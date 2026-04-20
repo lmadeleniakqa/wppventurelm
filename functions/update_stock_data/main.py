@@ -76,6 +76,7 @@ def update_stock_data(request):
 
     # 4. Build forecast tracking (compare predictions vs actuals)
     tracking = {}
+    from datetime import datetime as dt_cls
     for ticker in ["WPP", "Publicis", "Omnicom"]:
         if ticker not in forecasts or ticker not in stock_data:
             continue
@@ -85,6 +86,9 @@ def update_stock_data(request):
         errors = []
         n_within = 0
         for i, fd in enumerate(fc["dates"]):
+            # Skip weekends
+            if dt_cls.strptime(fd, "%Y-%m-%d").weekday() >= 5:
+                continue
             fp = fc["forecast"][i]
             lo = fc["lower"][i]
             hi = fc["upper"][i]
@@ -124,5 +128,93 @@ def update_stock_data(request):
     blob.upload_from_string(f"const FORECAST_TRACKING = {json.dumps(tracking)};")
 
     results["tracking"] = {k: v["summary"]["days_with_actuals"] for k, v in tracking.items()}
+
+    # 5. Performance monitoring — check retrain triggers
+    retrain_needed = False
+    retrain_reason = None
+
+    # Load current monitoring status
+    try:
+        status_blob = bucket.blob("monitoring/status.json")
+        if status_blob.exists():
+            mon_status = json.loads(status_blob.download_as_string())
+        else:
+            mon_status = {"consecutive_high_mape_days": 0, "retrains_this_quarter": 0, "last_trained": "2026-04-20"}
+    except Exception:
+        mon_status = {"consecutive_high_mape_days": 0, "retrains_this_quarter": 0, "last_trained": "2026-04-20"}
+
+    # Check WPP tracking (primary model)
+    wpp_t = tracking.get("WPP", {}).get("summary", {})
+    mape = wpp_t.get("mape")
+    ci_rate = wpp_t.get("ci_hit_rate")
+    dir_acc = wpp_t.get("direction_accuracy")
+    n_days = wpp_t.get("days_with_actuals", 0)
+
+    # Rule 1: MAPE > 5% for 10+ consecutive days
+    if mape is not None and mape > 5.0:
+        mon_status["consecutive_high_mape_days"] = mon_status.get("consecutive_high_mape_days", 0) + 1
+    else:
+        mon_status["consecutive_high_mape_days"] = 0
+
+    if mon_status["consecutive_high_mape_days"] >= 10:
+        retrain_needed = True
+        retrain_reason = f"MAPE={mape:.1f}% for {mon_status['consecutive_high_mape_days']} consecutive days"
+
+    # Rule 2: CI hit rate < 60% over 20+ days
+    if ci_rate is not None and n_days >= 20 and ci_rate < 60.0:
+        retrain_needed = True
+        retrain_reason = f"CI hit rate={ci_rate:.1f}% over {n_days} days (threshold: 60%)"
+
+    # Rule 3: Direction accuracy < 45% over 20+ days
+    if dir_acc is not None and n_days >= 20 and dir_acc < 45.0:
+        retrain_needed = True
+        retrain_reason = f"Direction accuracy={dir_acc:.1f}% over {n_days} days (below coin flip)"
+
+    # Rule 4: Quarterly schedule (first Monday of Jan, Apr, Jul, Oct)
+    today = datetime.utcnow()
+    if today.day <= 7 and today.weekday() == 0 and today.month in [1, 4, 7, 10]:
+        retrain_needed = True
+        retrain_reason = f"Quarterly scheduled retrain ({today.strftime('%Y-%m-%d')})"
+
+    # Guard: minimum 7 days between retrains, max 4 per quarter
+    last_trained = mon_status.get("last_trained", "2026-01-01")
+    days_since = (today - datetime.strptime(last_trained, "%Y-%m-%d")).days
+    if days_since < 7:
+        retrain_needed = False
+    if mon_status.get("retrains_this_quarter", 0) >= 4:
+        retrain_needed = False
+
+    # Trigger retrain if needed
+    if retrain_needed and retrain_reason:
+        try:
+            import urllib.request
+            retrain_url = "https://retrain-model-z6uoagg43a-uc.a.run.app"
+            payload = json.dumps({
+                "trigger": "auto_monitor",
+                "reason": retrain_reason,
+                "retrains_this_quarter": mon_status.get("retrains_this_quarter", 0),
+            }).encode()
+            req = urllib.request.Request(retrain_url, data=payload, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=300)
+            results["retrain_triggered"] = True
+            results["retrain_reason"] = retrain_reason
+        except Exception as e:
+            results["retrain_trigger_failed"] = str(e)
+    else:
+        results["retrain_triggered"] = False
+
+    # Save monitoring status
+    mon_status["last_checked"] = today.strftime("%Y-%m-%d %H:%M UTC")
+    mon_status["current_mape"] = mape
+    mon_status["current_ci_rate"] = ci_rate
+    mon_status["current_dir_acc"] = dir_acc
+    mon_status["days_tracked"] = n_days
+    bucket.blob("monitoring/status.json").upload_from_string(json.dumps(mon_status))
+
+    results["monitoring"] = {
+        "mape": mape, "ci_rate": ci_rate, "dir_acc": dir_acc,
+        "consecutive_high_mape": mon_status["consecutive_high_mape_days"],
+        "retrain_needed": retrain_needed,
+    }
     results["gcs_updated"] = True
     return json.dumps(results), 200, {"Content-Type": "application/json"}

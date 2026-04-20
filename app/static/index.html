@@ -207,8 +207,12 @@
 <div class="wrap"><div class="panel" id="p-detail">
     <div class="section">
         <h2>Forecast vs Actual — Daily Scorecard</h2>
-        <div class="desc">How accurate is our ARIMA+ forecast? Updated daily. Each row compares what we predicted vs what actually happened.</div>
+        <div class="desc">How accurate is our ARIMA+ forecast? Updated daily after market close. Auto-retrain triggers if performance degrades.</div>
         <div id="trackingScorecard"></div>
+    </div>
+    <div class="section">
+        <h2>Model Health Monitor</h2>
+        <div id="monitoringStatus"></div>
     </div>
     <div class="section">
         <h2>BQ ML ARIMA+ 90-Day Forecast</h2>
@@ -236,6 +240,7 @@
 <script src="forecast_data.js"></script>
 <script src="simulation_config.js"></script>
 <script src="forecast_tracking.js"></script>
+<script src="monitoring_config.js"></script>
 <script src="advertisers_data.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
@@ -430,8 +435,11 @@ function initDetail(){
                 const T = FORECAST_TRACKING[n];
                 if (!T || T.summary.days_with_actuals === 0) continue;
                 h += `<table style="margin-bottom:1rem"><thead><tr><th><span style="color:${C[n]}">${n}</span> Date</th><th>Forecast</th><th>Actual</th><th>Error</th><th>Error %</th><th>Within CI</th></tr></thead><tbody>`;
+                let pendingShown = 0;
                 for (const d of T.daily) {
                     if (d.status === 'pending') {
+                        if (pendingShown >= 5) continue; // Only show next 5 pending days
+                        pendingShown++;
                         h += `<tr style="color:var(--faint)"><td>${d.date}</td><td>$${d.forecast}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
                     } else {
                         const errCol = Math.abs(d.error_pct) < 2 ? 'var(--up)' : Math.abs(d.error_pct) < 5 ? 'var(--warn)' : 'var(--down)';
@@ -445,6 +453,55 @@ function initDetail(){
         // Show next pending dates
         h += '<div style="font-size:0.7rem;color:var(--faint);margin-top:0.5rem">Updated daily after market close (10 PM ET via Cloud Scheduler). Next forecast dates shown as pending until actuals arrive.</div>';
         el.innerHTML = h;
+    }
+
+    // Monitoring status
+    if (typeof MONITORING !== 'undefined') {
+        const mel = document.getElementById('monitoringStatus');
+        const M = MONITORING;
+        const S = M.current_status;
+        const R = M.rules;
+
+        // Get live metrics from tracking
+        const wppT = (typeof FORECAST_TRACKING !== 'undefined' && FORECAST_TRACKING.WPP) ? FORECAST_TRACKING.WPP.summary : {};
+        const mape = wppT.mape;
+        const ciRate = wppT.ci_hit_rate;
+        const dirAcc = wppT.direction_accuracy;
+        const nDays = wppT.days_with_actuals || 0;
+
+        let mh = '<div class="row r2" style="margin-bottom:1rem"><div>';
+        mh += '<div style="display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1rem;font-size:0.8rem">';
+        mh += `<span style="color:var(--faint)">Model</span><span>${S.model_version}</span>`;
+        mh += `<span style="color:var(--faint)">Last trained</span><span>${S.last_trained}</span>`;
+        mh += `<span style="color:var(--faint)">Retrains this quarter</span><span>${S.retrains_this_quarter}/4</span>`;
+        mh += `<span style="color:var(--faint)">Days tracked</span><span>${nDays}</span>`;
+        mh += '</div></div><div>';
+
+        // Rules status
+        const rules = [
+            { name: 'MAPE < 5% (10 days)', value: mape, threshold: R.mape_threshold.threshold, ok: mape === null || mape < 5, display: mape !== null ? mape + '%' : 'Pending', days_needed: 10 },
+            { name: 'CI hit > 60% (20 days)', value: ciRate, threshold: R.ci_hit_rate.threshold, ok: ciRate === null || nDays < 20 || ciRate >= 60, display: ciRate !== null ? ciRate + '%' : 'Pending', days_needed: 20 },
+            { name: 'Direction > 45% (20 days)', value: dirAcc, threshold: R.direction_accuracy.threshold, ok: dirAcc === null || nDays < 20 || dirAcc >= 45, display: dirAcc !== null ? dirAcc + '%' : 'Pending', days_needed: 20 },
+            { name: 'Quarterly retrain', value: null, threshold: null, ok: true, display: 'Next: Jul 2026', days_needed: 0 },
+            { name: 'Account move >$500M', value: null, threshold: 500, ok: true, display: 'Watching', days_needed: 0 },
+        ];
+
+        mh += '<table><thead><tr><th>Rule</th><th>Current</th><th>Status</th></tr></thead><tbody>';
+        for (const r of rules) {
+            const statusIcon = r.ok ? '<span class="c-up">●</span>' : '<span class="c-dn">● RETRAIN</span>';
+            const needsMore = r.days_needed > 0 && nDays < r.days_needed;
+            mh += `<tr><td>${r.name}</td><td style="text-align:right">${needsMore ? '<span style="color:var(--faint)">Need ' + r.days_needed + ' days</span>' : r.display}</td><td style="text-align:right">${needsMore ? '<span style="color:var(--faint)">—</span>' : statusIcon}</td></tr>`;
+        }
+        mh += '</tbody></table>';
+        mh += '</div></div>';
+
+        // Overall health
+        const allOk = rules.every(r => r.ok);
+        mh += `<div style="padding:0.6rem 1rem;border-radius:3px;font-size:0.8rem;margin-top:0.5rem;background:${allOk ? 'rgba(34,160,107,0.06)' : 'rgba(222,53,11,0.06)'};color:${allOk ? 'var(--up)' : 'var(--down)'}">`;
+        mh += allOk ? '● Model healthy — no retrain needed' : '● Performance degraded — auto-retrain will trigger';
+        mh += '</div>';
+
+        mel.innerHTML = mh;
     }
 
     const FD=FINANCIALS_DATA.financials;
