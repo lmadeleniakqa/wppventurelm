@@ -1,0 +1,5 @@
+torch>=2.0
+numpy
+scikit-learn
+scipy
+google-generativeai>=0.8.0

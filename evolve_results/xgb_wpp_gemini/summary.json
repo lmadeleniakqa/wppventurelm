@@ -1,0 +1,86 @@
+{
+  "experiment_id": "xgb_wpp_gemini_v1",
+  "session_id": "session_001",
+  "iterations_completed": 105,
+  "total_time_seconds": 4407.591238260269,
+  "best_score": 0.6211547994681568,
+  "best_program_id": "prog_5de9931336b1",
+  "best_metrics": {
+    "accuracy": 0.6177062374245473,
+    "roc_auc": 0.6374400285269709,
+    "f1": 0.6631205673758865,
+    "macro_f1": 0.6106300511298037,
+    "precision": 0.6071428571428571,
+    "recall": 0.73046875,
+    "win_rate": 0.62,
+    "n_trades": 350,
+    "best_iteration": 680,
+    "composite": 0.6211547994681568
+  },
+  "best_features": {
+    "has_attention": false,
+    "has_gating": false,
+    "has_residual": true,
+    "has_dropout": true,
+    "has_batchnorm": false,
+    "has_layernorm": false,
+    "has_focal_loss": true,
+    "has_contrastive": false,
+    "has_label_smoothing": false,
+    "activation": "unknown",
+    "framework": "sklearn",
+    "layer_count": 0
+  },
+  "score_trajectory": [
+    [
+      0,
+      0.5697769101266507
+    ],
+    [
+      2,
+      0.6133643101801121
+    ],
+    [
+      12,
+      0.6148428157092929
+    ],
+    [
+      17,
+      0.6191126056228732
+    ],
+    [
+      55,
+      0.6211547994681568
+    ]
+  ],
+  "population_stats": {
+    "total_candidates": 421,
+    "failed_candidates": 27,
+    "success_rate": "93.6%",
+    "best_score": 0.621155,
+    "best_program_id": "prog_5de9931336b1",
+    "island_sizes": [
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "unique_bins": 7,
+    "top_5_scores": [
+      0.6212,
+      0.6191,
+      0.6159,
+      0.6148,
+      0.6145
+    ]
+  },
+  "config": {
+    "max_iterations": 200,
+    "population_size": 50,
+    "target_metric": "composite",
+    "gemini_primary": "gemini-2.5-pro",
+    "gemini_secondary": "gemini-2.5-flash"
+  },
+  "system_prompt_evolved": true
+}
