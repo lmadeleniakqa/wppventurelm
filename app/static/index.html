@@ -205,14 +205,19 @@
 
 <!-- ===== DETAIL ===== -->
 <div class="wrap"><div class="panel" id="p-detail">
-    <div class="row r2">
-        <div class="section"><h2>Revenue & Organic Growth</h2><div class="chart-wrap sm"><canvas id="revChart"></canvas></div></div>
-        <div class="section"><h2>Operating Margin</h2><div class="chart-wrap sm"><canvas id="marginChart"></canvas></div></div>
+    <div class="section">
+        <h2>Forecast vs Actual — Daily Scorecard</h2>
+        <div class="desc">How accurate is our ARIMA+ forecast? Updated daily. Each row compares what we predicted vs what actually happened.</div>
+        <div id="trackingScorecard"></div>
     </div>
     <div class="section">
         <h2>BQ ML ARIMA+ 90-Day Forecast</h2>
-        <div class="desc">BigQuery ML auto-ARIMA with holiday effects, spike/dip detection, step changes, weekly + yearly seasonality.</div>
+        <div class="desc">Solid = historical. Dashed = forecast. Dots = actual closes since forecast started (tracking accuracy in real time).</div>
         <div class="chart-wrap"><canvas id="forecastChart"></canvas></div>
+    </div>
+    <div class="row r2">
+        <div class="section"><h2>Revenue & Organic Growth</h2><div class="chart-wrap sm"><canvas id="revChart"></canvas></div></div>
+        <div class="section"><h2>Operating Margin</h2><div class="chart-wrap sm"><canvas id="marginChart"></canvas></div></div>
     </div>
 </div></div>
 
@@ -230,6 +235,7 @@
 <script src="financials_data.js"></script>
 <script src="forecast_data.js"></script>
 <script src="simulation_config.js"></script>
+<script src="forecast_tracking.js"></script>
 <script src="advertisers_data.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
@@ -393,6 +399,54 @@ function initModels(){
 
 // === DETAIL ===
 function initDetail(){
+    // Forecast tracking scorecard
+    if (typeof FORECAST_TRACKING !== 'undefined') {
+        const el = document.getElementById('trackingScorecard');
+        let h = '<div class="row r3" style="margin-bottom:1rem">';
+        for (const n of GRP) {
+            const T = FORECAST_TRACKING[n];
+            if (!T) continue;
+            const s = T.summary;
+            const hasData = s.days_with_actuals > 0;
+            h += `<div class="card" style="border-top:3px solid ${C[n]}"><h3>${n}</h3>`;
+            if (hasData) {
+                h += `<div style="display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1rem;font-size:0.8rem;margin-top:0.5rem">
+                    <span style="color:var(--faint)">Days tracked</span><span>${s.days_with_actuals} of ${s.days_with_actuals + s.days_pending}</span>
+                    <span style="color:var(--faint)">MAPE</span><span style="color:${s.mape<3?'var(--up)':s.mape<5?'var(--warn)':'var(--down)'}">${s.mape}%</span>
+                    <span style="color:var(--faint)">CI hit rate</span><span style="color:${s.ci_hit_rate>80?'var(--up)':'var(--down)'}">${s.ci_hit_rate}% (${s.days_within_ci}/${s.days_with_actuals})</span>
+                    <span style="color:var(--faint)">Direction</span><span style="color:${s.direction_accuracy>50?'var(--up)':'var(--down)'}">${s.direction_accuracy||'—'}%</span>
+                </div>`;
+            } else {
+                h += `<div style="font-size:0.8rem;color:var(--faint);margin-top:0.5rem">Forecast starts ${s.forecast_start} — awaiting first actual close.</div>`;
+            }
+            h += '</div>';
+        }
+        h += '</div>';
+
+        // Daily tracking table
+        const anyData = GRP.some(n => FORECAST_TRACKING[n]?.summary?.days_with_actuals > 0);
+        if (anyData) {
+            for (const n of GRP) {
+                const T = FORECAST_TRACKING[n];
+                if (!T || T.summary.days_with_actuals === 0) continue;
+                h += `<table style="margin-bottom:1rem"><thead><tr><th><span style="color:${C[n]}">${n}</span> Date</th><th>Forecast</th><th>Actual</th><th>Error</th><th>Error %</th><th>Within CI</th></tr></thead><tbody>`;
+                for (const d of T.daily) {
+                    if (d.status === 'pending') {
+                        h += `<tr style="color:var(--faint)"><td>${d.date}</td><td>$${d.forecast}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+                    } else {
+                        const errCol = Math.abs(d.error_pct) < 2 ? 'var(--up)' : Math.abs(d.error_pct) < 5 ? 'var(--warn)' : 'var(--down)';
+                        h += `<tr><td>${d.date}</td><td>$${d.forecast}</td><td>$${d.actual}</td><td style="color:${errCol}">${d.error>0?'+':''}$${d.error}</td><td style="color:${errCol}">${d.error_pct>0?'+':''}${d.error_pct}%</td><td>${d.within_ci?'<span class="c-up">✓</span>':'<span class="c-dn">✗</span>'}</td></tr>`;
+                    }
+                }
+                h += '</tbody></table>';
+            }
+        }
+
+        // Show next pending dates
+        h += '<div style="font-size:0.7rem;color:var(--faint);margin-top:0.5rem">Updated daily after market close (10 PM ET via Cloud Scheduler). Next forecast dates shown as pending until actuals arrive.</div>';
+        el.innerHTML = h;
+    }
+
     const FD=FINANCIALS_DATA.financials;
     const years=FD.WPP.annual.map(a=>a.year);
 
@@ -411,17 +465,31 @@ function initDetail(){
         plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'line',padding:8}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2,callbacks:{label:c=>`  ${c.dataset.label}: ${c.parsed.y}%`}}},
         scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>v+'%'},border:{display:false},min:10,max:20}}}});
 
-    // ARIMA+ forecast
+    // ARIMA+ forecast with actual tracking overlay
     if(typeof FORECAST_DATA!=='undefined'){
         const fds=[];
         for(const n of GRP){
             const sd=STOCK_DATA[n];
+            // Historical
             fds.push({label:n+' Historical',data:sd.dates.slice(-130).map((d,i)=>({x:d,y:sd.closes[sd.closes.length-130+i]})),borderColor:C[n],borderWidth:2,pointRadius:0,fill:false,tension:0.1});
+            // Forecast
             const bq=FORECAST_DATA[n]?.models?.bq_arima_plus;
-            if(bq)fds.push({label:n+' Forecast',data:bq.forecast_dates.map((d,i)=>({x:d,y:bq.forecast[i]})),borderColor:C[n],borderWidth:2,borderDash:[4,4],pointRadius:0,fill:false,tension:0.1});
+            if(bq){
+                fds.push({label:n+' Forecast',data:bq.forecast_dates.map((d,i)=>({x:d,y:bq.forecast[i]})),borderColor:C[n],borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false,tension:0.1});
+                // CI band
+                fds.push({label:n+' CI',data:bq.forecast_dates.map((d,i)=>({x:d,y:bq.upper[i]})),borderColor:'transparent',backgroundColor:C[n]+'0A',pointRadius:0,fill:'+1'});
+                fds.push({label:n+' CI_lo',data:bq.forecast_dates.map((d,i)=>({x:d,y:bq.lower[i]})),borderColor:'transparent',pointRadius:0,fill:false});
+            }
+            // Actual dots (from tracking — these appear as actuals come in daily)
+            if(typeof FORECAST_TRACKING!=='undefined' && FORECAST_TRACKING[n]){
+                const actuals=FORECAST_TRACKING[n].daily.filter(d=>d.status==='actual');
+                if(actuals.length>0){
+                    fds.push({label:n+' Actual',data:actuals.map(d=>({x:d.date,y:d.actual})),borderColor:C[n],backgroundColor:C[n],borderWidth:0,pointRadius:5,pointStyle:'circle',showLine:false,fill:false});
+                }
+            }
         }
         charts.forecast=new Chart(document.getElementById('forecastChart').getContext('2d'),{type:'line',data:{datasets:fds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-            plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'line',padding:8,filter:i=>i.text.includes('Hist')}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2}},
+            plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,padding:8,filter:i=>!i.text.includes('CI')}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2,filter:i=>!i.dataset.label.includes('CI'),callbacks:{label:c=>`  ${c.dataset.label}: $${c.parsed.y.toFixed(2)}`}}},
             scales:{x:{type:'time',time:{unit:'month'},grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},maxTicksLimit:12},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+v},border:{display:false}}}}});
     }
 }

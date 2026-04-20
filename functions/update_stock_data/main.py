@@ -74,5 +74,55 @@ def update_stock_data(request):
     blob = bucket.blob("dashboard/forecast_live.js")
     blob.upload_from_string(f"const FORECAST_LIVE = {json.dumps(forecasts)};")
 
+    # 4. Build forecast tracking (compare predictions vs actuals)
+    tracking = {}
+    for ticker in ["WPP", "Publicis", "Omnicom"]:
+        if ticker not in forecasts or ticker not in stock_data:
+            continue
+        actual_map = dict(zip(stock_data[ticker]["dates"], stock_data[ticker]["closes"]))
+        fc = forecasts[ticker]
+        daily = []
+        errors = []
+        n_within = 0
+        for i, fd in enumerate(fc["dates"]):
+            fp = fc["forecast"][i]
+            lo = fc["lower"][i]
+            hi = fc["upper"][i]
+            actual = actual_map.get(fd)
+            if actual is not None:
+                err = actual - fp
+                err_pct = (err / actual) * 100
+                within = lo <= actual <= hi
+                if within:
+                    n_within += 1
+                errors.append(abs(err_pct))
+                daily.append({"date": fd, "forecast": round(fp, 2), "actual": round(actual, 2),
+                              "error": round(err, 2), "error_pct": round(err_pct, 2),
+                              "lower": round(lo, 2), "upper": round(hi, 2),
+                              "within_ci": within, "status": "actual"})
+            else:
+                daily.append({"date": fd, "forecast": round(fp, 2), "actual": None,
+                              "error": None, "error_pct": None,
+                              "lower": round(lo, 2), "upper": round(hi, 2),
+                              "within_ci": None, "status": "pending"})
+        n_actual = len(errors)
+        tracking[ticker] = {
+            "daily": daily,
+            "summary": {
+                "days_with_actuals": n_actual,
+                "days_pending": len(daily) - n_actual,
+                "days_within_ci": n_within,
+                "ci_hit_rate": round(n_within / n_actual * 100, 1) if n_actual > 0 else None,
+                "mape": round(sum(errors) / len(errors), 2) if errors else None,
+                "forecast_start": fc["dates"][0] if fc["dates"] else None,
+                "last_actual_date": stock_data[ticker]["dates"][-1],
+                "last_actual_price": stock_data[ticker]["closes"][-1],
+            },
+        }
+
+    blob = bucket.blob("dashboard/forecast_tracking.js")
+    blob.upload_from_string(f"const FORECAST_TRACKING = {json.dumps(tracking)};")
+
+    results["tracking"] = {k: v["summary"]["days_with_actuals"] for k, v in tracking.items()}
     results["gcs_updated"] = True
     return json.dumps(results), 200, {"Content-Type": "application/json"}
