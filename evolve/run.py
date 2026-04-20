@@ -94,7 +94,9 @@ def parse_args():
 
     # Example-specific
     parser.add_argument("--difficulty", choices=["easy", "medium", "hard"], default="medium",
-                        help="Synthetic data difficulty (stock example only)")
+                        help="Synthetic data difficulty (smoke-test only)")
+    parser.add_argument("--bigquery", action="store_true",
+                        help="Use real BigQuery data (required for honest results)")
     return parser.parse_args()
 
 
@@ -113,8 +115,11 @@ async def main():
         from .examples.xgb_wpp_daily import SEED_CODE, SYSTEM_PROMPT, make_eval_fn
         seed_code = SEED_CODE
         system_prompt = SYSTEM_PROMPT
-        eval_fn = make_eval_fn(difficulty=args.difficulty)
-        target_metric = args.target_metric or "composite"
+        eval_fn = make_eval_fn(difficulty=args.difficulty, use_bigquery=args.bigquery)
+        target_metric = args.target_metric or "score"
+        if not args.bigquery:
+            logger.warning("Running on SYNTHETIC data. Results will NOT transfer to real data. "
+                           "Use --bigquery for honest evaluation.")
 
     elif args.seed and args.eval:
         with open(args.seed) as f:

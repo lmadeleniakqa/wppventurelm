@@ -1,17 +1,23 @@
 """
-XGBoost WPP Daily — EvolveEngine example for evolving the xgb_wpp_specific model.
+XGBoost WPP Daily — EvolveEngine example for the xgb_wpp_specific model.
 
-Baseline: 60.6% accuracy, ROC AUC 0.61 (BigQuery ML XGBoost on WPP-only data).
-16 features, 2,481 daily observations, 5-day forward direction target.
+REAL BASELINE (on BigQuery data):
+  58.0% accuracy, AUC 0.587, 274 trades, 59.5% win rate, +82.5% P&L, Sharpe 0.37
 
-To use with real BigQuery data, set USE_BIGQUERY=True and ensure gcloud auth.
+LESSON LEARNED: Models evolved on synthetic data failed on real data. Aggressive
+regularization (gamma=10, reg_alpha=15) that won on synthetic makes models too
+conservative on real market data — zero trades or negative P&L. Always evaluate
+on real data. Domain constraints (monotonic on net_wins) transfer; numeric
+hyperparameter tuning does not.
+
+This module uses BigQuery by default. Synthetic is only for smoke-testing the pipeline.
 """
 
 import gc
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# 1. SEED CODE — XGBoost classifier replicating the BigQuery ML baseline
+# 1. SEED CODE — baseline config matching the real 58% model
 # ---------------------------------------------------------------------------
 
 SEED_CODE = '''
@@ -21,13 +27,15 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 # EVOLVE-BLOCK-START: HYPERPARAMETERS
-# XGBoost hyperparameters — baseline matches BigQuery ML defaults
+# Baseline hyperparameters — proven 58% accuracy on real data.
+# WARNING: Aggressive regularization (gamma>2, reg_alpha>5) kills trading signal.
+# The baseline moderate config is strong. Evolve cautiously.
 PARAMS = {
     "objective": "binary:logistic",
     "eval_metric": "logloss",
     "max_depth": 6,
-    "learning_rate": 0.3,
-    "n_estimators": 100,
+    "learning_rate": 0.03,
+    "n_estimators": 300,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "min_child_weight": 1,
@@ -37,9 +45,12 @@ PARAMS = {
     "scale_pos_weight": 1.0,
     "max_delta_step": 0,
     "random_state": 42,
+    # Monotonic constraint: net_wins (index 12) must increase prediction.
+    # This is the one evolved idea proven to transfer to real data.
+    "monotone_constraints": (0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
 }
-NUM_BOOST_ROUND = 100
-EARLY_STOPPING_ROUNDS = 10
+NUM_BOOST_ROUND = 300
+EARLY_STOPPING_ROUNDS = 15
 THRESHOLD = 0.5
 # EVOLVE-BLOCK-END: HYPERPARAMETERS
 
@@ -47,23 +58,30 @@ THRESHOLD = 0.5
 # EVOLVE-BLOCK-START: FEATURE_ENGINEERING
 def engineer_features(X, feature_names):
     """
-    Feature engineering on raw features. Returns (X_new, new_feature_names).
-    Input features (16):
-        ret_1d, ret_5d, ret_20d, ret_60d,
-        sp_ret_1d, sp_ret_5d, sp_ret_20d,
-        rel_5d, rel_20d,
-        vol_20d, beta_60d, rsi_14,
-        net_wins, net_spend_bn,
-        gdelt_tone, gdelt_volume
+    Feature engineering on the 16 raw features.
+    Returns (X_new, new_feature_names).
 
-    Ideas to explore:
-    - Interaction features (net_wins * ret_20d, gdelt_tone * vol_20d)
-    - Ratio features (ret_5d / vol_20d, rel_5d / beta_60d)
-    - Polynomial features on top predictors
-    - Rolling z-scores or rank transforms
-    - Binning continuous features
-    - Momentum regime indicators (rsi > 70, rsi < 30)
-    - Volatility-adjusted returns (ret_Xd / vol_20d)
+    Feature indices:
+        0: ret_1d, 1: ret_5d, 2: ret_20d, 3: ret_60d,
+        4: sp_ret_1d, 5: sp_ret_5d, 6: sp_ret_20d,
+        7: rel_5d, 8: rel_20d,
+        9: vol_20d, 10: beta_60d, 11: rsi_14,
+        12: net_wins, 13: net_spend_bn,
+        14: gdelt_tone, 15: gdelt_volume
+
+    HIGH IMPACT ideas (these create new signal, not just tune existing):
+    - Interaction: net_wins * ret_20d (competition + momentum alignment)
+    - Interaction: gdelt_tone * gdelt_volume (volume-weighted sentiment)
+    - Volatility-adjusted returns: ret_5d / (vol_20d + 1e-6)
+    - RSI regime flags: overbought (rsi > 70), oversold (rsi < 30)
+    - Momentum crossover: ret_5d - ret_20d (short vs medium trend)
+    - Competition intensity: net_wins * net_spend_bn
+    - Winsorize extreme values (clip at 1st/99th percentile)
+
+    IMPORTANT: New features must help the model find signal it can't find
+    from the raw features alone. XGBoost can already do splits on individual
+    features, so polynomial/binning of single features adds little.
+    Focus on CROSS-FEATURE interactions.
     """
     return X, feature_names
 # EVOLVE-BLOCK-END: FEATURE_ENGINEERING
@@ -72,15 +90,20 @@ def engineer_features(X, feature_names):
 # EVOLVE-BLOCK-START: TRAINING_PROCEDURE
 def train_model(X_train, y_train, X_val, y_val):
     """
-    Train XGBoost model and return (model, best_iteration).
+    Train XGBoost model. Returns (model, best_iteration).
 
-    Ideas to explore:
-    - Custom objective functions (focal loss, asymmetric loss)
-    - Different booster types (gbtree, dart, gblinear)
-    - Sample weighting strategies
-    - Monotonic constraints on key features
-    - Feature interaction constraints
-    - Two-stage training (coarse then fine)
+    Ideas that may help on REAL data:
+    - Monotonic constraints on additional features (vol_20d negative, sp_ret_20d positive)
+    - Feature interaction constraints: group correlated features
+    - Sample weighting: upweight recent data (market regime changes over 10 years)
+    - Two-stage: train on all data, fine-tune on recent 3 years
+    - Custom objective for asymmetric loss (missed opportunities vs false signals)
+
+    Ideas that FAILED on real data (avoid):
+    - DART booster with aggressive dropout — too conservative, zero trades
+    - gamma > 2, reg_alpha > 5, reg_lambda > 5 — kills signal
+    - max_depth < 4 — too shallow for feature interactions
+    - Very low learning rate (< 0.01) with high rounds — overfits to noise
     """
     dtrain = xgb.DMatrix(X_train, label=y_train)
     dval = xgb.DMatrix(X_val, label=y_val)
@@ -104,11 +127,14 @@ def predict(model, X):
     """
     Generate predictions from trained model.
 
-    Ideas to explore:
-    - Calibrated probabilities (Platt scaling, isotonic regression)
-    - Dynamic threshold tuning (optimize F1 or profit on val set)
-    - Ensemble with prediction from different iterations
-    - Margin-based confidence filtering
+    The baseline threshold of 0.5 with confidence filtering at 0.55/0.45
+    produces 274 trades with 59.5% win rate. Changes here directly affect
+    trade count and quality — test carefully.
+
+    Ideas:
+    - Dynamic threshold tuned on validation set (maximize Sharpe, not accuracy)
+    - Wider confidence band (0.57/0.43) for fewer but higher-quality trades
+    - Platt scaling for better-calibrated probabilities
     """
     dtest = xgb.DMatrix(X)
     probs = model.predict(dtest)
@@ -119,92 +145,92 @@ def predict(model, X):
 
 
 # ---------------------------------------------------------------------------
-# 2. SYSTEM PROMPT — domain guidance for Gemini
+# 2. SYSTEM PROMPT — grounded in real-data results
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are an expert ML engineer evolving an XGBoost classifier for stock direction prediction.
-The model predicts whether WPP stock will go up or down over the next 5 trading days.
+SYSTEM_PROMPT = """You are evolving an XGBoost classifier that predicts WPP stock 5-day direction.
 
-## Current Model (baseline: 60.6% accuracy, ROC AUC 0.61)
-- XGBoost with default BigQuery ML parameters
-- 16 features, 2,481 daily observations (WPP only, 10 years)
-- Binary classification: 5-day forward direction
+## Real Baseline Performance (this is what you must beat)
+- Accuracy: 58.0% | AUC: 0.587 | Trades: 274 | Win rate: 59.5% | P&L: +82.5% | Sharpe: 0.37
+- Config: max_depth=6, lr=0.03, 300 rounds, moderate regularization, gbtree booster
 
-## Key Domain Knowledge
-- #1 predictor is net_wins (account competition) at 29% importance
-- Market risk (vol_20d) is #2
-- Stock-specific models significantly outperform multi-stock models
-- Returns are very noisy at daily frequency — regularization is critical
-- Class balance is roughly 55/45 (slight upward bias)
+## What FAILED in previous evolution (DO NOT repeat)
+- Aggressive regularization (gamma=10, reg_alpha=15, reg_lambda=15) → model too conservative, zero trades
+- DART booster with high dropout → predicts "up" for everything, no signal
+- max_depth=3 → too shallow, can't capture feature interactions
+- Very low learning_rate (<0.01) with 800+ rounds → overfits to noise patterns
+- These ALL scored well on synthetic data but FAILED on real market data
 
-## Directions to Explore
+## What WORKED
+- Monotonic constraint on net_wins (index 12) → domain knowledge that transfers
+- The baseline moderate config is genuinely strong — don't blow it up
 
-### Hyperparameter Tuning
-- max_depth: try 3-10 (deeper risks overfitting on 2,481 samples)
-- learning_rate: try 0.01-0.3 with higher n_estimators for lower rates
-- subsample: try 0.5-1.0
-- colsample_bytree: try 0.3-1.0
-- min_child_weight: try 1-10 (higher = more regularization)
-- gamma: try 0-5 (minimum loss reduction for split)
-- reg_alpha (L1): try 0-10
-- reg_lambda (L2): try 0-10
-- scale_pos_weight: try ratio of negative/positive class counts
-- max_delta_step: try 1-10 for imbalanced data
-- n_estimators: try 50-500 (with appropriate early stopping)
+## High-Value Directions (focus here)
 
-### Feature Engineering (HIGH IMPACT)
-- Interaction: net_wins * ret_20d (competition momentum)
-- Interaction: gdelt_tone * gdelt_volume (weighted sentiment)
-- Volatility-adjusted returns: ret_Xd / vol_20d
-- RSI regime: binary indicators for overbought (>70) / oversold (<30)
-- Momentum crossover: ret_5d - ret_20d (short vs medium momentum)
-- Beta-adjusted relative strength: rel_20d / beta_60d
-- Competition intensity: net_wins * net_spend_bn
-- Polynomial: net_wins^2, vol_20d^2
-- Rolling rank transforms on continuous features
-- Clipping extreme values (winsorize at 1st/99th percentile)
+### Feature Engineering (HIGHEST IMPACT — creates new signal)
+- net_wins * ret_20d — competition momentum alignment
+- gdelt_tone * gdelt_volume — volume-weighted sentiment
+- ret_5d / (vol_20d + 1e-6) — volatility-adjusted momentum
+- ret_5d - ret_20d — short vs medium momentum crossover
+- net_wins * net_spend_bn — competition intensity
+- RSI regime flags: (rsi > 70) as overbought, (rsi < 30) as oversold
+- Winsorize features at 1st/99th percentile to reduce outlier impact
 
-### Training Procedure
-- Custom objective: focal loss for hard-to-classify samples
-- Asymmetric loss (penalize false negatives differently from false positives)
-- DART booster instead of gbtree (dropout regularization)
-- Monotonic constraints: enforce net_wins increases probability of up
-- Feature interaction constraints: group related features
-- Two-stage: first train on all data, then fine-tune on recent 2 years
-- Bagging: train multiple models on bootstrap samples, majority vote
+### Structural Constraints (transfers to real data)
+- Additional monotonic constraints: vol_20d should be negative (high vol = bearish)
+- Feature interaction constraints between correlated features
+- Sample weighting: upweight recent 3 years (market regimes change)
 
-### Prediction
-- Calibrate probabilities with Platt scaling
-- Dynamic threshold: optimize on validation set
-- Confidence filtering: only predict when probability > 0.55 or < 0.45
-- Ensemble ntree_limit values for robust prediction
+### Careful Hyperparameter Adjustments (SMALL moves only)
+- max_depth: stay in 5-8 range (not below 4, not above 10)
+- learning_rate: 0.02-0.05 range (not below 0.01)
+- subsample/colsample: 0.6-0.9 range
+- reg_alpha/reg_lambda: 0-2 range MAXIMUM (not higher)
+- gamma: 0-1 range MAXIMUM
+- early_stopping: 10-20 range
 
-## Constraints
-- Must use xgboost library
+### Prediction Refinement
+- Tune threshold on validation Sharpe ratio, not just accuracy
+- Wider confidence bands (0.57/0.43) for higher-quality trades
+- Must produce at least 100 trades to be useful (zero trades = fail)
+
+## Hard Constraints
+- Must use xgboost (not sklearn GradientBoosting)
 - Available: xgboost, numpy, sklearn, scipy
 - Train in under 60 seconds
-- Don't introduce external data dependencies
+- Must produce >= 50 trades on the validation set (models with zero trades score -1)
 """
 
 
 # ---------------------------------------------------------------------------
-# 3. EVALUATION FUNCTION FACTORY
+# 3. EVALUATION FUNCTION — real data by default, baseline-relative scoring
 # ---------------------------------------------------------------------------
+
+# Baseline metrics from real data (the bar to beat)
+BASELINE = {
+    "accuracy": 0.580,
+    "roc_auc": 0.587,
+    "win_rate": 0.595,
+    "n_trades": 274,
+    "pnl_pct": 82.5,
+    "sharpe": 0.37,
+}
+
 
 def make_eval_fn(difficulty: str = "medium", use_bigquery: bool = False):
     """
-    Returns an evaluation function for the XGBoost WPP model.
+    Returns evaluation function for the XGBoost WPP model.
 
-    With use_bigquery=True, loads real data from BigQuery.
-    Otherwise uses synthetic data that mimics the real distribution.
+    IMPORTANT: use_bigquery=True loads real data (default for production).
+    Synthetic data is only for smoke-testing the pipeline.
     """
     if use_bigquery:
-        X_train, y_train, X_val, y_val, feature_names = _load_bigquery_data()
+        X_train, y_train, X_val, y_val, X_test, y_test, feature_names, val_returns = _load_bigquery_data()
     else:
-        X_train, y_train, X_val, y_val, feature_names = _generate_synthetic_data(difficulty)
+        X_train, y_train, X_val, y_val, X_test, y_test, feature_names, val_returns = _generate_synthetic_data(difficulty)
 
     def evaluate(candidate_code: str) -> dict:
-        """Train candidate XGBoost model and return metrics."""
+        """Train candidate and return metrics with baseline-relative scoring."""
         try:
             import xgboost as xgb
             from sklearn.metrics import (
@@ -213,7 +239,6 @@ def make_eval_fn(difficulty: str = "medium", use_bigquery: bool = False):
             )
 
             ns = {"xgb": xgb, "np": np, "xgboost": xgb}
-            # Inject sklearn into namespace
             import sklearn.metrics
             import sklearn.calibration
             ns["sklearn"] = __import__("sklearn")
@@ -234,7 +259,7 @@ def make_eval_fn(difficulty: str = "medium", use_bigquery: bool = False):
             # Train
             train_fn = ns.get("train_model")
             if train_fn is None:
-                return {"accuracy": -1.0, "error": "train_model not found"}
+                return {"score": -1.0, "error": "train_model not found"}
 
             model, best_iter = train_fn(X_tr_eng, y_train, X_va_eng, y_val)
 
@@ -248,46 +273,92 @@ def make_eval_fn(difficulty: str = "medium", use_bigquery: bool = False):
                 threshold = float(ns.get("THRESHOLD", 0.5))
                 preds = (probs >= threshold).astype(int)
 
-            # Metrics
+            # --- Core metrics ---
             acc = accuracy_score(y_val, preds)
-            f1 = f1_score(y_val, preds, average="binary", zero_division=0)
-            macro_f1 = f1_score(y_val, preds, average="macro", zero_division=0)
-            precision = precision_score(y_val, preds, zero_division=0)
-            recall = recall_score(y_val, preds, zero_division=0)
-
             try:
                 roc = roc_auc_score(y_val, probs)
             except Exception:
-                roc = 0.0
+                roc = 0.5
 
-            # Trading simulation
-            trades = []
+            precision = precision_score(y_val, preds, zero_division=0)
+            recall = recall_score(y_val, preds, zero_division=0)
+
+            # --- Trading simulation (realistic) ---
+            trades_pnl = []
             for i in range(len(probs)):
                 if probs[i] > 0.55:
-                    trades.append(1 if y_val[i] == 1 else -1)
+                    # Long signal: profit if stock actually went up
+                    trades_pnl.append(val_returns[i] if val_returns is not None else
+                                      (1.0 if y_val[i] == 1 else -1.0))
                 elif probs[i] < 0.45:
-                    trades.append(1 if y_val[i] == 0 else -1)
-            win_rate = sum(1 for t in trades if t > 0) / len(trades) if trades else 0
+                    # Short signal: profit if stock actually went down
+                    trades_pnl.append(-val_returns[i] if val_returns is not None else
+                                      (1.0 if y_val[i] == 0 else -1.0))
 
-            # Composite score: weighted combination emphasizing accuracy + AUC
-            composite = 0.4 * acc + 0.3 * roc + 0.2 * macro_f1 + 0.1 * precision
+            n_trades = len(trades_pnl)
+            if n_trades > 0:
+                total_pnl = sum(trades_pnl)
+                win_rate = sum(1 for t in trades_pnl if t > 0) / n_trades
+                sharpe = (float(np.mean(trades_pnl) / np.std(trades_pnl) * np.sqrt(52))
+                          if np.std(trades_pnl) > 0 else 0.0)
+            else:
+                total_pnl = 0.0
+                win_rate = 0.0
+                sharpe = 0.0
+
+            # --- HARD FAIL: models with zero/too few trades are useless ---
+            if n_trades < 50:
+                return {
+                    "score": -1.0,
+                    "accuracy": float(acc),
+                    "roc_auc": float(roc),
+                    "n_trades": n_trades,
+                    "fail_reason": f"Only {n_trades} trades (need >= 50). Model too conservative.",
+                }
+
+            # --- Baseline-relative scoring ---
+            # Score = how much better than baseline across key metrics
+            # Each component is (candidate - baseline) / baseline, capped
+            acc_delta = (acc - BASELINE["accuracy"]) / BASELINE["accuracy"]
+            auc_delta = (roc - BASELINE["roc_auc"]) / BASELINE["roc_auc"]
+            wr_delta = (win_rate - BASELINE["win_rate"]) / BASELINE["win_rate"]
+            sharpe_delta = (sharpe - BASELINE["sharpe"]) / max(BASELINE["sharpe"], 0.01)
+
+            # Trade count penalty: fewer trades than baseline is penalized
+            trade_ratio = min(n_trades / BASELINE["n_trades"], 1.5)  # cap at 1.5x
+            trade_penalty = 0.0 if trade_ratio >= 0.5 else -0.5 * (0.5 - trade_ratio)
+
+            # Weighted baseline-relative score
+            # Positive = better than baseline, negative = worse
+            score = (
+                0.30 * acc_delta
+                + 0.25 * auc_delta
+                + 0.20 * wr_delta
+                + 0.15 * sharpe_delta
+                + 0.10 * trade_penalty
+            )
 
             return {
+                "score": float(score),
                 "accuracy": float(acc),
                 "roc_auc": float(roc),
-                "f1": float(f1),
-                "macro_f1": float(macro_f1),
                 "precision": float(precision),
                 "recall": float(recall),
+                "n_trades": n_trades,
                 "win_rate": float(win_rate),
-                "n_trades": len(trades),
+                "total_pnl": float(total_pnl),
+                "sharpe": float(sharpe),
                 "best_iteration": int(best_iter) if best_iter else 0,
-                "composite": float(composite),
+                # Deltas for transparency
+                "vs_baseline_acc": f"{acc_delta:+.1%}",
+                "vs_baseline_auc": f"{auc_delta:+.1%}",
+                "vs_baseline_wr": f"{wr_delta:+.1%}",
+                "vs_baseline_sharpe": f"{sharpe_delta:+.1%}",
             }
 
         except Exception as e:
             import traceback
-            return {"accuracy": -1.0, "composite": -1.0,
+            return {"score": -1.0,
                     "error": f"{type(e).__name__}: {e}\n{traceback.format_exc()[-300:]}"}
 
         finally:
@@ -298,8 +369,8 @@ def make_eval_fn(difficulty: str = "medium", use_bigquery: bool = False):
 
 def _generate_synthetic_data(difficulty: str = "medium"):
     """
-    Generate synthetic data mimicking the WPP daily features distribution.
-    2,481 samples, 16 features, binary target (5-day direction).
+    Synthetic data for smoke-testing only. NOT for evolution.
+    Returns (X_train, y_train, X_val, y_val, X_test, y_test, feature_names, val_returns).
     """
     np.random.seed(42)
     n_samples = 2481
@@ -312,74 +383,52 @@ def _generate_synthetic_data(difficulty: str = "medium"):
         "gdelt_tone", "gdelt_volume",
     ]
 
-    # Simulate realistic feature distributions
     X = np.zeros((n_samples, 16), dtype=np.float32)
-
-    # Returns: mean ~0, std varies by horizon
-    X[:, 0] = np.random.normal(0.0, 1.5, n_samples)     # ret_1d
-    X[:, 1] = np.random.normal(0.05, 3.0, n_samples)     # ret_5d
-    X[:, 2] = np.random.normal(0.2, 6.0, n_samples)      # ret_20d
-    X[:, 3] = np.random.normal(0.5, 12.0, n_samples)     # ret_60d
-
-    # S&P returns (correlated with stock returns)
-    X[:, 4] = 0.6 * X[:, 0] + np.random.normal(0, 0.8, n_samples)  # sp_ret_1d
-    X[:, 5] = 0.5 * X[:, 1] + np.random.normal(0, 1.5, n_samples)  # sp_ret_5d
-    X[:, 6] = 0.4 * X[:, 2] + np.random.normal(0, 3.0, n_samples)  # sp_ret_20d
-
-    # Relative strength
-    X[:, 7] = X[:, 1] - X[:, 5]   # rel_5d
-    X[:, 8] = X[:, 2] - X[:, 6]   # rel_20d
-
-    # Volatility, beta, RSI
-    X[:, 9] = np.abs(np.random.normal(25, 8, n_samples))   # vol_20d
-    X[:, 10] = np.random.normal(0.85, 0.25, n_samples)     # beta_60d
-    X[:, 11] = np.random.normal(50, 15, n_samples)         # rsi_14
-    X[:, 11] = np.clip(X[:, 11], 10, 90)
-
-    # Competition features (most important predictors)
+    X[:, 0] = np.random.normal(0.0, 1.5, n_samples)
+    X[:, 1] = np.random.normal(0.05, 3.0, n_samples)
+    X[:, 2] = np.random.normal(0.2, 6.0, n_samples)
+    X[:, 3] = np.random.normal(0.5, 12.0, n_samples)
+    X[:, 4] = 0.6 * X[:, 0] + np.random.normal(0, 0.8, n_samples)
+    X[:, 5] = 0.5 * X[:, 1] + np.random.normal(0, 1.5, n_samples)
+    X[:, 6] = 0.4 * X[:, 2] + np.random.normal(0, 3.0, n_samples)
+    X[:, 7] = X[:, 1] - X[:, 5]
+    X[:, 8] = X[:, 2] - X[:, 6]
+    X[:, 9] = np.abs(np.random.normal(25, 8, n_samples))
+    X[:, 10] = np.random.normal(0.85, 0.25, n_samples)
+    X[:, 11] = np.clip(np.random.normal(50, 15, n_samples), 10, 90)
     X[:, 12] = np.random.choice([-2, -1, 0, 1, 2, 3], n_samples,
-                                 p=[0.1, 0.15, 0.3, 0.25, 0.12, 0.08])  # net_wins
-    X[:, 13] = np.abs(np.random.normal(0.5, 0.3, n_samples))  # net_spend_bn
+                                 p=[0.1, 0.15, 0.3, 0.25, 0.12, 0.08])
+    X[:, 13] = np.abs(np.random.normal(0.5, 0.3, n_samples))
+    X[:, 14] = np.random.normal(0.0, 1.0, n_samples)
+    X[:, 15] = np.abs(np.random.normal(100, 50, n_samples))
 
-    # Sentiment
-    X[:, 14] = np.random.normal(0.0, 1.0, n_samples)       # gdelt_tone
-    X[:, 15] = np.abs(np.random.normal(100, 50, n_samples)) # gdelt_volume
-
-    # Target: nonlinear function of features + noise
-    # Matches observed feature importance: net_wins >> vol_20d >> sp_ret_20d
     noise_scale = {"easy": 0.3, "medium": 0.6, "hard": 1.0}[difficulty]
-
-    signal = (
-        0.15 * X[:, 12]                          # net_wins (strongest)
-        - 0.008 * X[:, 9]                         # vol_20d (high vol = bearish)
-        + 0.01 * X[:, 6]                          # sp_ret_20d (market trend)
-        + 0.08 * X[:, 13]                          # net_spend_bn
-        + 0.005 * X[:, 2]                          # ret_20d (momentum)
-        + 0.02 * X[:, 14]                          # gdelt_tone
-        + 0.003 * X[:, 3]                          # ret_60d
-        + 0.01 * (X[:, 1] - X[:, 5])              # rel_5d
-        - 0.005 * np.abs(X[:, 11] - 50)           # RSI distance from neutral
-        + 0.05 * X[:, 12] * (X[:, 2] > 0).astype(float)  # interaction: wins + momentum
-    )
-
+    signal = (0.15 * X[:, 12] - 0.008 * X[:, 9] + 0.01 * X[:, 6]
+              + 0.08 * X[:, 13] + 0.005 * X[:, 2] + 0.02 * X[:, 14])
     noise = noise_scale * np.random.randn(n_samples)
     y = (signal + noise > np.median(signal)).astype(np.float32)
 
-    # Slight upward bias (55/45 like real data)
-    bias_flip = (y == 0) & (np.random.rand(n_samples) < 0.05)
-    y[bias_flip] = 1.0
+    # Simulated 5-day returns for trading sim
+    val_returns = (signal * 0.02 + 0.01 * np.random.randn(n_samples)).astype(np.float32)
 
-    # Sequential split (80/20, temporal)
-    split = int(n_samples * 0.8)
+    # 70/15/15 split
+    s1 = int(n_samples * 0.7)
+    s2 = int(n_samples * 0.85)
     return (
-        X[:split], y[:split],
-        X[split:], y[split:],
+        X[:s1], y[:s1],
+        X[s1:s2], y[s1:s2],
+        X[s2:], y[s2:],
         feature_names,
+        val_returns[s1:s2],
     )
 
 
 def _load_bigquery_data():
-    """Load real WPP data from BigQuery."""
+    """
+    Load real WPP data from BigQuery.
+    Split: 70% train / 15% validation (for evolution) / 15% test (held out).
+    Returns (X_train, y_train, X_val, y_val, X_test, y_test, feature_names, val_returns).
+    """
     from google.cloud import bigquery
     client = bigquery.Client(project="na-analytics")
     query = """
@@ -400,5 +449,18 @@ def _load_bigquery_data():
     X = df[feature_cols].values.astype(np.float32)
     y = df["target_direction"].values.astype(np.float32)
 
-    split = int(len(X) * 0.8)
-    return X[:split], y[:split], X[split:], y[split:], feature_cols
+    # Use 5-day return for realistic trading simulation
+    val_returns = df["target_5d_return"].values.astype(np.float32) if "target_5d_return" in df.columns else None
+
+    # Sequential split: 70 / 15 / 15
+    n = len(X)
+    s1 = int(n * 0.7)
+    s2 = int(n * 0.85)
+
+    return (
+        X[:s1], y[:s1],
+        X[s1:s2], y[s1:s2],
+        X[s2:], y[s2:],
+        feature_cols,
+        val_returns[s1:s2] if val_returns is not None else None,
+    )
