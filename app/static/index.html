@@ -140,7 +140,7 @@
 
 <!-- ===== MODELS ===== -->
 <div class="wrap"><div class="panel" id="p-models">
-    <div class="callout"><h3>11 Models Trained Across BigQuery ML + Vertex AI</h3><p>Best model: <strong>XGBoost WPP-specific at 60.6% direction accuracy</strong> (ROC AUC 0.61). The #1 most important feature is <strong>net_wins</strong> — account competition data is more predictive than any price-based signal.</p></div>
+    <div class="callout"><h3>13 Models Trained — Evolved v2 is Production</h3><p>Best model: <strong>Evolved XGBoost v2 — 58.2% accuracy, Sharpe 0.86, +202% P&L</strong>. Evolved by Gemini 2.5 Pro from 217 candidates on real BigQuery data. Key innovations: recency-weighted training (last 3Y count 2x) + monotonic constraint on net_wins. JEPA tested but doesn't beat XGBoost at this data scale.</p></div>
     <div class="section">
         <h2>Model Leaderboard</h2>
         <div id="modelTable"></div>
@@ -151,20 +151,25 @@
         <div id="featureImportance"></div>
     </div>
     <div class="section">
-        <h2>Lag-Shifted Alignment</h2>
-        <div class="desc">The ensemble predicts with a 1-quarter lag — prediction[t+1] aligns near-perfectly with actual[t]. R² = 0.996+ for all three stocks.</div>
-        <div class="pills" id="lagPills">
-            <button class="pill on" data-v="WPP">WPP</button>
-            <button class="pill" data-v="Publicis">Publicis</button>
-            <button class="pill" data-v="Omnicom">Omnicom</button>
+        <h2>Production Model</h2>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:0.5rem 1.5rem;font-size:0.8rem;margin-top:0.5rem">
+            <span style="color:var(--faint)">Model</span><span>Evolved XGBoost v2</span>
+            <span style="color:var(--faint)">Evolved by</span><span>Gemini 2.5 Pro — 217 candidates, 54 iterations on real BigQuery data</span>
+            <span style="color:var(--faint)">Accuracy</span><span>58.2% (5-day direction, sequential split)</span>
+            <span style="color:var(--faint)">Sharpe</span><span>0.86 (annualized, >55% confidence trades only)</span>
+            <span style="color:var(--faint)">P&L</span><span>+202% cumulative (289 trades, 59.2% win rate)</span>
+            <span style="color:var(--faint)">Key innovation</span><span>Recency-weighted training (last 3Y count 2x) + monotonic constraint on net_wins</span>
+            <span style="color:var(--faint)">#1 feature</span><span>net_wins (account competition) — 29% of total importance</span>
+            <span style="color:var(--faint)">Weights</span><span style="font-family:monospace;font-size:0.7rem">gs://na-analytics-media-stocks/models/xgb_wpp_evolved_v2/model.bst</span>
+            <span style="color:var(--faint)">Training code</span><span style="font-family:monospace;font-size:0.7rem">evolve_results/xgb_wpp_real_v2/best_program.py</span>
+            <span style="color:var(--faint)">Data</span><span style="font-family:monospace;font-size:0.7rem">na-analytics.media_stocks.daily_features (7,443 rows, 16 features)</span>
         </div>
-        <div class="chart-wrap"><canvas id="lagChart"></canvas></div>
     </div>
 </div></div>
 
 <!-- ===== SIMULATOR ===== -->
 <div class="wrap"><div class="panel" id="p-simulator">
-    <div class="callout"><h3>Account Move Simulator</h3><p>Select from the <strong>top 100 global advertisers</strong> ($194.5B total spend), set when the move happens, and see the predicted impact on stock price and win streaks over time.</p></div>
+    <div class="callout"><h3>Account Move Simulator</h3><p>Powered by the <strong>Evolved XGBoost v2</strong> model (58.2% accuracy, Sharpe 0.86, +202% P&L) — evolved by Gemini from 217 candidates on real BigQuery data. Select from the <strong>top 100 global advertisers</strong> ($194.5B total spend), set when the move happens, and see the predicted impact.</p></div>
 
     <div class="row r2">
         <div class="section">
@@ -234,7 +239,6 @@ const GRP = ['WPP','Publicis','Omnicom'];
 const cf = {family:"-apple-system,sans-serif"};
 const gc = 'rgba(0,0,0,0.04)';
 let vis = {WPP:true,Publicis:true,Omnicom:true,SP500:false};
-let lagCo = 'WPP';
 let charts = {};
 
 // === NAV ===
@@ -385,25 +389,6 @@ function initModels(){
     }
     document.getElementById('featureImportance').innerHTML=fh;
 
-    // Lag chart
-    buildLagChart();
-    document.querySelectorAll('#lagPills .pill').forEach(p=>{
-        p.addEventListener('click',()=>{document.querySelectorAll('#lagPills .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');lagCo=p.dataset.v;buildLagChart();});
-    });
-}
-
-function buildLagChart(){
-    const B=BACKTEST_DATA[lagCo]; if(!B)return;
-    const recs=B.records, labels=recs.map(r=>r.quarter);
-    const shifted=[...recs.slice(1).map(r=>r.ensemble_pred),null];
-    if(charts.lag)charts.lag.destroy();
-    charts.lag=new Chart(document.getElementById('lagChart').getContext('2d'),{type:'line',data:{labels,datasets:[
-        {label:'Actual',data:recs.map(r=>r.actual_price),borderColor:C[lagCo],borderWidth:2.5,pointRadius:3,pointBackgroundColor:C[lagCo],fill:false,tension:0.2},
-        {label:'Lag-Shifted',data:shifted,borderColor:'#22A06B',borderWidth:2,pointRadius:2,pointBackgroundColor:'#22A06B',fill:false,tension:0.2},
-        {label:'Original Ensemble',data:recs.map(r=>r.ensemble_pred),borderColor:'rgba(123,97,255,0.2)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,tension:0.2},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:10},usePointStyle:true,pointStyle:'line',padding:12}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2,callbacks:{label:c=>`  ${c.dataset.label}: $${c.parsed.y?c.parsed.y.toFixed(2):'—'}`}}},
-        scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:8},maxRotation:45},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+v},border:{display:false}}}}});
 }
 
 // === DETAIL ===
