@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Holding Companies — Intelligence Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        :root {
+            --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            --serif: Georgia, 'Times New Roman', serif;
+            --bg: #FFFFFF; --elevated: #F8F8F9; --border: #E5E5EA; --border-active: #C8C8CD;
+            --text: #0A0A0A; --muted: #6B6B6B; --faint: #9B9B9B;
+            --accent: #7B61FF; --teal: #4AEADC; --orange: #FF6B35;
+            --up: #22A06B; --down: #DE350B; --warn: #CF9F02;
+            --wpp: #7B61FF; --pub: #4AEADC; --omc: #FF6B35; --sp: #C8C8CD;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 0 2rem; }
+        header { padding: 4rem 0 0; }
+        header p.eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); }
+        header h1 { font-size: 2.25rem; font-weight: 500; letter-spacing: -0.03em; margin: 0.25rem 0 0.5rem; }
+        header .lead { font-family: var(--serif); font-size: 1.125rem; color: var(--muted); max-width: 720px; }
+        nav { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin: 2.5rem 0 0; overflow-x: auto; }
+        nav button { font-family: var(--font); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.75rem 1rem; border: none; background: none; color: var(--faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+        nav button:hover { color: var(--muted); }
+        nav button.on { color: var(--accent); border-bottom-color: var(--accent); }
+        .panel { display: none; padding: 2rem 0 4rem; }
+        .panel.on { display: block; }
+        .row { display: grid; gap: 1.25rem; margin-bottom: 1.5rem; }
+        .r2 { grid-template-columns: 1fr 1fr; }
+        .r3 { grid-template-columns: 1fr 1fr 1fr; }
+        .r4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .r5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+        .card { background: var(--elevated); border: 1px solid var(--border); border-radius: 3px; padding: 1.25rem; }
+        .card h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-weight: 400; }
+        .card .big { font-size: 2rem; font-weight: 500; margin: 0.25rem 0; letter-spacing: -0.02em; }
+        .card .sub { font-size: 0.7rem; color: var(--muted); }
+        .section { background: var(--elevated); border: 1px solid var(--border); border-radius: 3px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .section h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; margin-bottom: 0.25rem; }
+        .section .desc { font-family: var(--serif); font-size: 0.85rem; color: var(--muted); margin-bottom: 1.25rem; }
+        .chart-wrap { position: relative; height: 380px; }
+        .chart-wrap.sm { height: 260px; }
+        .pills { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
+        .pill { font-family: var(--font); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 3px; background: none; color: var(--faint); cursor: pointer; transition: all 0.15s; }
+        .pill.on { border-color: currentColor; }
+        .pill[data-v="WPP"].on { color: var(--wpp); }
+        .pill[data-v="Publicis"].on { color: var(--pub); }
+        .pill[data-v="Omnicom"].on { color: var(--omc); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { text-align: left; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 400; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); }
+        td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+        th:not(:first-child), td:not(:first-child) { text-align: right; }
+        tr:hover { background: rgba(0,0,0,0.015); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .c-up { color: var(--up); } .c-dn { color: var(--down); } .c-w { color: var(--warn); }
+        .bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 0.5rem; }
+        .bar-fill { height: 100%; border-radius: 2px; }
+        .callout { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; background: rgba(123,97,255,0.03); margin-bottom: 1.5rem; }
+        .callout h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
+        .callout p { font-size: 0.85rem; color: var(--muted); }
+        .callout strong { color: var(--text); }
+        .tag { display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px; }
+        .tag-up { background: rgba(34,160,107,0.1); color: var(--up); }
+        .tag-dn { background: rgba(222,53,11,0.1); color: var(--down); }
+        footer { padding: 0 0 2rem; font-size: 0.65rem; color: var(--faint); }
+        footer span::before { content: '‣ '; color: var(--accent); }
+        @media (max-width: 768px) { .r2,.r3,.r4,.r5 { grid-template-columns: 1fr; } .wrap { padding: 0 1rem; } header { padding: 2rem 0 0; } .chart-wrap { height: 260px; } .chart-wrap.sm { height: 200px; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <p class="eyebrow">Intelligence Report — April 2026</p>
+        <h1>Media Holding Companies</h1>
+        <p class="lead">10-year stock performance, competitive account dynamics, and predictive model findings for WPP, Publicis Groupe, and Omnicom Group.</p>
+    </header>
+    <nav id="nav">
+        <button class="on" data-p="overview">Overview</button>
+        <button data-p="competition">Competition</button>
+        <button data-p="streaks">Win Streaks</button>
+        <button data-p="models">Models</button>
+        <button data-p="simulator">Simulator</button>
+        <button data-p="detail">Detail</button>
+    </nav>
+</div>
+
+<!-- ===== OVERVIEW ===== -->
+<div class="wrap"><div class="panel on" id="p-overview">
+    <div class="row r3" id="kpis"></div>
+    <div class="section">
+        <h2>10-Year Price Performance</h2>
+        <div class="pills" id="pricePills">
+            <button class="pill on" data-v="WPP">WPP</button>
+            <button class="pill on" data-v="Publicis">Publicis</button>
+            <button class="pill on" data-v="Omnicom">Omnicom</button>
+            <button class="pill" data-v="SP500">S&P 500</button>
+        </div>
+        <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+    </div>
+    <div class="row r3">
+        <div class="card" style="border-top:3px solid var(--wpp)"><h3>WPP</h3><div class="big c-dn" id="wpp-ret"></div><div class="sub">β 0.99 · R² 0.27 · 74% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: Cindy Rose (Jan 2026). Under Elevate28 transformation.</div></div>
+        <div class="card" style="border-top:3px solid var(--pub)"><h3>Publicis</h3><div class="big c-up" id="pub-ret"></div><div class="sub">β 0.52 · R² 0.10 · 90% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: Arthur Sadoun. Epsilon data moat + AI-first strategy.</div></div>
+        <div class="card" style="border-top:3px solid var(--omc)"><h3>Omnicom</h3><div class="big" id="omc-ret"></div><div class="sub">β 0.85 · R² 0.29 · 71% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: John Wren (29 years). IPG merger completed 2025.</div></div>
+    </div>
+</div></div>
+
+<!-- ===== COMPETITION ===== -->
+<div class="wrap"><div class="panel" id="p-competition">
+    <div class="callout"><h3>Zero-Sum Dynamics</h3><p>When one holding group wins a major account, it almost always comes <strong>at the expense of another</strong>. Over 10 years, $31B in media spend changed hands between the Big 3. Publicis captured the most; WPP lost the most.</p></div>
+    <div class="row r3" id="compKpis"></div>
+    <div class="section">
+        <h2>Cumulative Net Account Spend ($M)</h2>
+        <div class="desc">Running total of competitive wins minus losses. One group's gain is another's pain.</div>
+        <div class="chart-wrap"><canvas id="netSpendChart"></canvas></div>
+    </div>
+    <div class="section">
+        <h2>Account Moves — Full Ledger</h2>
+        <div style="overflow-x:auto" id="moveTable"></div>
+    </div>
+</div></div>
+
+<!-- ===== WIN STREAKS ===== -->
+<div class="wrap"><div class="panel" id="p-streaks">
+    <div class="callout"><h3>The Magic Number Is 3</h3><p>When Publicis hit <strong>3 consecutive net-win quarters</strong>, average quarterly return was <strong>+24%</strong> with <strong>+15.5% excess vs S&P 500</strong>. WPP under Cindy Rose is currently at <strong>streak = 2</strong> (Estée Lauder Q1, Wendy's Q2). One more win in Q3 2026 triggers the pattern.</p></div>
+    <div class="section">
+        <h2>Consecutive Wins → Stock Impact</h2>
+        <div class="desc">Average quarterly return and excess vs S&P at each streak length.</div>
+        <div class="chart-wrap sm"><canvas id="streakChart"></canvas></div>
+    </div>
+    <div id="streakTables"></div>
+    <div class="section">
+        <h2>WPP Current Position</h2>
+        <div id="wppPath"></div>
+    </div>
+</div></div>
+
+<!-- ===== MODELS ===== -->
+<div class="wrap"><div class="panel" id="p-models">
+    <div class="callout"><h3>11 Models Trained Across BigQuery ML + Vertex AI</h3><p>Best model: <strong>XGBoost WPP-specific at 60.6% direction accuracy</strong> (ROC AUC 0.61). The #1 most important feature is <strong>net_wins</strong> — account competition data is more predictive than any price-based signal.</p></div>
+    <div class="section">
+        <h2>Model Leaderboard</h2>
+        <div id="modelTable"></div>
+    </div>
+    <div class="section">
+        <h2>Feature Importance</h2>
+        <div class="desc">What drives the best model's predictions. Account competition data is #1.</div>
+        <div id="featureImportance"></div>
+    </div>
+    <div class="section">
+        <h2>Lag-Shifted Alignment</h2>
+        <div class="desc">The ensemble predicts with a 1-quarter lag — prediction[t+1] aligns near-perfectly with actual[t]. R² = 0.996+ for all three stocks.</div>
+        <div class="pills" id="lagPills">
+            <button class="pill on" data-v="WPP">WPP</button>
+            <button class="pill" data-v="Publicis">Publicis</button>
+            <button class="pill" data-v="Omnicom">Omnicom</button>
+        </div>
+        <div class="chart-wrap"><canvas id="lagChart"></canvas></div>
+    </div>
+</div></div>
+
+<!-- ===== SIMULATOR ===== -->
+<div class="wrap"><div class="panel" id="p-simulator">
+    <div class="callout"><h3>Account Move Simulator</h3><p>Select from the <strong>top 100 global advertisers</strong> ($194.5B total spend), set when the move happens, and see the predicted impact on stock price and win streaks over time.</p></div>
+
+    <div class="row r2">
+        <div class="section">
+            <h2>Add Account Move</h2>
+            <div style="display:grid;gap:0.75rem;margin-top:0.75rem">
+                <div>
+                    <label style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">Advertiser</label>
+                    <select id="simBrand" onchange="onBrandSelect()" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.85rem;margin-top:0.25rem">
+                        <option value="">Select an advertiser...</option>
+                    </select>
+                    <div id="brandInfo" style="font-size:0.7rem;color:var(--faint);margin-top:0.25rem"></div>
+                </div>
+                <div class="row r2" style="margin-bottom:0">
+                    <div><label style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">Budget ($M)</label><input type="number" id="simBudget" value="500" min="50" max="10000" step="50" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.85rem;margin-top:0.25rem"></div>
+                    <div><label style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">When</label><input type="date" id="simDate" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.85rem;margin-top:0.25rem"></div>
+                </div>
+                <div class="row r2" style="margin-bottom:0">
+                    <div><label style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">From</label><select id="simFrom" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.85rem;margin-top:0.25rem"><option value="WPP">WPP</option><option value="Publicis" selected>Publicis</option><option value="Omnicom">Omnicom</option><option value="Dentsu">Dentsu</option><option value="Havas">Havas</option><option value="Other">Other / In-house</option></select></div>
+                    <div><label style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">To</label><select id="simTo" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.85rem;margin-top:0.25rem"><option value="WPP" selected>WPP</option><option value="Publicis">Publicis</option><option value="Omnicom">Omnicom</option><option value="Other">Other / In-house</option></select></div>
+                </div>
+                <button onclick="addSimMove()" style="padding:0.6rem 1.5rem;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:var(--font);font-size:0.8rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em">Add Move</button>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Scenario <span id="moveCount" style="font-size:0.7rem;color:var(--faint);font-weight:400"></span></h2>
+            <div id="simQueue" style="margin-top:0.5rem"><p style="font-size:0.8rem;color:var(--faint)">No moves added yet. Select an advertiser to start.</p></div>
+            <button onclick="runSimulation()" style="margin-top:1rem;padding:0.6rem 1.5rem;background:var(--text);color:#fff;border:none;border-radius:3px;font-family:var(--font);font-size:0.8rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em;width:100%">Run Simulation</button>
+            <button onclick="clearSimulation()" style="margin-top:0.5rem;padding:0.4rem 1rem;background:none;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:0.7rem;cursor:pointer;color:var(--faint);width:100%">Clear All</button>
+        </div>
+    </div>
+    <div id="simResults"></div>
+</div></div>
+
+<!-- ===== DETAIL ===== -->
+<div class="wrap"><div class="panel" id="p-detail">
+    <div class="row r2">
+        <div class="section"><h2>Revenue & Organic Growth</h2><div class="chart-wrap sm"><canvas id="revChart"></canvas></div></div>
+        <div class="section"><h2>Operating Margin</h2><div class="chart-wrap sm"><canvas id="marginChart"></canvas></div></div>
+    </div>
+    <div class="section">
+        <h2>BQ ML ARIMA+ 90-Day Forecast</h2>
+        <div class="desc">BigQuery ML auto-ARIMA with holiday effects, spike/dip detection, step changes, weekly + yearly seasonality.</div>
+        <div class="chart-wrap"><canvas id="forecastChart"></canvas></div>
+    </div>
+</div></div>
+
+<div class="wrap"><footer>
+    <span>Source: Yahoo Finance. WPP (NYSE), Publicis (Euronext Paris), Omnicom (NYSE), S&P 500.</span><br>
+    <span>Variance decomposition via OLS. Models trained in BigQuery ML (XGBoost, DNN, ARIMA+) and Vertex AI (PyTorch T4 GPU).</span><br>
+    <span>Account data from AdAge, Adweek, Campaign. 10 years, 7,443 daily observations, 17 features.</span>
+</footer></div>
+
+<script src="stock_data.js"></script>
+<script src="competition_data.js"></script>
+<script src="streak_data.js"></script>
+<script src="daily_models_data.js"></script>
+<script src="backtest_data.js"></script>
+<script src="financials_data.js"></script>
+<script src="forecast_data.js"></script>
+<script src="simulation_config.js"></script>
+<script src="advertisers_data.js"></script>
+<script>
+const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
+const F = {WPP:'rgba(123,97,255,0.06)',Publicis:'rgba(74,234,220,0.06)',Omnicom:'rgba(255,107,53,0.06)'};
+const CUR = {WPP:'$',Publicis:'€',Omnicom:'$'};
+const GRP = ['WPP','Publicis','Omnicom'];
+const cf = {family:"-apple-system,sans-serif"};
+const gc = 'rgba(0,0,0,0.04)';
+let vis = {WPP:true,Publicis:true,Omnicom:true,SP500:false};
+let lagCo = 'WPP';
+let charts = {};
+
+// === NAV ===
+document.querySelectorAll('nav button').forEach(b=>{
+    b.addEventListener('click',()=>{
+        document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+        document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        document.getElementById('p-'+b.dataset.p).classList.add('on');
+    });
+});
+
+// === OVERVIEW ===
+function initOverview(){
+    // KPIs
+    const el=document.getElementById('kpis');
+    let h='';
+    for(const n of GRP){
+        const d=STOCK_DATA[n],c=d.closes,l=c[c.length-1],f5=c[Math.max(0,c.length-1260)];
+        const r=((l-f5)/f5*100).toFixed(1);
+        h+=`<div class="card"><h3><span class="dot" style="background:${C[n]}"></span> ${n}</h3><div class="big">${CUR[n]}${l.toFixed(2)}</div><div class="sub ${r>0?'c-up':'c-dn'}">${r>0?'+':''}${r}% (5Y)</div></div>`;
+        document.getElementById(n==='WPP'?'wpp-ret':n==='Publicis'?'pub-ret':'omc-ret').textContent=(r>0?'+':'')+r+'% (10Y)';
+    }
+    el.innerHTML=h;
+    // Price chart
+    buildPriceChart();
+}
+
+function buildPriceChart(){
+    const ctx=document.getElementById('priceChart').getContext('2d');
+    const ds=[];
+    for(const n of [...GRP,'SP500']){
+        if(!vis[n])continue;
+        const d=STOCK_DATA[n], base=d.closes[0];
+        ds.push({label:n==='SP500'?'S&P 500':n, data:d.dates.map((dt,i)=>({x:dt,y:+(d.closes[i]/base*100).toFixed(1)})),
+            borderColor:C[n], backgroundColor:n!=='SP500'?F[n]:'transparent', borderWidth:n==='SP500'?1:2,
+            borderDash:n==='SP500'?[4,4]:[], pointRadius:0, fill:n!=='SP500', tension:0.1});
+    }
+    if(charts.price)charts.price.destroy();
+    charts.price=new Chart(ctx,{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:10},usePointStyle:true,pointStyle:'line',padding:12}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2}},
+        scales:{x:{type:'time',time:{unit:'year'},grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},maxTicksLimit:10},border:{display:false}},
+            y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false},title:{display:true,text:'INDEXED (START = 100)',color:'#999',font:{...cf,size:9}}}}}});
+}
+
+document.querySelectorAll('#pricePills .pill').forEach(p=>{
+    p.addEventListener('click',()=>{p.classList.toggle('on');vis[p.dataset.v]=p.classList.contains('on');buildPriceChart();});
+});
+
+// === COMPETITION ===
+function initCompetition(){
+    const el=document.getElementById('compKpis');
+    let h='';
+    for(const n of GRP){
+        const d=COMPETITION_DATA.cumulative_data[n], last=d[d.length-1];
+        const net=last.cum_wins-last.cum_losses, ns=last.cum_net_spend;
+        h+=`<div class="card" style="border-top:3px solid ${C[n]}"><h3>${n}</h3><div class="big">${last.cum_wins}W / ${last.cum_losses}L</div><div class="sub ${ns>0?'c-up':'c-dn'}">Net spend: $${ns>0?'+':''}${(ns/1000).toFixed(1)}B</div></div>`;
+    }
+    el.innerHTML=h;
+
+    // Net spend chart
+    const ctx=document.getElementById('netSpendChart').getContext('2d');
+    const ds=GRP.map(n=>{const d=COMPETITION_DATA.cumulative_data[n];return{label:n,data:d.map(q=>({x:q.quarter.replace('-Q1','-01-15').replace('-Q2','-04-15').replace('-Q3','-07-15').replace('-Q4','-10-15'),y:q.cum_net_spend})),borderColor:C[n],backgroundColor:F[n],borderWidth:2,pointRadius:0,fill:true,tension:0.3,stepped:'after'};});
+    charts.netSpend=new Chart(ctx,{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:10},usePointStyle:true,pointStyle:'line',padding:12}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2,callbacks:{label:c=>`  ${c.dataset.label}: $${(c.parsed.y/1000).toFixed(1)}B`}}},
+        scales:{x:{type:'time',time:{unit:'year'},grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},
+            y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+(v/1000).toFixed(1)+'B'},border:{display:false}}}}});
+
+    // Move table
+    const moves=COMPETITION_DATA.account_moves.filter(m=>m.spend>0).sort((a,b)=>b.date.localeCompare(a.date));
+    let t='<table><thead><tr><th>Date</th><th>Brand</th><th>Spend</th><th>From → To</th></tr></thead><tbody>';
+    for(const m of moves){
+        const fg=GRP.includes(m.from)?`<span style="color:${C[m.from]}">${m.from}</span>`:m.from;
+        const tg=GRP.includes(m.to)?`<span style="color:${C[m.to]}">${m.to}</span>`:m.to;
+        t+=`<tr><td>${m.date}</td><td><strong>${m.brand}</strong></td><td>$${m.spend}M</td><td>${fg} → ${tg}</td></tr>`;
+    }
+    document.getElementById('moveTable').innerHTML=t+'</tbody></table>';
+}
+
+// === STREAKS ===
+function initStreaks(){
+    // Streak chart
+    const ctx=document.getElementById('streakChart').getContext('2d');
+    const labels=['6L','5L','4L','3L','2L','1L','1W','2W','3W','4W','5W','6W'];
+    const streakLevels=[-6,-5,-4,-3,-2,-1,1,2,3,4,5,6];
+    const ds=GRP.map(n=>{const S=STREAK_DATA[n];return{label:n,data:streakLevels.map(l=>{
+        const d=l>0?S.win_streak_impact[l]:S.loss_streak_impact[l];return d?d.avg_excess:null;
+    }),backgroundColor:C[n]+'80',borderColor:C[n],borderWidth:1};});
+    charts.streak=new Chart(ctx,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:10},usePointStyle:true,padding:12}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2,callbacks:{label:c=>c.parsed.y!==null?`  ${c.dataset.label}: ${c.parsed.y>0?'+':''}${c.parsed.y.toFixed(1)}%`:''}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>v+'%'},border:{display:false},title:{display:true,text:'AVG EXCESS VS S&P 500',color:'#999',font:{...cf,size:9}}}}}});
+
+    // Tables
+    let h='';
+    for(const n of GRP){
+        const S=STREAK_DATA[n];
+        h+=`<div class="section" style="border-top:3px solid ${C[n]}"><h2>${n}</h2><table><thead><tr><th>Streak</th><th>Count</th><th>Avg Return</th><th>Excess vs S&P</th><th>Next Q Return</th><th>Next Q Excess</th></tr></thead><tbody>`;
+        for(const len of [1,2,3,4,5,6]){const d=S.win_streak_impact[len];if(!d)continue;
+            const hot=d.avg_excess>5;
+            h+=`<tr style="${hot?'background:rgba(34,160,107,0.04);font-weight:500':''}"><td class="c-up">${len} win${len>1?'s':''}</td><td>${d.count}×</td><td class="${d.avg_return>0?'c-up':'c-dn'}">${d.avg_return>0?'+':''}${d.avg_return}%</td><td class="${d.avg_excess>0?'c-up':'c-dn'}">${d.avg_excess>0?'+':''}${d.avg_excess}%</td><td class="${d.next_q_return>0?'c-up':'c-dn'}">${d.next_q_return>0?'+':''}${d.next_q_return}%</td><td class="${d.next_q_excess>0?'c-up':'c-dn'}">${d.next_q_excess>0?'+':''}${d.next_q_excess}%</td></tr>`;
+        }
+        for(const len of [-1,-2,-3,-4,-5,-6]){const d=S.loss_streak_impact[len];if(!d)continue;
+            const cold=d.avg_excess<-5;
+            h+=`<tr style="${cold?'background:rgba(222,53,11,0.03);font-weight:500':''}"><td class="c-dn">${Math.abs(len)} loss${Math.abs(len)>1?'es':''}</td><td>${d.count}×</td><td class="${d.avg_return>0?'c-up':'c-dn'}">${d.avg_return>0?'+':''}${d.avg_return}%</td><td class="${d.avg_excess>0?'c-up':'c-dn'}">${d.avg_excess>0?'+':''}${d.avg_excess}%</td><td class="${d.next_q_return>0?'c-up':'c-dn'}">${d.next_q_return>0?'+':''}${d.next_q_return}%</td><td class="${d.next_q_excess>0?'c-up':'c-dn'}">${d.next_q_excess>0?'+':''}${d.next_q_excess}%</td></tr>`;
+        }
+        h+='</tbody></table></div>';
+    }
+    document.getElementById('streakTables').innerHTML=h;
+
+    // WPP path
+    const cd=COMPETITION_DATA.cumulative_data.WPP;
+    let path='<table><thead><tr><th>Quarter</th><th>Wins</th><th>Losses</th><th>Net</th><th>Brands</th><th>Status</th></tr></thead><tbody>';
+    for(const d of cd.slice(-8)){
+        const net=d.wins-d.losses;
+        const status=net>0?'<span class="tag tag-up">WIN</span>':net<0?'<span class="tag tag-dn">LOSS</span>':'<span style="font-size:0.6rem;color:var(--faint)">FLAT</span>';
+        const brands=[...d.win_brands.map(b=>'<span class="c-up">+'+b+'</span>'),...d.loss_brands.map(b=>'<span class="c-dn">−'+b+'</span>')].join(', ')||'—';
+        path+=`<tr><td>${d.quarter}</td><td>${d.wins}</td><td>${d.losses}</td><td class="${net>0?'c-up':net<0?'c-dn':''}">${net>0?'+':''}${net}</td><td>${brands}</td><td>${status}</td></tr>`;
+    }
+    path+='</tbody></table>';
+    path+='<div style="margin-top:1rem;font-size:0.85rem;color:var(--muted)">Current streak: <strong style="color:var(--up)">2 consecutive wins</strong>. One more net-win quarter (Q3 2026) hits the threshold.</div>';
+    document.getElementById('wppPath').innerHTML=path;
+}
+
+// === MODELS ===
+function initModels(){
+    const DM=DAILY_MODELS_DATA;
+    let t='<table><thead><tr><th>Model</th><th>Platform</th><th>Accuracy</th><th>ROC AUC</th><th>Verdict</th></tr></thead><tbody>';
+    const order=['xgb_wpp_specific','vertex_ai_pytorch','xgb_daily_direction','dnn_daily_direction','xgb_daily_return','dnn_daily_return'];
+    for(const k of order){
+        const m=DM.models[k];if(!m)continue;
+        const best=k===DM.best_model;
+        const metric=m.accuracy?m.accuracy+'%':(m.r2!==undefined?'R² '+m.r2.toFixed(3):(m.status||'—'));
+        const col=m.accuracy>55?'var(--up)':m.accuracy>50?'var(--warn)':(m.r2!==undefined&&m.r2<0)?'var(--down)':'var(--faint)';
+        t+=`<tr style="${best?'font-weight:500;background:rgba(123,97,255,0.03)':''}"><td>${m.type}${best?' ‣':''}</td><td>${m.platform}</td><td style="color:${col}">${metric}</td><td>${m.roc_auc?m.roc_auc.toFixed(3):'—'}</td><td style="color:var(--muted);font-size:0.7rem;max-width:300px">${m.verdict}</td></tr>`;
+    }
+    t+='</tbody></table>';
+    document.getElementById('modelTable').innerHTML=t;
+
+    // Feature importance
+    const fi=DM.feature_importance;
+    const catCol={'Account Competition':'#22A06B','Market Risk':'#CF9F02','S&P 500 (Market)':'#3B82F6','Momentum':'#7B61FF','Media Sentiment':'#4AEADC','Technical':'#FF6B35','Relative Strength':'#a78bfa'};
+    const maxI=fi[0].importance;
+    let fh='';
+    for(const f of fi){
+        const pct=(f.importance/maxI*100).toFixed(0);
+        const col=catCol[f.category]||'#999';
+        fh+=`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.3rem 0"><span style="font-size:0.75rem;color:var(--muted);min-width:110px">${f.feature}</span><div class="bar" style="flex:1"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:0.65rem;color:${col};min-width:120px">${f.category}</span></div>`;
+    }
+    document.getElementById('featureImportance').innerHTML=fh;
+
+    // Lag chart
+    buildLagChart();
+    document.querySelectorAll('#lagPills .pill').forEach(p=>{
+        p.addEventListener('click',()=>{document.querySelectorAll('#lagPills .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');lagCo=p.dataset.v;buildLagChart();});
+    });
+}
+
+function buildLagChart(){
+    const B=BACKTEST_DATA[lagCo]; if(!B)return;
+    const recs=B.records, labels=recs.map(r=>r.quarter);
+    const shifted=[...recs.slice(1).map(r=>r.ensemble_pred),null];
+    if(charts.lag)charts.lag.destroy();
+    charts.lag=new Chart(document.getElementById('lagChart').getContext('2d'),{type:'line',data:{labels,datasets:[
+        {label:'Actual',data:recs.map(r=>r.actual_price),borderColor:C[lagCo],borderWidth:2.5,pointRadius:3,pointBackgroundColor:C[lagCo],fill:false,tension:0.2},
+        {label:'Lag-Shifted',data:shifted,borderColor:'#22A06B',borderWidth:2,pointRadius:2,pointBackgroundColor:'#22A06B',fill:false,tension:0.2},
+        {label:'Original Ensemble',data:recs.map(r=>r.ensemble_pred),borderColor:'rgba(123,97,255,0.2)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,tension:0.2},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:10},usePointStyle:true,pointStyle:'line',padding:12}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2,callbacks:{label:c=>`  ${c.dataset.label}: $${c.parsed.y?c.parsed.y.toFixed(2):'—'}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:8},maxRotation:45},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+v},border:{display:false}}}}});
+}
+
+// === DETAIL ===
+function initDetail(){
+    const FD=FINANCIALS_DATA.financials;
+    const years=FD.WPP.annual.map(a=>a.year);
+
+    // Revenue chart
+    const ds=[];
+    for(const n of GRP){ds.push({type:'bar',label:n,data:FD[n].annual.map(a=>a.revenue),backgroundColor:C[n]+'40',borderColor:C[n],borderWidth:1,yAxisID:'y',barPercentage:0.7});}
+    for(const n of GRP){ds.push({type:'line',label:n+' Org%',data:FD[n].annual.map(a=>a.organic_growth),borderColor:C[n],borderWidth:2,pointRadius:3,pointBackgroundColor:C[n],fill:false,tension:0.3,yAxisID:'y1'});}
+    charts.rev=new Chart(document.getElementById('revChart').getContext('2d'),{type:'bar',data:{labels:years.map(String),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2}},
+        scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},y:{position:'left',grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false},title:{display:true,text:'Revenue (B)',color:'#999',font:{...cf,size:8}}},
+            y1:{position:'right',grid:{display:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>v+'%'},border:{display:false},title:{display:true,text:'Organic %',color:'#999',font:{...cf,size:8}}}}}});
+
+    // Margin chart
+    const mds=GRP.map(n=>({label:n,data:FD[n].annual.map(a=>a.operating_margin),borderColor:C[n],backgroundColor:F[n],borderWidth:2,pointRadius:3,pointBackgroundColor:C[n],fill:true,tension:0.3}));
+    charts.margin=new Chart(document.getElementById('marginChart').getContext('2d'),{type:'line',data:{labels:years.map(String),datasets:mds},options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'line',padding:8}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2,callbacks:{label:c=>`  ${c.dataset.label}: ${c.parsed.y}%`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>v+'%'},border:{display:false},min:10,max:20}}}});
+
+    // ARIMA+ forecast
+    if(typeof FORECAST_DATA!=='undefined'){
+        const fds=[];
+        for(const n of GRP){
+            const sd=STOCK_DATA[n];
+            fds.push({label:n+' Historical',data:sd.dates.slice(-130).map((d,i)=>({x:d,y:sd.closes[sd.closes.length-130+i]})),borderColor:C[n],borderWidth:2,pointRadius:0,fill:false,tension:0.1});
+            const bq=FORECAST_DATA[n]?.models?.bq_arima_plus;
+            if(bq)fds.push({label:n+' Forecast',data:bq.forecast_dates.map((d,i)=>({x:d,y:bq.forecast[i]})),borderColor:C[n],borderWidth:2,borderDash:[4,4],pointRadius:0,fill:false,tension:0.1});
+        }
+        charts.forecast=new Chart(document.getElementById('forecastChart').getContext('2d'),{type:'line',data:{datasets:fds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+            plugins:{legend:{display:true,position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'line',padding:8,filter:i=>i.text.includes('Hist')}},tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:10,cornerRadius:2}},
+            scales:{x:{type:'time',time:{unit:'month'},grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},maxTicksLimit:12},border:{display:false}},y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+v},border:{display:false}}}}});
+    }
+}
+
+// === SIMULATOR ===
+let simMoves = [];
+
+function initSimulator() {
+    // Populate brand dropdown
+    const sel = document.getElementById('simBrand');
+    if (typeof ADVERTISERS === 'undefined') return;
+    const sectors = [...new Set(ADVERTISERS.map(a => a.sector))].sort();
+    for (const sector of sectors) {
+        const group = document.createElement('optgroup');
+        group.label = sector;
+        ADVERTISERS.filter(a => a.sector === sector).sort((a,b) => b.spend - a.spend).forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.name;
+            opt.textContent = `${a.name} — $${(a.spend/1000).toFixed(1)}B (${a.group})`;
+            group.appendChild(opt);
+        });
+        sel.appendChild(group);
+    }
+    // Default date to next quarter
+    const now = new Date();
+    const nextQ = new Date(now.getFullYear(), Math.ceil((now.getMonth()+1)/3)*3, 1);
+    document.getElementById('simDate').value = nextQ.toISOString().split('T')[0];
+}
+
+function onBrandSelect() {
+    const name = document.getElementById('simBrand').value;
+    const a = ADVERTISERS.find(x => x.name === name);
+    if (!a) { document.getElementById('brandInfo').innerHTML = ''; return; }
+    document.getElementById('simBudget').value = a.spend;
+    document.getElementById('brandInfo').innerHTML = `${a.sector} · ${a.agency} · Last reviewed ${a.last_review}`;
+    // Auto-set From to current group
+    const fromSel = document.getElementById('simFrom');
+    const grp = a.group;
+    for (const opt of fromSel.options) { if (opt.value === grp) { fromSel.value = grp; break; } }
+}
+
+function addSimMove() {
+    const brandSel = document.getElementById('simBrand');
+    const brand = brandSel.value || brandSel.options[brandSel.selectedIndex]?.text?.split(' —')[0] || 'Unnamed';
+    const budget = parseInt(document.getElementById('simBudget').value) || 500;
+    const from = document.getElementById('simFrom').value;
+    const to = document.getElementById('simTo').value;
+    const date = document.getElementById('simDate').value || '2026-07-01';
+    if (from === to) { alert('From and To must be different'); return; }
+    simMoves.push({ brand, budget, from, to, date });
+    simMoves.sort((a, b) => a.date.localeCompare(b.date));
+    brandSel.value = '';
+    document.getElementById('brandInfo').innerHTML = '';
+    renderQueue();
+}
+
+function removeSimMove(i) { simMoves.splice(i, 1); renderQueue(); }
+function clearSimulation() { simMoves = []; renderQueue(); document.getElementById('simResults').innerHTML = ''; }
+
+function renderQueue() {
+    const el = document.getElementById('simQueue');
+    document.getElementById('moveCount').textContent = simMoves.length ? `(${simMoves.length} move${simMoves.length>1?'s':''})` : '';
+    if (!simMoves.length) { el.innerHTML = '<p style="font-size:0.8rem;color:var(--faint)">No moves added yet. Select an advertiser to start.</p>'; return; }
+    let h = '<table><thead><tr><th>Date</th><th>Brand</th><th>Budget</th><th>From → To</th><th></th></tr></thead><tbody>';
+    simMoves.forEach((m, i) => {
+        h += `<tr><td style="white-space:nowrap">${m.date}</td><td><strong>${m.brand}</strong></td><td>$${m.budget >= 1000 ? (m.budget/1000).toFixed(1)+'B' : m.budget+'M'}</td><td><span style="color:${C[m.from]||'var(--faint)'}">${m.from}</span> → <span style="color:${C[m.to]||'var(--faint)'}">${m.to}</span></td><td><button onclick="removeSimMove(${i})" style="background:none;border:none;color:var(--down);cursor:pointer;font-size:0.9rem">×</button></td></tr>`;
+    });
+    el.innerHTML = h + '</tbody></table>';
+}
+
+function runSimulation() {
+    if (!simMoves.length) return;
+    const SC = SIM_CONFIG;
+
+    // Group moves by quarter
+    const movesByQ = {};
+    for (const m of simMoves) {
+        const [y, mo] = m.date.split('-');
+        const qi = Math.ceil(parseInt(mo) / 3);
+        const q = `${y}-Q${qi}`;
+        if (!movesByQ[q]) movesByQ[q] = [];
+        movesByQ[q].push(m);
+    }
+    const simQuarters = Object.keys(movesByQ).sort();
+
+    // Walk forward through quarters, building cumulative state
+    const timeline = []; // per-quarter snapshots
+    const state = {};
+    for (const name of GRP) {
+        state[name] = {
+            streak: SC.current_streaks[name] || 0,
+            price: SC.current_prices[name],
+            cum_impact: 0,
+            total_wins: 0, total_losses: 0,
+        };
+    }
+
+    for (const q of simQuarters) {
+        const moves = movesByQ[q];
+        const qState = {};
+
+        for (const name of GRP) {
+            let wins = 0, losses = 0, spend_won = 0, spend_lost = 0;
+            const won_brands = [], lost_brands = [];
+            for (const m of moves) {
+                if (m.to === name) { wins++; spend_won += m.budget; won_brands.push(m.brand); }
+                if (m.from === name) { losses++; spend_lost += m.budget; lost_brands.push(m.brand); }
+            }
+            const net = wins - losses;
+            const net_spend_bn = (spend_won - spend_lost) / 1000;
+
+            // Update streak
+            let s = state[name].streak;
+            if (net > 0) s = s > 0 ? s + 1 : 1;
+            else if (net < 0) s = s < 0 ? s - 1 : -1;
+
+            const prev_streak = state[name].streak;
+            const crossed_3_up = prev_streak < 3 && s >= 3;
+            const broke_streak = prev_streak >= 2 && s <= 0;       // was winning, now broken
+            const entered_deep_loss = prev_streak > -3 && s <= -3; // fell into deep loss territory
+            const extended_loss = prev_streak <= -3 && s < prev_streak; // already deep, getting worse
+
+            const sensitivity = Math.abs(SC.spend_sensitivity_pct_per_bn[name] || 2.0);
+            let impact = net_spend_bn * sensitivity;
+            let streak_bonus = 0;
+            let streak_penalty = 0;
+            let streak_note = '';
+
+            // Winning streak bonus (crossing magic 3)
+            if (crossed_3_up) {
+                const eff = SC.streak_effects[name] && SC.streak_effects[name]['3'];
+                streak_bonus = eff ? eff.avg_excess : 10;
+                impact += streak_bonus;
+                streak_note = 'MAGIC 3 CROSSED';
+            }
+
+            // Losing streak penalties
+            if (broke_streak) {
+                streak_penalty = -3.0; // streak broken = negative sentiment
+                impact += streak_penalty;
+                streak_note = 'STREAK BROKEN';
+            }
+            if (entered_deep_loss) {
+                const eff = SC.streak_effects[name] && SC.streak_effects[name]['-3'];
+                streak_penalty = eff ? eff.avg_excess : -5.0;
+                impact += streak_penalty;
+                streak_note = 'DEEP LOSS ZONE';
+            }
+            if (extended_loss) {
+                const eff = SC.streak_effects[name] && SC.streak_effects[name][String(s)];
+                streak_penalty = eff ? eff.avg_excess * 0.5 : -2.0; // diminishing but compounding
+                impact += streak_penalty;
+                streak_note = streak_note || 'LOSSES COMPOUNDING';
+            }
+
+            const new_price = state[name].price * (1 + impact / 100);
+            state[name].cum_impact += impact;
+            state[name].streak = s;
+            state[name].price = new_price;
+            state[name].total_wins += wins;
+            state[name].total_losses += losses;
+
+            qState[name] = {
+                wins, losses, net, won_brands, lost_brands, spend_won, spend_lost,
+                streak: s, prev_streak,
+                crossed_3: crossed_3_up, broke_streak, entered_deep_loss,
+                streak_bonus: Math.round(streak_bonus * 10) / 10,
+                streak_penalty: Math.round(streak_penalty * 10) / 10,
+                streak_note,
+                q_impact: Math.round(impact * 100) / 100,
+                price: Math.round(new_price * 100) / 100,
+                cum_impact: Math.round(state[name].cum_impact * 100) / 100,
+            };
+        }
+        timeline.push({ quarter: q, moves, state: qState });
+    }
+
+    // Final summary
+    const final = {};
+    for (const name of GRP) {
+        const s = state[name];
+        const bands = SC.arima_bands[name];
+        const bw = bands && bands['90d'] ? (bands['90d'].upper - bands['90d'].lower) / 2 : s.price * 0.15;
+        final[name] = {
+            current_price: SC.current_prices[name],
+            forecast_price: Math.round(s.price * 100) / 100,
+            total_impact: Math.round(s.cum_impact * 100) / 100,
+            streak: s.streak,
+            initial_streak: SC.current_streaks[name] || 0,
+            crosses_3: (SC.current_streaks[name] || 0) < 3 && s.streak >= 3,
+            broke_streak: (SC.current_streaks[name] || 0) >= 2 && s.streak <= 0,
+            total_wins: s.total_wins, total_losses: s.total_losses,
+            ci_lower: Math.round((s.price - bw) * 100) / 100,
+            ci_upper: Math.round((s.price + bw) * 100) / 100,
+        };
+    }
+
+    renderSimResults(final, timeline);
+}
+
+function renderSimResults(R, timeline) {
+    let h = '<div class="row r3" style="margin-top:1.5rem">';
+
+    for (const name of GRP) {
+        const r = R[name];
+        const impC = r.total_impact > 0 ? 'var(--up)' : r.total_impact < 0 ? 'var(--down)' : 'var(--faint)';
+        const sC = r.streak >= 3 ? 'var(--up)' : r.streak <= -3 ? 'var(--down)' : 'var(--muted)';
+
+        h += `<div class="card" style="border-top:3px solid ${C[name]}">
+            <h3>${name}</h3>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin:0.75rem 0 0.25rem">
+                <span style="font-size:0.85rem;color:var(--faint)">$${r.current_price.toFixed(2)}</span>
+                <span style="font-size:1.25rem;color:var(--faint)">→</span>
+                <span class="big" style="color:${impC}">$${r.forecast_price.toFixed(2)}</span>
+            </div>
+            <div style="font-size:0.8rem;color:${impC};font-weight:500">${r.total_impact>0?'+':''}${r.total_impact.toFixed(1)}%</div>
+            <div style="font-size:0.65rem;color:var(--faint);margin-top:0.15rem">90% CI: $${r.ci_lower.toFixed(2)} – $${r.ci_upper.toFixed(2)}</div>
+            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem">
+                    <span style="color:var(--faint)">Streak</span>
+                    <span style="color:${sC};font-weight:500">${r.initial_streak} → ${r.streak}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-top:0.25rem">
+                    <span style="color:var(--faint)">Accounts</span>
+                    <span>${r.total_wins ? '<span class="c-up">+'+r.total_wins+'W</span>' : ''}${r.total_wins&&r.total_losses?' / ':''}${r.total_losses ? '<span class="c-dn">-'+r.total_losses+'L</span>' : ''}${!r.total_wins&&!r.total_losses?'—':''}</span>
+                </div>
+                ${r.crosses_3 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(34,160,107,0.08);border-radius:3px;font-size:0.7rem;color:var(--up);font-weight:500">‣ CROSSES MAGIC 3 — historically +24% return</div>' : ''}
+                ${r.streak <= -3 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ DEEP LOSING STREAK — compounding penalty applied</div>' : ''}
+                ${r.initial_streak >= 2 && r.streak <= 0 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ WIN STREAK BROKEN — negative sentiment impact</div>' : ''}
+            </div>
+        </div>`;
+    }
+    h += '</div>';
+
+    // Forecast chart with simulation overlay
+    h += '<div class="section" style="margin-top:1.5rem"><h2>BQ ML ARIMA+ Forecast — With Simulation Impact</h2>';
+    h += '<div class="desc">Solid = historical prices. Dashed = BQ ARIMA+ 90-day forecast. Bold = forecast adjusted for simulated account moves.</div>';
+    h += '<div class="chart-wrap"><canvas id="simForecastChart"></canvas></div></div>';
+
+    // Timeline table
+    h += '<div class="section" style="margin-top:1.5rem"><h2>Scenario Timeline</h2>';
+    h += '<table style="margin-top:1rem"><thead><tr><th>Quarter</th><th>Move</th><th>Budget</th><th>From → To</th>';
+    for (const n of GRP) h += `<th><span style="color:${C[n]}">${n}</span> Streak</th>`;
+    h += '<th>Impact</th></tr></thead><tbody>';
+
+    // Start row (current state)
+    h += '<tr style="color:var(--faint)"><td>Now</td><td colspan="3" style="text-align:left">Current state</td>';
+    for (const n of GRP) h += `<td>${SIM_CONFIG.current_streaks[n]||0}</td>`;
+    h += '<td>—</td></tr>';
+
+    for (const t of timeline) {
+        for (const m of t.moves) {
+            const winner = GRP.find(n => t.state[n] && t.state[n].won_brands.includes(m.brand));
+            const loser = GRP.find(n => t.state[n] && t.state[n].lost_brands.includes(m.brand));
+            h += `<tr><td>${t.quarter}</td><td><strong>${m.brand}</strong></td><td>$${m.budget>=1000?(m.budget/1000).toFixed(1)+'B':m.budget+'M'}</td>`;
+            h += `<td><span style="color:${C[m.from]||'var(--faint)'}">${m.from}</span> → <span style="color:${C[m.to]||'var(--faint)'}">${m.to}</span></td>`;
+            for (const n of GRP) {
+                const s = t.state[n];
+                const col = s.crossed_3 ? 'var(--up);font-weight:600' : s.broke_streak ? 'var(--down);font-weight:600' : s.entered_deep_loss ? 'var(--down)' : s.streak<=-3 ? 'var(--down)' : 'inherit';
+                const note = s.streak_note ? `<div style="font-size:0.55rem;color:${s.crossed_3?'var(--up)':'var(--down)'}">${s.streak_note}</div>` : '';
+                h += `<td style="color:${col}">${s.prev_streak}→${s.streak}${note}</td>`;
+            }
+            // Show impact for ALL affected groups, not just winner/loser
+            const impacts = GRP.filter(n => t.state[n].q_impact !== 0).map(n => {
+                const imp = t.state[n].q_impact;
+                return `<span class="${imp>0?'c-up':'c-dn'}">${n} ${imp>0?'+':''}${imp.toFixed(1)}%</span>`;
+            });
+            h += `<td>${impacts.join('<br>') || '—'}</td></tr>`;
+        }
+    }
+
+    // Final row
+    h += '<tr style="font-weight:500;background:var(--elevated)"><td>End</td><td colspan="3" style="text-align:left">Final state</td>';
+    for (const n of GRP) { const f=R[n]; h += `<td style="color:${f.streak>=3?'var(--up)':f.streak<=-3?'var(--down)':'inherit'}">${f.streak}</td>`; }
+    h += `<td>${GRP.map(n=>`<span style="color:${C[n]}">${R[n].total_impact>0?'+':''}${R[n].total_impact.toFixed(1)}%</span>`).join(' · ')}</td></tr>`;
+
+    h += '</tbody></table></div>';
+
+    document.getElementById('simResults').innerHTML = h;
+
+    // ARIMA+ forecast chart with progressive simulation overlay + inflection annotations
+    setTimeout(() => {
+        if (!document.getElementById('simForecastChart')) return;
+        const datasets = [];
+        const annotations = {};
+
+        // Build cumulative impact per date for each group
+        // Each move shifts the forecast from that date forward
+        const moveImpacts = {}; // { groupName: [{date, cum_impact_mult}] }
+        for (const n of GRP) {
+            const impacts = []; // sorted by date
+            let cumImpact = 0;
+            for (const t of timeline) {
+                const s = t.state[n];
+                if (s.q_impact !== 0) {
+                    cumImpact = s.cum_impact;
+                    // Convert quarter to approx date
+                    const qd = t.quarter.replace('-Q1','-02-15').replace('-Q2','-05-15').replace('-Q3','-08-15').replace('-Q4','-11-15');
+                    impacts.push({ date: qd, cum_pct: cumImpact, crossed_3: s.crossed_3 });
+                }
+            }
+            moveImpacts[n] = impacts;
+        }
+
+        // Add annotation lines for each move date
+        let annoIdx = 0;
+        for (const t of timeline) {
+            for (const m of t.moves) {
+                const moveDate = m.date;
+                const label = m.brand + ' ($' + (m.budget >= 1000 ? (m.budget/1000).toFixed(1)+'B' : m.budget+'M') + ')';
+                const crossesMagic = Object.values(t.state).some(s => s.crossed_3);
+                const breaksSomeone = Object.entries(t.state).find(([n, s]) => s.broke_streak && n !== m.to);
+                const deepLoss = Object.entries(t.state).find(([n, s]) => s.entered_deep_loss);
+
+                let annoLabel = label;
+                let annoColor = 'rgba(123,97,255,0.8)';
+                let annoBorder = 'rgba(123,97,255,0.3)';
+                let annoWidth = 1.5;
+                let annoDash = [3, 3];
+
+                if (crossesMagic) {
+                    annoLabel = '‣ ' + label + ' — MAGIC 3';
+                    annoColor = 'rgba(34,160,107,0.9)';
+                    annoBorder = 'rgba(34,160,107,0.7)';
+                    annoWidth = 2.5; annoDash = [];
+                } else if (breaksSomeone) {
+                    annoLabel = label + ' — BREAKS ' + breaksSomeone[0] + ' STREAK';
+                    annoColor = 'rgba(222,53,11,0.8)';
+                    annoBorder = 'rgba(222,53,11,0.5)';
+                    annoWidth = 2; annoDash = [];
+                } else if (deepLoss) {
+                    annoLabel = label + ' — ' + deepLoss[0] + ' IN DEEP LOSS';
+                    annoColor = 'rgba(222,53,11,0.7)';
+                    annoBorder = 'rgba(222,53,11,0.4)';
+                    annoWidth = 1.5;
+                }
+
+                annotations['move' + annoIdx] = {
+                    type: 'line', xMin: moveDate, xMax: moveDate,
+                    borderColor: annoBorder, borderWidth: annoWidth, borderDash: annoDash,
+                    label: {
+                        display: true, content: annoLabel,
+                        position: annoIdx % 2 === 0 ? 'start' : 'end',
+                        backgroundColor: annoColor, color: '#fff',
+                        font: { size: crossesMagic ? 10 : 8 },
+                        padding: { top: 3, bottom: 3, left: 6, right: 6 },
+                        borderRadius: 2,
+                    }
+                };
+                annoIdx++;
+            }
+        }
+
+        for (const n of GRP) {
+            const sd = STOCK_DATA[n];
+            const histSlice = 130;
+
+            // Historical
+            datasets.push({
+                label: n + ' Historical',
+                data: sd.dates.slice(-histSlice).map((d, i) => ({ x: d, y: sd.closes[sd.closes.length - histSlice + i] })),
+                borderColor: C[n], borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1
+            });
+
+            const bq = FORECAST_DATA[n]?.models?.bq_arima_plus;
+            if (bq) {
+                // Base ARIMA+ forecast (dashed, thin)
+                datasets.push({
+                    label: n + ' Base Forecast',
+                    data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.forecast[i] })),
+                    borderColor: C[n] + '50', borderWidth: 1, borderDash: [6, 4], pointRadius: 0, fill: false, tension: 0.1
+                });
+
+                // Confidence band
+                datasets.push({
+                    label: n + ' CI upper', data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.upper[i] })),
+                    borderColor: 'transparent', backgroundColor: C[n] + '08', pointRadius: 0, fill: '+1'
+                });
+                datasets.push({
+                    label: n + ' CI lower', data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.lower[i] })),
+                    borderColor: 'transparent', pointRadius: 0, fill: false
+                });
+
+                // Adjusted forecast — ramps progressively at each move date
+                const impacts = moveImpacts[n];
+                const adjData = bq.forecast_dates.map((d, i) => {
+                    // Find the latest impact that applies to this date
+                    let applicable_pct = 0;
+                    for (const imp of impacts) {
+                        if (d >= imp.date) applicable_pct = imp.cum_pct;
+                    }
+                    const mult = 1 + (applicable_pct / 100);
+                    return { x: d, y: Math.round(bq.forecast[i] * mult * 100) / 100 };
+                });
+
+                const totalImpact = R[n].total_impact;
+                if (totalImpact !== 0) {
+                    datasets.push({
+                        label: n + ' Adjusted (' + (totalImpact > 0 ? '+' : '') + totalImpact.toFixed(1) + '%)',
+                        data: adjData,
+                        borderColor: C[n], borderWidth: 3, pointRadius: 0, fill: false, tension: 0.1
+                    });
+                }
+            }
+        }
+
+        new Chart(document.getElementById('simForecastChart').getContext('2d'), {
+            type: 'line', data: { datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'top', align: 'start',
+                        labels: { color: '#999', font: { ...cf, size: 9 }, usePointStyle: true, pointStyle: 'line', padding: 8,
+                            filter: item => !item.text.includes('CI') }
+                    },
+                    tooltip: { backgroundColor: '#fff', borderColor: '#e5e5ea', borderWidth: 1, titleColor: '#0a0a0a', bodyColor: '#6b6b6b', padding: 12, cornerRadius: 2,
+                        callbacks: { label: c => c.dataset.label.includes('CI') ? '' : `  ${c.dataset.label}: $${c.parsed.y.toFixed(2)}` },
+                        filter: item => !item.dataset.label.includes('CI')
+                    },
+                    annotation: { annotations }
+                },
+                scales: {
+                    x: { type: 'time', time: { unit: 'month' }, grid: { color: gc, drawBorder: false }, ticks: { color: '#999', font: { ...cf, size: 9 }, maxTicksLimit: 12 }, border: { display: false } },
+                    y: { grid: { color: gc, drawBorder: false }, ticks: { color: '#999', font: { ...cf, size: 9 }, callback: v => '$' + v }, border: { display: false } }
+                }
+            }
+        });
+    }, 100);
+}
+
+// === LAZY INIT ===
+const inited={overview:false};
+function show(p){
+    if(!inited[p]){
+        if(p==='overview')initOverview();
+        if(p==='competition')initCompetition();
+        if(p==='streaks')initStreaks();
+        if(p==='models')initModels();
+        if(p==='simulator')initSimulator();
+        if(p==='detail')initDetail();
+        inited[p]=true;
+    }
+}
+document.querySelectorAll('nav button').forEach(b=>{b.addEventListener('click',()=>show(b.dataset.p));});
+show('overview');
+</script>
+</body>
+</html>
