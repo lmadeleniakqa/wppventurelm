@@ -13,16 +13,16 @@
     "company": "Amazon",
     "estimated_annual_global_media_spend_usd_millions": 7500,
     "holding_group": "Mixed",
-    "specific_agency": "IPG Mediabrands (Initiative/UM) + significant in-house",
+    "specific_agency": "WPP (EMEA/APAC) + Omnicom Media Group (Americas); IPG retained AWS/Amazon Ads only",
     "industry_sector": "Tech/Retail",
-    "last_review_year": 2023
+    "last_review_year": 2024
   },
   {
     "rank": 3,
     "company": "Unilever",
     "estimated_annual_global_media_spend_usd_millions": 6500,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP/Mindshare-led (NA, UK, APAC) + Omnicom, IPG, Havas, Publicis, Dentsu across markets",
     "industry_sector": "FMCG",
     "last_review_year": 2024
   },
@@ -30,10 +30,10 @@
     "rank": 4,
     "company": "L'Oréal",
     "estimated_annual_global_media_spend_usd_millions": 6200,
-    "holding_group": "WPP",
-    "specific_agency": "Wavemaker (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "Omnicom/OMG (US); WPP/Wavemaker (EMEA, 20+ global markets); Publicis (UK/Ireland)",
     "industry_sector": "FMCG/Beauty",
-    "last_review_year": 2021
+    "last_review_year": 2023
   },
   {
     "rank": 5,
@@ -57,10 +57,10 @@
     "rank": 7,
     "company": "Nestlé",
     "estimated_annual_global_media_spend_usd_millions": 5000,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare / Wavemaker (WPP) across markets",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP/OpenMind-led (47 European markets + APAC); Publicis (China); others in select markets",
     "industry_sector": "FMCG",
-    "last_review_year": 2023
+    "last_review_year": 2024
   },
   {
     "rank": 8,
@@ -84,26 +84,26 @@
     "rank": 10,
     "company": "Volkswagen Group",
     "estimated_annual_global_media_spend_usd_millions": 4200,
-    "holding_group": "Mixed",
-    "specific_agency": "PHD (Omnicom) for VW brand; Mindshare (WPP) for Audi; others vary by brand/market",
+    "holding_group": "Omnicom",
+    "specific_agency": "PHD (Omnicom) — consolidated across all brands (VW, Audi, Porsche, Skoda, etc.)",
     "industry_sector": "Auto",
-    "last_review_year": 2023
+    "last_review_year": 2024
   },
   {
     "rank": 11,
     "company": "Coca-Cola",
     "estimated_annual_global_media_spend_usd_millions": 4100,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP/EssenceMediacom (global ex-NA); Publicis (North America, won Mar 2025)",
     "industry_sector": "FMCG/Beverages",
-    "last_review_year": 2021
+    "last_review_year": 2025
   },
   {
     "rank": 12,
     "company": "Walt Disney Company",
     "estimated_annual_global_media_spend_usd_millions": 3900,
-    "holding_group": "Omnicom",
-    "specific_agency": "OMD (Omnicom)",
+    "holding_group": "Mixed",
+    "specific_agency": "Omnicom/OMG23 (Studios, Networks NA); Publicis (Disney+, ESPN+, Parks)",
     "industry_sector": "Media/Entertainment",
     "last_review_year": 2023
   },
@@ -130,16 +130,16 @@
     "company": "Microsoft",
     "estimated_annual_global_media_spend_usd_millions": 3500,
     "holding_group": "Publicis",
-    "specific_agency": "Starcom (Publicis) + in-house",
+    "specific_agency": "Publicis Media — $1.2B global media moved from Dentsu in Q2 2026",
     "industry_sector": "Tech",
-    "last_review_year": 2023
+    "last_review_year": 2026
   },
   {
     "rank": 16,
     "company": "AB InBev",
     "estimated_annual_global_media_spend_usd_millions": 3400,
-    "holding_group": "Mixed",
-    "specific_agency": "In-house (draftLine) + Dentsu in select markets",
+    "holding_group": "Publicis",
+    "specific_agency": "Starcom (Publicis) — primary AOR for US, Europe, ~90% of global spend; Dentsu for Canada/Africa only",
     "industry_sector": "FMCG/Beverages",
     "last_review_year": 2024
   },
@@ -147,10 +147,10 @@
     "rank": 17,
     "company": "Mars Inc.",
     "estimated_annual_global_media_spend_usd_millions": 3200,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "Publicis",
+    "specific_agency": "Publicis Media — $1.7B global media moved from GroupM (WPP) in 2025, 70+ markets",
     "industry_sector": "FMCG",
-    "last_review_year": 2022
+    "last_review_year": 2025
   },
   {
     "rank": 18,
@@ -166,9 +166,9 @@
     "company": "General Motors",
     "estimated_annual_global_media_spend_usd_millions": 3000,
     "holding_group": "Dentsu",
-    "specific_agency": "Carat (Dentsu)",
+    "specific_agency": "Dentsu (lead media agency); Omnicom (CRM)",
     "industry_sector": "Auto",
-    "last_review_year": 2022
+    "last_review_year": 2024
   },
   {
     "rank": 20,
@@ -193,7 +193,7 @@
     "company": "Pfizer",
     "estimated_annual_global_media_spend_usd_millions": 2700,
     "holding_group": "Publicis",
-    "specific_agency": "Zenith / Spark Foundry (Publicis)",
+    "specific_agency": "Publicis (media, data, tech, production — won 2023)",
     "industry_sector": "Pharma",
     "last_review_year": 2023
   },
@@ -202,43 +202,43 @@
     "company": "Johnson & Johnson / Kenvue",
     "estimated_annual_global_media_spend_usd_millions": 2600,
     "holding_group": "Mixed",
-    "specific_agency": "Kenvue: EssenceMediacom (WPP); J&J Pharma: various",
+    "specific_agency": "Kenvue: Publicis (media, won late 2025); WPP (creative). J&J Pharma: various",
     "industry_sector": "Pharma/FMCG",
-    "last_review_year": 2024
+    "last_review_year": 2025
   },
   {
     "rank": 24,
     "company": "Reckitt (RB)",
     "estimated_annual_global_media_spend_usd_millions": 2500,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP (Europe from 2026); Publicis/Zenith (some markets); Dentsu/iProspect (US Nutrition); Omnicom (Australia)",
     "industry_sector": "FMCG",
-    "last_review_year": 2022
+    "last_review_year": 2026
   },
   {
     "rank": 25,
     "company": "Hyundai / Kia",
     "estimated_annual_global_media_spend_usd_millions": 2500,
     "holding_group": "Mixed",
-    "specific_agency": "Innocean (in-house) + Canvas Worldwide (US)",
+    "specific_agency": "Canvas Worldwide/Innocean (US); Havas Media Network + Innocean (international, renewed Jan 2026)",
     "industry_sector": "Auto",
-    "last_review_year": 2023
+    "last_review_year": 2026
   },
   {
     "rank": 26,
     "company": "BMW Group",
     "estimated_annual_global_media_spend_usd_millions": 2400,
-    "holding_group": "Omnicom",
-    "specific_agency": "PHD (Omnicom)",
+    "holding_group": "Mixed",
+    "specific_agency": "Omnicom (Americas); Dentsu/iProspect (Europe from 2026); Starcom/Publicis (APAC)",
     "industry_sector": "Auto",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 27,
     "company": "Mercedes-Benz",
     "estimated_annual_global_media_spend_usd_millions": 2300,
     "holding_group": "Omnicom",
-    "specific_agency": "OMD (Omnicom)",
+    "specific_agency": "Omnicom/Team X (bespoke unit — creative, media, CRM, digital)",
     "industry_sector": "Auto",
     "last_review_year": 2022
   },
@@ -246,17 +246,17 @@
     "rank": 28,
     "company": "AT&T",
     "estimated_annual_global_media_spend_usd_millions": 2300,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "Omnicom",
+    "specific_agency": "Hearts & Science (Omnicom) — created for AT&T in 2016",
     "industry_sector": "Telecom",
-    "last_review_year": 2023
+    "last_review_year": 2016
   },
   {
     "rank": 29,
     "company": "Mondelez International",
     "estimated_annual_global_media_spend_usd_millions": 2200,
-    "holding_group": "Publicis",
-    "specific_agency": "Starcom (Publicis)",
+    "holding_group": "Mixed",
+    "specific_agency": "Publicis (~70% global); WPP/Wavemaker (APAC); VaynerMedia (US digital)",
     "industry_sector": "FMCG",
     "last_review_year": 2022
   },
@@ -282,17 +282,17 @@
     "rank": 32,
     "company": "McDonald's",
     "estimated_annual_global_media_spend_usd_millions": 2100,
-    "holding_group": "Omnicom",
-    "specific_agency": "OMD (Omnicom)",
+    "holding_group": "Mixed",
+    "specific_agency": "Publicis/Starcom (US national media, won Q1 2022); Omnicom/OMD (local US, some international)",
     "industry_sector": "QSR",
-    "last_review_year": 2023
+    "last_review_year": 2022
   },
   {
     "rank": 33,
     "company": "Honda Motor",
     "estimated_annual_global_media_spend_usd_millions": 2000,
     "holding_group": "Mixed",
-    "specific_agency": "RPA / Publicis (US); Dentsu (Japan/Asia)",
+    "specific_agency": "RPA (independent, US); Dentsu (Japan/Asia)",
     "industry_sector": "Auto",
     "last_review_year": 2022
   },
@@ -300,17 +300,17 @@
     "rank": 34,
     "company": "Nissan Motor",
     "estimated_annual_global_media_spend_usd_millions": 1900,
-    "holding_group": "Dentsu",
-    "specific_agency": "Dentsu (global)",
+    "holding_group": "Omnicom",
+    "specific_agency": "Omnicom/Nissan United (OMD + TBWA) — global multi-year agreement",
     "industry_sector": "Auto",
-    "last_review_year": 2023
+    "last_review_year": 2024
   },
   {
     "rank": 35,
     "company": "Warner Bros. Discovery",
     "estimated_annual_global_media_spend_usd_millions": 1900,
     "holding_group": "Omnicom",
-    "specific_agency": "PHD (Omnicom)",
+    "specific_agency": "Hearts & Science (Omnicom) — US + APAC",
     "industry_sector": "Media/Entertainment",
     "last_review_year": 2022
   },
@@ -327,17 +327,17 @@
     "rank": 37,
     "company": "Nike",
     "estimated_annual_global_media_spend_usd_millions": 1850,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "PMG (independent, North America); IPG/Initiative (global ex-NA); WPP/Mindshare (China only)",
     "industry_sector": "Apparel/Sportswear",
-    "last_review_year": 2023
+    "last_review_year": 2022
   },
   {
     "rank": 38,
     "company": "Netflix",
     "estimated_annual_global_media_spend_usd_millions": 1800,
     "holding_group": "Mixed",
-    "specific_agency": "Dentsu (some markets) + significant in-house",
+    "specific_agency": "Regional model — IPG markets (Initiative Australia, Mediahub UK); Hakuhodo/H+ (SEA/Taiwan); others",
     "industry_sector": "Media/Entertainment",
     "last_review_year": 2024
   },
@@ -354,35 +354,35 @@
     "rank": 40,
     "company": "Bayer",
     "estimated_annual_global_media_spend_usd_millions": 1750,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "IPG",
+    "specific_agency": "IPG/Initiative (Consumer Health, effective Jan 2026); moved from WPP/EssenceMediacom",
     "industry_sector": "Pharma/FMCG",
-    "last_review_year": 2023
+    "last_review_year": 2026
   },
   {
     "rank": 41,
     "company": "Kraft Heinz",
     "estimated_annual_global_media_spend_usd_millions": 1700,
-    "holding_group": "Publicis",
-    "specific_agency": "Starcom (Publicis)",
+    "holding_group": "Dentsu",
+    "specific_agency": "Carat (Dentsu) — consolidated global media from Starcom in Sept 2023",
     "industry_sector": "FMCG",
-    "last_review_year": 2022
+    "last_review_year": 2023
   },
   {
     "rank": 42,
     "company": "LVMH",
     "estimated_annual_global_media_spend_usd_millions": 1700,
-    "holding_group": "Havas",
-    "specific_agency": "Havas Media + select Publicis/Dentsu for specific maisons",
+    "holding_group": "Mixed",
+    "specific_agency": "Publicis Media (North America + some EMEA); Havas/Forward Media (Italy, Latin America, expanding Europe from 2026)",
     "industry_sector": "Luxury",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 43,
     "company": "Danone",
     "estimated_annual_global_media_spend_usd_millions": 1650,
     "holding_group": "WPP",
-    "specific_agency": "Wavemaker (WPP)",
+    "specific_agency": "Wavemaker (WPP) — global consolidation",
     "industry_sector": "FMCG",
     "last_review_year": 2022
   },
@@ -391,7 +391,7 @@
     "company": "Colgate-Palmolive",
     "estimated_annual_global_media_spend_usd_millions": 1600,
     "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "specific_agency": "Wavemaker (WPP)",
     "industry_sector": "FMCG",
     "last_review_year": 2022
   },
@@ -399,10 +399,10 @@
     "rank": 45,
     "company": "AstraZeneca",
     "estimated_annual_global_media_spend_usd_millions": 1550,
-    "holding_group": "Dentsu",
-    "specific_agency": "Carat (Dentsu)",
+    "holding_group": "IPG",
+    "specific_agency": "IPG/Initiative (Healix division) — media AOR through 2028",
     "industry_sector": "Pharma",
-    "last_review_year": 2023
+    "last_review_year": 2024
   },
   {
     "rank": 46,
@@ -417,35 +417,35 @@
     "rank": 47,
     "company": "General Mills",
     "estimated_annual_global_media_spend_usd_millions": 1500,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "IPG",
+    "specific_agency": "UM (IPG Mediabrands) — appointed global media AOR in 2023, 35+ markets",
     "industry_sector": "FMCG",
-    "last_review_year": 2022
+    "last_review_year": 2023
   },
   {
     "rank": 48,
     "company": "Diageo",
     "estimated_annual_global_media_spend_usd_millions": 1450,
-    "holding_group": "Publicis",
-    "specific_agency": "Publicis Media (various agencies by market)",
+    "holding_group": "Omnicom",
+    "specific_agency": "PHD (Omnicom) — global media; review underway Feb 2026 (Dentsu, Publicis, Omnicom shortlisted)",
     "industry_sector": "FMCG/Beverages",
-    "last_review_year": 2024
+    "last_review_year": 2026
   },
   {
     "rank": 49,
     "company": "Estée Lauder Companies",
     "estimated_annual_global_media_spend_usd_millions": 1400,
-    "holding_group": "Mixed",
-    "specific_agency": "Multiple agencies by brand; significant in-house digital",
+    "holding_group": "WPP",
+    "specific_agency": "WPP Media — first-ever global media partner; consolidated from regional agencies (Brainlabs, Monks, Assembly)",
     "industry_sector": "Beauty/Luxury",
-    "last_review_year": 2023
+    "last_review_year": 2026
   },
   {
     "rank": 50,
     "company": "Ferrero",
     "estimated_annual_global_media_spend_usd_millions": 1400,
     "holding_group": "Publicis",
-    "specific_agency": "Zenith (Publicis)",
+    "specific_agency": "Zenith/Publicis Kin (bespoke unit — Italy, UK, Ireland, China)",
     "industry_sector": "FMCG",
     "last_review_year": 2022
   },
@@ -454,9 +454,9 @@
     "company": "Novartis",
     "estimated_annual_global_media_spend_usd_millions": 1350,
     "holding_group": "Publicis",
-    "specific_agency": "Zenith / Starcom (Publicis)",
+    "specific_agency": "Starcom/NovartisONE2 (Publicis, bespoke unit with Epsilon)",
     "industry_sector": "Pharma",
-    "last_review_year": 2023
+    "last_review_year": 2019
   },
   {
     "rank": 52,
@@ -471,19 +471,19 @@
     "rank": 53,
     "company": "Adidas",
     "estimated_annual_global_media_spend_usd_millions": 1300,
-    "holding_group": "Dentsu",
-    "specific_agency": "Carat (Dentsu)",
+    "holding_group": "WPP",
+    "specific_agency": "EssenceMediacom (WPP) — currently under global review (2026)",
     "industry_sector": "Apparel/Sportswear",
-    "last_review_year": 2024
+    "last_review_year": 2026
   },
   {
     "rank": 54,
     "company": "JPMorgan Chase",
     "estimated_annual_global_media_spend_usd_millions": 1250,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP (bespoke Team JPMC via WPP Media) + Dentsu (split)",
     "industry_sector": "Finance",
-    "last_review_year": 2024
+    "last_review_year": 2021
   },
   {
     "rank": 55,
@@ -499,27 +499,27 @@
     "company": "Intel",
     "estimated_annual_global_media_spend_usd_millions": 1200,
     "holding_group": "Dentsu",
-    "specific_agency": "Dentsu X",
+    "specific_agency": "Carat/Team Intel (Dentsu) — global AOR since 2018",
     "industry_sector": "Tech",
-    "last_review_year": 2023
+    "last_review_year": 2018
   },
   {
     "rank": 57,
     "company": "American Express",
     "estimated_annual_global_media_spend_usd_millions": 1200,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "holding_group": "Omnicom",
+    "specific_agency": "UM (Omnicom Media, legacy-IPG) — won from Mindshare in Oct 2018",
     "industry_sector": "Finance",
-    "last_review_year": 2022
+    "last_review_year": 2018
   },
   {
     "rank": 58,
     "company": "Alibaba Group",
     "estimated_annual_global_media_spend_usd_millions": 1200,
     "holding_group": "Mixed",
-    "specific_agency": "In-house + Publicis/Dentsu in select markets",
+    "specific_agency": "In-house + WPP primarily (Mindshare China, MediaCom international)",
     "industry_sector": "Tech/Retail",
-    "last_review_year": 2023
+    "last_review_year": 2020
   },
   {
     "rank": 59,
@@ -534,28 +534,28 @@
     "rank": 60,
     "company": "Target",
     "estimated_annual_global_media_spend_usd_millions": 1150,
-    "holding_group": "Dentsu",
-    "specific_agency": "Carat (Dentsu)",
+    "holding_group": "WPP",
+    "specific_agency": "WPP Media/Team Arrow Partners (bespoke, Minneapolis) — since 2016",
     "industry_sector": "Retail",
-    "last_review_year": 2023
+    "last_review_year": 2016
   },
   {
     "rank": 61,
     "company": "Mastercard",
     "estimated_annual_global_media_spend_usd_millions": 1100,
-    "holding_group": "Dentsu",
-    "specific_agency": "Carat (Dentsu)",
+    "holding_group": "WPP",
+    "specific_agency": "WPP Media — won $180M account from Dentsu/Carat in Aug 2025, 70+ markets",
     "industry_sector": "Finance",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 62,
     "company": "Uber",
     "estimated_annual_global_media_spend_usd_millions": 1100,
-    "holding_group": "WPP",
-    "specific_agency": "EssenceMediacom (WPP)",
+    "holding_group": "Publicis",
+    "specific_agency": "Starcom (Publicis) — moved from Mediacom (WPP) in 2021",
     "industry_sector": "Tech/Travel",
-    "last_review_year": 2024
+    "last_review_year": 2021
   },
   {
     "rank": 63,
@@ -579,10 +579,10 @@
     "rank": 65,
     "company": "Yum Brands (KFC, Pizza Hut, Taco Bell)",
     "estimated_annual_global_media_spend_usd_millions": 1050,
-    "holding_group": "Publicis",
-    "specific_agency": "Spark Foundry / Starcom (Publicis)",
+    "holding_group": "Omnicom",
+    "specific_agency": "Omnicom/IPG Team Accelerate — moved from WPP/Wavemaker Jan 2025",
     "industry_sector": "QSR",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 66,
@@ -606,8 +606,8 @@
     "rank": 68,
     "company": "Booking Holdings (Booking.com, Priceline)",
     "estimated_annual_global_media_spend_usd_millions": 1000,
-    "holding_group": "Mixed",
-    "specific_agency": "Significant in-house (performance) + agency partners",
+    "holding_group": "Publicis",
+    "specific_agency": "Publicis Media — moved from Wavemaker (WPP) in Q4 2024",
     "industry_sector": "Travel",
     "last_review_year": 2024
   },
@@ -615,10 +615,10 @@
     "rank": 69,
     "company": "Dell Technologies",
     "estimated_annual_global_media_spend_usd_millions": 950,
-    "holding_group": "Havas",
-    "specific_agency": "Havas Media",
+    "holding_group": "Mixed",
+    "specific_agency": "WPP Media (transitioning in-house $600M+ media buying since early 2025)",
     "industry_sector": "Tech",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 70,
@@ -633,28 +633,28 @@
     "rank": 71,
     "company": "Restaurant Brands International (Burger King, Tim Hortons, Popeyes)",
     "estimated_annual_global_media_spend_usd_millions": 950,
-    "holding_group": "Publicis",
-    "specific_agency": "Spark Foundry / Starcom (Publicis)",
+    "holding_group": "Omnicom",
+    "specific_agency": "PHD (Omnicom) — Burger King US, Popeyes US/Canada, Tim Hortons US since 2022",
     "industry_sector": "QSR",
-    "last_review_year": 2023
+    "last_review_year": 2022
   },
   {
     "rank": 72,
     "company": "Starbucks",
     "estimated_annual_global_media_spend_usd_millions": 900,
-    "holding_group": "Dentsu",
-    "specific_agency": "Dentsu X",
+    "holding_group": "Publicis",
+    "specific_agency": "Spark Foundry (Publicis) — retained 2025",
     "industry_sector": "QSR/Retail",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 73,
     "company": "Vodafone",
     "estimated_annual_global_media_spend_usd_millions": 900,
-    "holding_group": "WPP",
-    "specific_agency": "Wavemaker (WPP)",
+    "holding_group": "Dentsu",
+    "specific_agency": "Carat (Dentsu) — re-confirmed Aug 2025, 3-year contract EMEA; WPP/Wavemaker in select JV markets",
     "industry_sector": "Telecom",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 74,
@@ -669,19 +669,19 @@
     "rank": 75,
     "company": "Red Bull",
     "estimated_annual_global_media_spend_usd_millions": 850,
-    "holding_group": "In-house",
-    "specific_agency": "Primarily in-house (Red Bull Media House) + select partners",
+    "holding_group": "Havas",
+    "specific_agency": "Havas Media Network (media buying UK, Australia, expanding); Red Bull Media House (content)",
     "industry_sector": "FMCG/Beverages",
-    "last_review_year": null
+    "last_review_year": 2024
   },
   {
     "rank": 76,
     "company": "HSBC",
     "estimated_annual_global_media_spend_usd_millions": 850,
-    "holding_group": "WPP",
-    "specific_agency": "Mindshare (WPP)",
+    "holding_group": "Omnicom",
+    "specific_agency": "PHD (Omnicom) — moved from Wavemaker (WPP) in 2021",
     "industry_sector": "Finance",
-    "last_review_year": 2022
+    "last_review_year": 2021
   },
   {
     "rank": 77,
@@ -706,7 +706,7 @@
     "company": "ExxonMobil",
     "estimated_annual_global_media_spend_usd_millions": 800,
     "holding_group": "Omnicom",
-    "specific_agency": "OMD (Omnicom)",
+    "specific_agency": "UM (Omnicom Media, legacy-IPG) — since 2011",
     "industry_sector": "Energy",
     "last_review_year": 2022
   },
@@ -723,10 +723,10 @@
     "rank": 81,
     "company": "Salesforce",
     "estimated_annual_global_media_spend_usd_millions": 750,
-    "holding_group": "Publicis",
-    "specific_agency": "Publicis Media (Spark Foundry)",
+    "holding_group": "Omnicom",
+    "specific_agency": "Initiative (Omnicom Media, legacy-IPG) — won 2020",
     "industry_sector": "Tech",
-    "last_review_year": 2023
+    "last_review_year": 2020
   },
   {
     "rank": 82,
@@ -741,8 +741,8 @@
     "rank": 83,
     "company": "Spotify",
     "estimated_annual_global_media_spend_usd_millions": 700,
-    "holding_group": "WPP",
-    "specific_agency": "Wavemaker (WPP)",
+    "holding_group": "Publicis",
+    "specific_agency": "OneVibe (Publicis, bespoke) — won from IPG/UM in Mar 2024, effective Jun 2024",
     "industry_sector": "Tech/Entertainment",
     "last_review_year": 2024
   },
@@ -750,10 +750,10 @@
     "rank": 84,
     "company": "Paramount Global",
     "estimated_annual_global_media_spend_usd_millions": 700,
-    "holding_group": "Publicis",
-    "specific_agency": "Spark Foundry (Publicis)",
+    "holding_group": "Mixed",
+    "specific_agency": "Omnicom/Initiative (US streaming/TV); Publicis/Spark Foundry (theatrical, Nickelodeon, international)",
     "industry_sector": "Media/Entertainment",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 85,
@@ -777,19 +777,19 @@
     "rank": 87,
     "company": "Church & Dwight",
     "estimated_annual_global_media_spend_usd_millions": 600,
-    "holding_group": "Havas",
-    "specific_agency": "Havas Media",
+    "holding_group": "WPP",
+    "specific_agency": "Wavemaker (WPP) — retained Nov 2023, $232M, 18-year relationship",
     "industry_sector": "FMCG",
-    "last_review_year": 2022
+    "last_review_year": 2023
   },
   {
     "rank": 88,
     "company": "Sanofi",
     "estimated_annual_global_media_spend_usd_millions": 600,
-    "holding_group": "Publicis",
-    "specific_agency": "Zenith (Publicis)",
+    "holding_group": "Mixed",
+    "specific_agency": "Omnicom Media (global ex-US); Havas Media (US)",
     "industry_sector": "Pharma",
-    "last_review_year": 2023
+    "last_review_year": 2021
   },
   {
     "rank": 89,
@@ -814,7 +814,7 @@
     "company": "Subaru",
     "estimated_annual_global_media_spend_usd_millions": 580,
     "holding_group": "Omnicom",
-    "specific_agency": "PHD (Omnicom)",
+    "specific_agency": "Carmichael Lynch (Omnicom, legacy-IPG) — full-service including media",
     "industry_sector": "Auto",
     "last_review_year": 2022
   },
@@ -831,10 +831,10 @@
     "rank": 93,
     "company": "Kering (Gucci, YSL, etc.)",
     "estimated_annual_global_media_spend_usd_millions": 550,
-    "holding_group": "Publicis",
-    "specific_agency": "Publicis Media / Zenith",
+    "holding_group": "Dentsu",
+    "specific_agency": "iProspect (Dentsu) — global media across all 42 markets since 2022",
     "industry_sector": "Luxury",
-    "last_review_year": 2023
+    "last_review_year": 2022
   },
   {
     "rank": 94,
@@ -859,7 +859,7 @@
     "company": "Richemont (Cartier, etc.)",
     "estimated_annual_global_media_spend_usd_millions": 530,
     "holding_group": "WPP",
-    "specific_agency": "Wavemaker (WPP) in key markets",
+    "specific_agency": "EssenceMediacom (WPP)",
     "industry_sector": "Luxury",
     "last_review_year": 2022
   },
@@ -876,26 +876,26 @@
     "rank": 98,
     "company": "Pernod Ricard",
     "estimated_annual_global_media_spend_usd_millions": 510,
-    "holding_group": "Omnicom",
-    "specific_agency": "OMD / PHD (Omnicom)",
+    "holding_group": "Mixed",
+    "specific_agency": "Publicis (North America, Dec 2025); Dentsu/Carat (EMEA, 2024)",
     "industry_sector": "FMCG/Beverages",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 99,
     "company": "Merck & Co. (MSD)",
     "estimated_annual_global_media_spend_usd_millions": 500,
-    "holding_group": "Publicis",
-    "specific_agency": "Spark Foundry (Publicis)",
+    "holding_group": "Omnicom",
+    "specific_agency": "Initiative (Omnicom Media, legacy-IPG) — retained H1 2025, $468.5M",
     "industry_sector": "Pharma",
-    "last_review_year": 2023
+    "last_review_year": 2025
   },
   {
     "rank": 100,
     "company": "Hermès",
     "estimated_annual_global_media_spend_usd_millions": 480,
     "holding_group": "Havas",
-    "specific_agency": "Havas Media",
+    "specific_agency": "Havas Media Group (luxury international unit)",
     "industry_sector": "Luxury",
     "last_review_year": 2022
   }

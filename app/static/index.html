@@ -85,6 +85,7 @@
         <button data-p="models">Models</button>
         <button data-p="simulator">Simulator</button>
         <button data-p="detail">Detail</button>
+        <button data-p="intel">Market Intelligence</button>
     </nav>
 </div>
 
@@ -225,6 +226,40 @@
     </div>
 </div></div>
 
+<div class="wrap"><div class="panel" id="p-intel">
+    <div class="callout"><h3>Pitch Prediction Model v2</h3><p>Scoring <strong>100 global advertisers</strong> across 7 signals — tenure staleness, recency dampener, sector churn, spend magnitude, holding-group vulnerability, industry catalysts (Omnicom-IPG merger, WPP Elevate28), and seasonality. Recently reviewed accounts (2025-2026) are dampened. <strong>Q2 is decision season</strong>: 42% of all moves and 51% of spend land Apr–Jun.</p></div>
+    <div class="row r4" id="intelKpis"></div>
+    <div class="section">
+        <h2>Competition Timeline — 24 Months Forward</h2>
+        <div class="desc">Estimated review windows for at-risk accounts. Bar = RFI start → decision → transition complete. Based on spend tier (mega $3B+: ~8 months, large $1B+: ~6 months, mid: ~5 months). Darker = higher risk score.</div>
+        <div class="pills" id="ganttPills"></div>
+        <div style="overflow-x:auto" id="ganttContainer"></div>
+    </div>
+    <div class="section">
+        <h2>24-Month Pitch Heatmap</h2>
+        <div class="desc">Risk score per quarter for top advertisers. Red = imminent (≥75), orange = likely (55-74), yellow = elevated (35-54). Sorted by nearest-quarter score.</div>
+        <div class="pills" id="intelPills"></div>
+        <div style="overflow-x:auto"><table id="intelHeatmap"></table></div>
+    </div>
+    <div class="section">
+        <h2>Predicted Pitch Volume by Quarter</h2>
+        <div class="desc">Number of accounts predicted to pitch (score ≥ 55) per quarter, by current holding group.</div>
+        <div class="chart-wrap sm"><canvas id="intelBarChart"></canvas></div>
+    </div>
+    <div class="row r2">
+        <div class="section">
+            <h2>Defensive — WPP at Risk</h2>
+            <div class="desc">WPP accounts most likely to pitch. Higher score = more urgent.</div>
+            <div style="overflow-x:auto"><table id="intelDefense"></table></div>
+        </div>
+        <div class="section">
+            <h2>Offensive — WPP Opportunities</h2>
+            <div class="desc">Competitor accounts most likely to pitch. Potential WPP wins.</div>
+            <div style="overflow-x:auto"><table id="intelOffense"></table></div>
+        </div>
+    </div>
+</div></div>
+
 <div class="wrap"><footer>
     <span>Source: Yahoo Finance. WPP (NYSE), Publicis (Euronext Paris), Omnicom (NYSE), S&P 500.</span><br>
     <span>Variance decomposition via OLS. Models trained in BigQuery ML (XGBoost, DNN, ARIMA+) and Vertex AI (PyTorch T4 GPU).</span><br>
@@ -242,6 +277,8 @@
 <script src="forecast_tracking.js"></script>
 <script src="monitoring_config.js"></script>
 <script src="advertisers_data.js"></script>
+<script src="advertiser_stats.js"></script>
+<script src="pitch_prediction.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
 const F = {WPP:'rgba(123,97,255,0.06)',Publicis:'rgba(74,234,220,0.06)',Omnicom:'rgba(255,107,53,0.06)'};
@@ -748,12 +785,29 @@ function runSimulation() {
 }
 
 function renderSimResults(R, timeline) {
+    const SC = SIM_CONFIG;
     let h = '<div class="row r3" style="margin-top:1.5rem">';
+
+    // Calculate value created/destroyed for each group
+    let totalValueCreated = 0;
+    for (const name of GRP) {
+        const r = R[name];
+        const shares = SC.shares_outstanding?.[name] || 200e6;
+        const mktCap = r.current_price * shares;
+        const newMktCap = r.forecast_price * shares;
+        const valueDelta = newMktCap - mktCap;
+        r.shares = shares;
+        r.market_cap = mktCap;
+        r.new_market_cap = newMktCap;
+        r.value_created = valueDelta;
+    }
 
     for (const name of GRP) {
         const r = R[name];
         const impC = r.total_impact > 0 ? 'var(--up)' : r.total_impact < 0 ? 'var(--down)' : 'var(--faint)';
         const sC = r.streak >= 3 ? 'var(--up)' : r.streak <= -3 ? 'var(--down)' : 'var(--muted)';
+        const valBn = r.value_created / 1e9;
+        const valC = valBn > 0 ? 'var(--up)' : valBn < 0 ? 'var(--down)' : 'var(--faint)';
 
         h += `<div class="card" style="border-top:3px solid ${C[name]}">
             <h3>${name}</h3>
@@ -763,8 +817,14 @@ function renderSimResults(R, timeline) {
                 <span class="big" style="color:${impC}">$${r.forecast_price.toFixed(2)}</span>
             </div>
             <div style="font-size:0.8rem;color:${impC};font-weight:500">${r.total_impact>0?'+':''}${r.total_impact.toFixed(1)}%</div>
-            <div style="font-size:0.65rem;color:var(--faint);margin-top:0.15rem">90% CI: $${r.ci_lower.toFixed(2)} – $${r.ci_upper.toFixed(2)}</div>
-            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+
+            <div style="margin-top:0.75rem;padding:0.75rem;background:${valBn>0.01?'rgba(34,160,107,0.06)':valBn<-0.01?'rgba(222,53,11,0.04)':'var(--elevated)'};border-radius:3px">
+                <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint)">Value ${valBn>=0?'Created':'Destroyed'}</div>
+                <div style="font-size:1.5rem;font-weight:500;color:${valC};margin-top:0.15rem">${valBn>=0?'+':''}$${Math.abs(valBn).toFixed(2)}B</div>
+                <div style="font-size:0.65rem;color:var(--faint);margin-top:0.15rem">Market cap: $${(r.market_cap/1e9).toFixed(1)}B → $${(r.new_market_cap/1e9).toFixed(1)}B</div>
+            </div>
+
+            <div style="margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border)">
                 <div style="display:flex;justify-content:space-between;font-size:0.75rem">
                     <span style="color:var(--faint)">Streak</span>
                     <span style="color:${sC};font-weight:500">${r.initial_streak} → ${r.streak}</span>
@@ -774,12 +834,37 @@ function renderSimResults(R, timeline) {
                     <span>${r.total_wins ? '<span class="c-up">+'+r.total_wins+'W</span>' : ''}${r.total_wins&&r.total_losses?' / ':''}${r.total_losses ? '<span class="c-dn">-'+r.total_losses+'L</span>' : ''}${!r.total_wins&&!r.total_losses?'—':''}</span>
                 </div>
                 ${r.crosses_3 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(34,160,107,0.08);border-radius:3px;font-size:0.7rem;color:var(--up);font-weight:500">‣ CROSSES MAGIC 3 — historically +24% return</div>' : ''}
-                ${r.streak <= -3 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ DEEP LOSING STREAK — compounding penalty applied</div>' : ''}
-                ${r.initial_streak >= 2 && r.streak <= 0 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ WIN STREAK BROKEN — negative sentiment impact</div>' : ''}
+                ${r.streak <= -3 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ DEEP LOSING STREAK — compounding penalty</div>' : ''}
+                ${r.initial_streak >= 2 && r.streak <= 0 ? '<div style="margin-top:0.5rem;padding:0.4rem 0.6rem;background:rgba(222,53,11,0.06);border-radius:3px;font-size:0.7rem;color:var(--down);font-weight:500">‣ WIN STREAK BROKEN</div>' : ''}
             </div>
         </div>`;
     }
     h += '</div>';
+
+    // Net value summary across all groups
+    const netValue = GRP.reduce((sum, n) => sum + R[n].value_created, 0);
+    const winnerValue = Math.max(...GRP.map(n => R[n].value_created));
+    const loserValue = Math.min(...GRP.map(n => R[n].value_created));
+    const winner = GRP.find(n => R[n].value_created === winnerValue);
+    const loser = GRP.find(n => R[n].value_created === loserValue);
+
+    h += `<div class="row r3" style="margin-bottom:1.5rem">
+        <div class="card" style="border-left:3px solid var(--up)">
+            <h3>Biggest Winner</h3>
+            <div class="big c-up">${winner}</div>
+            <div style="font-size:0.85rem;color:var(--up)">+$${(winnerValue/1e9).toFixed(2)}B value created</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--down)">
+            <h3>Biggest Loser</h3>
+            <div class="big c-dn">${loser}</div>
+            <div style="font-size:0.85rem;color:var(--down)">${(loserValue/1e9).toFixed(2)}B value destroyed</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--accent)">
+            <h3>Value of This Scenario</h3>
+            <div class="big" style="color:var(--accent)">$${(Math.abs(winnerValue - loserValue)/1e9).toFixed(2)}B</div>
+            <div style="font-size:0.75rem;color:var(--muted)">Total value at stake across the Big 3</div>
+        </div>
+    </div>`;
 
     // Forecast chart with simulation overlay
     h += '<div class="section" style="margin-top:1.5rem"><h2>BQ ML ARIMA+ Forecast — With Simulation Impact</h2>';
@@ -827,127 +912,107 @@ function renderSimResults(R, timeline) {
 
     document.getElementById('simResults').innerHTML = h;
 
-    // ARIMA+ forecast chart with progressive simulation overlay + inflection annotations
+    // ARIMA+ forecast chart — base vs simulation impact
     setTimeout(() => {
         if (!document.getElementById('simForecastChart')) return;
         const datasets = [];
         const annotations = {};
 
-        // Build cumulative impact per date for each group
-        // Each move shifts the forecast from that date forward
-        const moveImpacts = {}; // { groupName: [{date, cum_impact_mult}] }
-        for (const n of GRP) {
-            const impacts = []; // sorted by date
-            let cumImpact = 0;
-            for (const t of timeline) {
-                const s = t.state[n];
-                if (s.q_impact !== 0) {
-                    cumImpact = s.cum_impact;
-                    // Convert quarter to approx date
-                    const qd = t.quarter.replace('-Q1','-02-15').replace('-Q2','-05-15').replace('-Q3','-08-15').replace('-Q4','-11-15');
-                    impacts.push({ date: qd, cum_pct: cumImpact, crossed_3: s.crossed_3 });
-                }
-            }
-            moveImpacts[n] = impacts;
-        }
+        // Build per-move impact events with ACTUAL dates (not quarter approximations)
+        // Each move has: date, cumulative impact % for each group
+        const moveEvents = []; // [{date, impacts: {WPP: cum%, Publicis: cum%, Omnicom: cum%}, label, flags}]
+        const cumImpact = {WPP: 0, Publicis: 0, Omnicom: 0};
 
-        // Add annotation lines for each move date
-        let annoIdx = 0;
         for (const t of timeline) {
             for (const m of t.moves) {
-                const moveDate = m.date;
-                const label = m.brand + ' ($' + (m.budget >= 1000 ? (m.budget/1000).toFixed(1)+'B' : m.budget+'M') + ')';
-                const crossesMagic = Object.values(t.state).some(s => s.crossed_3);
-                const breaksSomeone = Object.entries(t.state).find(([n, s]) => s.broke_streak && n !== m.to);
-                const deepLoss = Object.entries(t.state).find(([n, s]) => s.entered_deep_loss);
-
-                let annoLabel = label;
-                let annoColor = 'rgba(123,97,255,0.8)';
-                let annoBorder = 'rgba(123,97,255,0.3)';
-                let annoWidth = 1.5;
-                let annoDash = [3, 3];
-
-                if (crossesMagic) {
-                    annoLabel = '‣ ' + label + ' — MAGIC 3';
-                    annoColor = 'rgba(34,160,107,0.9)';
-                    annoBorder = 'rgba(34,160,107,0.7)';
-                    annoWidth = 2.5; annoDash = [];
-                } else if (breaksSomeone) {
-                    annoLabel = label + ' — BREAKS ' + breaksSomeone[0] + ' STREAK';
-                    annoColor = 'rgba(222,53,11,0.8)';
-                    annoBorder = 'rgba(222,53,11,0.5)';
-                    annoWidth = 2; annoDash = [];
-                } else if (deepLoss) {
-                    annoLabel = label + ' — ' + deepLoss[0] + ' IN DEEP LOSS';
-                    annoColor = 'rgba(222,53,11,0.7)';
-                    annoBorder = 'rgba(222,53,11,0.4)';
-                    annoWidth = 1.5;
-                }
-
-                annotations['move' + annoIdx] = {
-                    type: 'line', xMin: moveDate, xMax: moveDate,
-                    borderColor: annoBorder, borderWidth: annoWidth, borderDash: annoDash,
-                    label: {
-                        display: true, content: annoLabel,
-                        position: annoIdx % 2 === 0 ? 'start' : 'end',
-                        backgroundColor: annoColor, color: '#fff',
-                        font: { size: crossesMagic ? 10 : 8 },
-                        padding: { top: 3, bottom: 3, left: 6, right: 6 },
-                        borderRadius: 2,
+                // Apply this move's impact
+                for (const n of GRP) {
+                    if (t.state[n].q_impact !== 0) {
+                        cumImpact[n] = t.state[n].cum_impact;
                     }
-                };
-                annoIdx++;
+                }
+                moveEvents.push({
+                    date: m.date,
+                    impacts: {...cumImpact},
+                    label: m.brand + ' ($' + (m.budget >= 1000 ? (m.budget/1000).toFixed(1)+'B' : m.budget+'M') + ')',
+                    crossed_3: Object.values(t.state).some(s => s.crossed_3),
+                    broke_streak: Object.entries(t.state).some(([n, s]) => s.broke_streak),
+                    to: m.to, from: m.from,
+                });
             }
         }
+
+        // Add annotation lines at each move date
+        moveEvents.forEach((ev, i) => {
+            let lbl = ev.label;
+            let col = 'rgba(123,97,255,0.8)';
+            let bdr = 'rgba(123,97,255,0.3)';
+            let w = 1.5, dash = [3,3];
+
+            if (ev.crossed_3) {
+                lbl = '‣ ' + lbl + ' — MAGIC 3';
+                col = 'rgba(34,160,107,0.9)'; bdr = 'rgba(34,160,107,0.7)'; w = 2.5; dash = [];
+            } else if (ev.broke_streak) {
+                lbl = lbl + ' — STREAK BROKEN';
+                col = 'rgba(222,53,11,0.8)'; bdr = 'rgba(222,53,11,0.5)'; w = 2; dash = [];
+            }
+
+            annotations['move' + i] = {
+                type: 'line', xMin: ev.date, xMax: ev.date,
+                borderColor: bdr, borderWidth: w, borderDash: dash,
+                label: { display: true, content: lbl, position: i % 2 === 0 ? 'start' : 'end',
+                    backgroundColor: col, color: '#fff', font: { size: ev.crossed_3 ? 10 : 8 },
+                    padding: { top: 3, bottom: 3, left: 6, right: 6 }, borderRadius: 2 }
+            };
+        });
 
         for (const n of GRP) {
             const sd = STOCK_DATA[n];
-            const histSlice = 130;
+            const histSlice = 90;
 
-            // Historical
+            // Historical (thinner, shorter)
             datasets.push({
                 label: n + ' Historical',
                 data: sd.dates.slice(-histSlice).map((d, i) => ({ x: d, y: sd.closes[sd.closes.length - histSlice + i] })),
-                borderColor: C[n], borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1
+                borderColor: C[n], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.1
             });
 
             const bq = FORECAST_DATA[n]?.models?.bq_arima_plus;
             if (bq) {
-                // Base ARIMA+ forecast (dashed, thin)
+                // Base ARIMA+ forecast (dashed, faded — the "no simulation" scenario)
                 datasets.push({
-                    label: n + ' Base Forecast',
+                    label: n + ' No Wins (base)',
                     data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.forecast[i] })),
-                    borderColor: C[n] + '50', borderWidth: 1, borderDash: [6, 4], pointRadius: 0, fill: false, tension: 0.1
+                    borderColor: C[n] + '40', borderWidth: 1, borderDash: [6, 4], pointRadius: 0, fill: false, tension: 0.1
                 });
 
-                // Confidence band
-                datasets.push({
-                    label: n + ' CI upper', data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.upper[i] })),
-                    borderColor: 'transparent', backgroundColor: C[n] + '08', pointRadius: 0, fill: '+1'
-                });
-                datasets.push({
-                    label: n + ' CI lower', data: bq.forecast_dates.map((d, i) => ({ x: d, y: bq.lower[i] })),
-                    borderColor: 'transparent', pointRadius: 0, fill: false
-                });
-
-                // Adjusted forecast — ramps progressively at each move date
-                const impacts = moveImpacts[n];
+                // Adjusted forecast — STEPS UP/DOWN at each move date
+                // Before first move: follows base forecast exactly
+                // At each move: multiplier jumps by that move's impact
                 const adjData = bq.forecast_dates.map((d, i) => {
-                    // Find the latest impact that applies to this date
-                    let applicable_pct = 0;
-                    for (const imp of impacts) {
-                        if (d >= imp.date) applicable_pct = imp.cum_pct;
+                    let pct = 0;
+                    for (const ev of moveEvents) {
+                        if (d >= ev.date) pct = ev.impacts[n];
                     }
-                    const mult = 1 + (applicable_pct / 100);
+                    const mult = 1 + (pct / 100);
                     return { x: d, y: Math.round(bq.forecast[i] * mult * 100) / 100 };
                 });
 
+                // Always show adjusted line (even if impact is 0 — it overlaps base, that's fine)
                 const totalImpact = R[n].total_impact;
-                if (totalImpact !== 0) {
+                datasets.push({
+                    label: n + ' With Wins (' + (totalImpact > 0 ? '+' : '') + totalImpact.toFixed(1) + '%)',
+                    data: adjData,
+                    borderColor: C[n], borderWidth: 3, pointRadius: 0, fill: false, tension: 0.1
+                });
+
+                // Shade the gap between base and adjusted (the simulation delta)
+                if (Math.abs(totalImpact) > 0.5) {
                     datasets.push({
-                        label: n + ' Adjusted (' + (totalImpact > 0 ? '+' : '') + totalImpact.toFixed(1) + '%)',
-                        data: adjData,
-                        borderColor: C[n], borderWidth: 3, pointRadius: 0, fill: false, tension: 0.1
+                        label: n + ' delta',
+                        data: adjData, borderColor: 'transparent',
+                        backgroundColor: totalImpact > 0 ? C[n] + '15' : 'rgba(222,53,11,0.08)',
+                        pointRadius: 0, fill: '-2' // fill to the base forecast line
                     });
                 }
             }
@@ -979,6 +1044,231 @@ function renderSimResults(R, timeline) {
 
 // === LAZY INIT ===
 const inited={overview:false};
+// === MARKET INTELLIGENCE ===
+function initIntel(){
+    if(typeof PITCH_PREDICTIONS==='undefined') return;
+    const PP = PITCH_PREDICTIONS;
+    const preds = PP.predictions;
+    const QS = PP.metadata.quarters;
+    const cal = PP.competition_calendar || [];
+
+    // Color helpers
+    function sc(v){ return v>=75?'var(--down)':v>=55?'var(--orange)':v>=35?'var(--warn)':'var(--up)'; }
+    function bg(v){ return v>=75?'rgba(222,53,11,0.18)':v>=55?'rgba(255,107,53,0.14)':v>=35?'rgba(207,159,2,0.10)':'transparent'; }
+    function bracketLabel(b){ return b==='3mo'?'Imminent':b==='6mo'?'Likely':b==='9mo'?'Elevated':'Low'; }
+    var GC = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',Dentsu:'#FF9F43',Mixed:'#C8C8CD',IPG:'#e67e22',Havas:'#95a5a6',Other:'#999'};
+
+    // --- KPIs ---
+    var wppRisk = PP.getAtRisk('WPP');
+    var wppOpp = PP.getOpportunities('WPP');
+    var total55 = preds.filter(p=>p.composite_score>=55);
+    var topPred = preds[0];
+    var kH = '';
+    kH += '<div class="card"><h3>Accounts in Play (Score ≥ 55)</h3><div class="big">'+total55.length+'</div><div class="sub">$'+(total55.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B total spend at risk</div></div>';
+    kH += '<div class="card"><h3>WPP Defensive Alerts</h3><div class="big c-dn">'+wppRisk.length+'</div><div class="sub">$'+(wppRisk.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B WPP spend exposed</div></div>';
+    kH += '<div class="card"><h3>WPP Offensive Targets</h3><div class="big c-up">'+wppOpp.length+'</div><div class="sub">$'+(wppOpp.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B competitor spend in play</div></div>';
+    kH += '<div class="card"><h3>Highest Risk Account</h3><div class="big" style="font-size:1.4rem">'+topPred.name+'</div><div class="sub">Score '+topPred.composite_score+' · '+topPred.group+' · Peak '+topPred.peak_quarter+'</div></div>';
+    document.getElementById('intelKpis').innerHTML = kH;
+
+    // --- GANTT TIMELINE ---
+    var ganttFilters = ['All','WPP at Risk','WPP Opportunities','3mo Imminent','6mo Likely'];
+    var gfH = '';
+    ganttFilters.forEach(function(f,i){ gfH += '<button class="pill'+(i===0?' on':'')+'" data-gf="'+f+'">'+f+'</button>'; });
+    document.getElementById('ganttPills').innerHTML = gfH;
+
+    // Month labels for timeline header
+    var monthLabels = [];
+    for(var m=0; m<27; m++){
+        var yr = 2026 + Math.floor(m/12);
+        var mo = (m%12)+1;
+        var mName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m%12];
+        monthLabels.push({ label: (mo===1||m===0)? mName+"'"+String(yr).slice(2) : mName, month: m });
+    }
+
+    function filterCal(f){
+        if(f==='All') return cal.filter(c=>c.score>=35).slice(0,30);
+        if(f==='WPP at Risk') return cal.filter(c=>c.group==='WPP'&&c.score>=35);
+        if(f==='WPP Opportunities') return cal.filter(c=>c.group!=='WPP'&&c.score>=55);
+        if(f==='3mo Imminent') return cal.filter(c=>c.bracket==='3mo');
+        if(f==='6mo Likely') return cal.filter(c=>c.bracket==='6mo');
+        return cal.slice(0,30);
+    }
+
+    function renderGantt(items){
+        items.sort(function(a,b){ return a.review_start_offset - b.review_start_offset; });
+        var totalMonths = 27;
+        var colW = 36; // px per month
+        var rowH = 28;
+        var labelW = 190;
+        var chartW = totalMonths * colW;
+
+        var h = '<div style="position:relative;font-size:0.7rem">';
+        // Header
+        h += '<div style="display:flex;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px">';
+        h += '<div style="min-width:'+labelW+'px;font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;font-size:0.6rem;padding:4px 8px">Advertiser</div>';
+        h += '<div style="display:flex;flex:1">';
+        monthLabels.forEach(function(ml){
+            var isCurrent = ml.month === 3; // April 2026
+            h += '<div style="width:'+colW+'px;text-align:center;color:'+(isCurrent?'var(--accent)':'var(--faint)')+';font-size:0.55rem;padding:2px 0;'+(ml.label.includes("'")?'font-weight:600':'')+'">'+ ml.label+'</div>';
+        });
+        h += '</div></div>';
+
+        // "Now" marker label
+        h += '<div style="display:flex">';
+        h += '<div style="min-width:'+labelW+'px"></div>';
+        h += '<div style="position:relative;flex:1">';
+        // Now line at month 3 (April 2026)
+        h += '<div style="position:absolute;left:'+(3*colW + colW/2)+'px;top:0;bottom:0;width:1px;background:var(--accent);opacity:0.3;z-index:0"></div>';
+        // Q shading
+        for(var qi=0;qi<8;qi++){
+            var qStart = [3,6,9,12,15,18,21,24][qi];
+            if(qi%2===0) h += '<div style="position:absolute;left:'+(qStart*colW)+'px;width:'+(3*colW)+'px;top:0;bottom:0;background:rgba(0,0,0,0.015);z-index:0"></div>';
+        }
+        h += '</div></div>';
+
+        // Rows
+        items.forEach(function(item){
+            var barColor = GC[item.group]||'#999';
+            var opacity = item.score >= 75 ? 1.0 : item.score >= 55 ? 0.7 : 0.45;
+            var startPx = Math.max(0, item.review_start_offset) * colW;
+            var decisionPx = item.decision_offset * colW;
+            var endPx = Math.min(totalMonths, item.transition_end_offset) * colW;
+            var reviewW = decisionPx - startPx;
+            var transW = endPx - decisionPx;
+
+            h += '<div style="display:flex;align-items:center;height:'+rowH+'px;border-bottom:1px solid rgba(0,0,0,0.04)">';
+            // Label
+            h += '<div style="min-width:'+labelW+'px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+item.name+' ($'+item.spend+'M, '+item.group+')">';
+            h += '<span style="color:'+barColor+';font-size:0.5rem">●</span> ';
+            h += '<span style="font-weight:500">'+item.name.substring(0,22)+'</span> ';
+            h += '<span style="color:var(--faint)">$'+item.spend+'M</span>';
+            h += '</div>';
+            // Bar area
+            h += '<div style="position:relative;flex:1;height:'+rowH+'px">';
+            // Review phase (RFI + pitch)
+            if(reviewW > 0) {
+                h += '<div style="position:absolute;left:'+startPx+'px;width:'+reviewW+'px;top:8px;height:12px;background:'+barColor+';opacity:'+opacity+';border-radius:2px 0 0 2px" title="Review: '+item.review_start+' → Decision: '+item.decision+'"></div>';
+            }
+            // Transition phase (lighter)
+            if(transW > 0) {
+                h += '<div style="position:absolute;left:'+decisionPx+'px;width:'+transW+'px;top:8px;height:12px;background:'+barColor+';opacity:'+(opacity*0.35)+';border-radius:0 2px 2px 0" title="Transition ends: '+item.transition_end+'"></div>';
+            }
+            // Decision diamond
+            h += '<div style="position:absolute;left:'+(decisionPx-4)+'px;top:6px;width:8px;height:8px;background:'+barColor+';transform:rotate(45deg);border:1px solid #fff;z-index:1" title="Decision: '+item.decision+'"></div>';
+            h += '</div></div>';
+        });
+
+        h += '</div>';
+        document.getElementById('ganttContainer').innerHTML = h;
+    }
+
+    renderGantt(filterCal('All'));
+
+    document.querySelectorAll('#ganttPills .pill').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('#ganttPills .pill').forEach(function(b){b.classList.remove('on');});
+            btn.classList.add('on');
+            renderGantt(filterCal(btn.dataset.gf));
+        });
+    });
+
+    // --- Heatmap pills ---
+    var filters = ['All','WPP at Risk','WPP Opportunities','FMCG','Auto','Tech','Pharma','Finance'];
+    var pillH = '';
+    filters.forEach(function(f,i){
+        pillH += '<button class="pill'+(i===0?' on':'')+'" data-filter="'+f+'">'+f+'</button>';
+    });
+    document.getElementById('intelPills').innerHTML = pillH;
+
+    function filterPreds(f){
+        if(f==='All') return preds.filter(p=>p.composite_score>=25);
+        if(f==='WPP at Risk') return preds.filter(p=>p.wpp_stance==='at_risk');
+        if(f==='WPP Opportunities') return preds.filter(p=>p.wpp_stance==='opportunity');
+        return preds.filter(p=>p.sector.indexOf(f)>=0 && p.composite_score>=25);
+    }
+
+    function renderHeatmap(filtered){
+        var top = filtered.slice(0,35);
+        var h = '<thead><tr><th style="text-align:left;min-width:170px">Advertiser</th><th>Group</th><th>Spend</th>';
+        QS.forEach(function(q){ h += '<th>'+q.replace('20','\'')+'</th>'; });
+        h += '<th>Peak</th><th>Likely →</th></tr></thead><tbody>';
+        top.forEach(function(p){
+            h += '<tr><td style="text-align:left;font-weight:500">'+p.name+'</td>';
+            h += '<td><span style="color:'+(GC[p.group]||'var(--muted)')+'">'+p.group+'</span></td>';
+            h += '<td>$'+p.spend+'M</td>';
+            QS.forEach(function(q){
+                var v = p.quarterly_risk[q]||0;
+                h += '<td style="background:'+bg(v)+';color:'+sc(v)+';font-weight:600;font-size:0.75rem">'+v+'</td>';
+            });
+            h += '<td style="font-size:0.7rem">'+p.peak_quarter.replace('20','\'')+'</td>';
+            var dest = p.likely_destination[0];
+            h += '<td style="font-size:0.7rem">'+(dest?dest.group+' ('+Math.round(dest.probability*100)+'%)':'—')+'</td>';
+            h += '</tr>';
+        });
+        h += '</tbody>';
+        document.getElementById('intelHeatmap').innerHTML = h;
+    }
+
+    renderHeatmap(filterPreds('All'));
+
+    document.querySelectorAll('#intelPills .pill').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('#intelPills .pill').forEach(function(b){b.classList.remove('on');});
+            btn.classList.add('on');
+            renderHeatmap(filterPreds(btn.dataset.filter));
+        });
+    });
+
+    // --- Stacked bar: pitch volume by quarter ---
+    var barGroups = ['WPP','Publicis','Omnicom','Dentsu','Mixed','Other'];
+    var barColors = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',Dentsu:'#FF9F43',Mixed:'#C8C8CD',Other:'#999'};
+    var barDatasets = barGroups.map(function(g){
+        return {
+            label: g,
+            data: QS.map(function(q){
+                return (PP.timeline[q]||[]).filter(function(t){ return t.group===g||(g==='Other'&&barGroups.indexOf(t.group)<0); }).length;
+            }),
+            backgroundColor: barColors[g]||'#999'
+        };
+    });
+    new Chart(document.getElementById('intelBarChart').getContext('2d'),{
+        type:'bar',
+        data:{ labels: QS.map(function(q){return q.replace('20','\'');}), datasets: barDatasets },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            scales:{
+                x:{ stacked:true, grid:{display:false}, ticks:{font:{...cf,size:10},color:'#999'} },
+                y:{ stacked:true, grid:{color:gc}, ticks:{font:{...cf,size:10},color:'#999',stepSize:5}, title:{display:true,text:'Accounts predicted to pitch',font:{...cf,size:10},color:'#999'} }
+            },
+            plugins:{
+                legend:{position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'rect',padding:8}},
+                tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2}
+            }
+        }
+    });
+
+    // --- Defensive / Offensive tables ---
+    function renderTable(elId, rows, showDest){
+        var h = '<thead><tr><th style="text-align:left">Advertiser</th><th>Spend</th>'+(showDest?'<th>Current</th>':'')+'<th>Score</th><th>Bracket</th><th>Est. Decision</th><th>'+(showDest?'Likely Winner':'Likely Dest.')+'</th></tr></thead><tbody>';
+        rows.slice(0,15).forEach(function(p){
+            var dest = p.likely_destination[0];
+            var timeline = p.competition_timeline;
+            h += '<tr><td style="text-align:left;font-weight:500">'+p.name+'</td>';
+            h += '<td>$'+p.spend+'M</td>';
+            if(showDest) h += '<td>'+p.group+'</td>';
+            h += '<td style="color:'+sc(p.composite_score)+';font-weight:600">'+p.composite_score+'</td>';
+            h += '<td><span style="font-size:0.65rem;text-transform:uppercase;padding:2px 6px;border-radius:2px;background:'+bg(p.composite_score)+';color:'+sc(p.composite_score)+'">'+bracketLabel(p.risk_bracket)+'</span></td>';
+            h += '<td style="font-size:0.7rem">'+(timeline?timeline.decision:'—')+'</td>';
+            h += '<td>'+(dest?dest.group+' ('+Math.round(dest.probability*100)+'%)':'—')+'</td></tr>';
+        });
+        h += '</tbody>';
+        document.getElementById(elId).innerHTML = h;
+    }
+
+    renderTable('intelDefense', wppRisk, false);
+    renderTable('intelOffense', wppOpp, true);
+}
+
 function show(p){
     if(!inited[p]){
         if(p==='overview')initOverview();
@@ -987,6 +1277,7 @@ function show(p){
         if(p==='models')initModels();
         if(p==='simulator')initSimulator();
         if(p==='detail')initDetail();
+        if(p==='intel')initIntel();
         inited[p]=true;
     }
 }
