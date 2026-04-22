@@ -469,9 +469,8 @@
         <h2>Relationship Network</h2>
         <div class="desc">Holdings → Advertisers → People. Edges = school connections and shared employers. Drag nodes to explore. Hover for details.</div>
         <div class="pills" id="graphPills" style="margin-bottom:0.75rem">
-            <button class="pill on" data-gf="all">All Holdings</button>
-            <button class="pill" data-gf="WPP" style="color:var(--faint)">WPP Only</button>
-            <button class="pill" data-gf="connections" style="color:var(--faint)">Connections Only</button>
+            <button class="pill on" data-gf="all">Connected Accounts</button>
+            <button class="pill" data-gf="WPP" style="color:var(--faint)">WPP Network</button>
         </div>
         <div style="position:relative;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:#FAFAFA">
             <canvas id="forceGraph" width="1080" height="600" style="width:100%;height:600px;cursor:grab"></canvas>
@@ -497,126 +496,144 @@
         }
         resize();
 
-        // Build graph data
+        // Build graph — only companies with connections (imminent competition)
         var nodes=[], links=[], nodeMap={};
-        var filter='all';
+
+        // Find companies that have school connections
+        var connectedCos={};
+        PI.school_overlaps.forEach(function(o){
+            connectedCos[o.agency_co]=true; connectedCos[o.client_co]=true;
+        });
+        // Also include companies with relationship scores
+        Object.keys(PI.scores).forEach(function(co){
+            var s=PI.scores[co];
+            if((s.wpp_score||0)+(s.comp_score||0)>0) connectedCos[co]=true;
+        });
 
         function buildGraph(filterMode){
             nodes=[]; links=[]; nodeMap={};
             var holdingSeen={}, companySeen={};
+            var holdingAngles={'WPP':0,'Publicis Groupe':1.2,'Omnicom':2.4,'dentsu':3.6,'Havas':4.8,'Mixed':5.5};
 
-            // Holdings as big nodes
+            // Determine which companies to show
+            var showCos={};
             Object.keys(PI.profiles).forEach(function(co){
                 var p=PI.profiles[co];
                 var h=p.holding||'Other';
+                if(filterMode==='WPP' && h!=='WPP' && !connectedCos[co]) return;
+                if(filterMode==='connections' && !connectedCos[co]) return;
+                if(filterMode==='all' && !connectedCos[co]) return; // default: only connected
+                showCos[co]=true;
+            });
+
+            // Holdings — only those with visible companies
+            var holdingForCo={};
+            Object.keys(showCos).forEach(function(co){
+                var h=(PI.profiles[co]||{}).holding||'Other';
+                holdingForCo[co]=h;
                 if(!holdingSeen[h]){
                     holdingSeen[h]=true;
-                    var n={id:'h:'+h, label:h, type:'holding', color:HC[h]||'#999', r:28, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
+                    var angle=holdingAngles[h]||Math.random()*6.28;
+                    var n={id:'h:'+h, label:h, type:'holding', color:HC[h]||'#999', r:30,
+                        x:W/2+Math.cos(angle)*160, y:H/2+Math.sin(angle)*130, vx:0, vy:0};
                     nodeMap[n.id]=nodes.length; nodes.push(n);
                 }
             });
 
-            // Companies as medium nodes
-            Object.keys(PI.profiles).forEach(function(co){
-                var p=PI.profiles[co];
-                var h=p.holding||'Other';
-                if(filterMode==='WPP' && h!=='WPP') return;
+            // Companies
+            Object.keys(showCos).forEach(function(co){
+                var p=PI.profiles[co]; var h=holdingForCo[co];
                 var sc=PI.scores[co]||{};
-                var hasConnection=(sc.wpp_score||0)+(sc.comp_score||0)>0;
-                if(filterMode==='connections' && !hasConnection) return;
-
-                var n={id:'c:'+co, label:co, type:'company', pool:p.pool, holding:h, color:HC[h]||'#999', r:10+Math.min(p.people.length*0.3,8), count:p.people.length, wpp_score:sc.wpp_score||0, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
-                nodeMap[n.id]=nodes.length; nodes.push(n);
-                companySeen[co]=true;
-
-                // Link company → holding
-                if(nodeMap['h:'+h]!==undefined){
-                    links.push({source:nodeMap['h:'+h], target:nodes.length-1, strength:0.3, color:'rgba(0,0,0,0.06)'});
-                }
+                var angle=holdingAngles[h]||0;
+                var jitter=(Math.random()-0.5)*1.5;
+                var n={id:'c:'+co, label:co, type:'company', pool:p.pool, holding:h,
+                    color:HC[h]||'#999', r:8+Math.min((sc.wpp_score||0)*0.8,10),
+                    count:p.people.length, wpp_score:sc.wpp_score||0, comp_score:sc.comp_score||0,
+                    x:W/2+Math.cos(angle+jitter)*220+Math.random()*40,
+                    y:H/2+Math.sin(angle+jitter)*180+Math.random()*40, vx:0, vy:0};
+                nodeMap[n.id]=nodes.length; nodes.push(n); companySeen[co]=true;
+                if(nodeMap['h:'+h]!==undefined)
+                    links.push({source:nodeMap['h:'+h], target:nodes.length-1, strength:0.4, color:'rgba(0,0,0,0.08)'});
             });
 
-            // People nodes (only those with school connections)
+            // People with connections
             var peopleInGraph={};
             PI.school_overlaps.forEach(function(o){
-                var agencyCo=o.agency_co, clientCo=o.client_co;
-                if(!companySeen[agencyCo] && !companySeen[clientCo]) return;
-
-                // Agency person node
-                var aId='p:'+o.agency+'@'+agencyCo;
-                if(!peopleInGraph[aId]){
-                    peopleInGraph[aId]=true;
-                    var ah=PI.profiles[agencyCo]?PI.profiles[agencyCo].holding:'';
-                    var n={id:aId, label:o.agency, type:'person', company:agencyCo, holding:ah, color:HC[ah]||'#999', r:4, school:o.school, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
-                    nodeMap[aId]=nodes.length; nodes.push(n);
-                    if(nodeMap['c:'+agencyCo]!==undefined) links.push({source:nodeMap['c:'+agencyCo], target:nodes.length-1, strength:0.5, color:'rgba(0,0,0,0.04)'});
-                }
-
-                // Client person node
-                var cId='p:'+o.client+'@'+clientCo;
-                if(!peopleInGraph[cId]){
-                    peopleInGraph[cId]=true;
-                    var ch=PI.profiles[clientCo]?PI.profiles[clientCo].holding:'';
-                    var n={id:cId, label:o.client, type:'person', company:clientCo, holding:ch, color:HC[ch]||'#999', r:4, school:o.school, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
-                    nodeMap[cId]=nodes.length; nodes.push(n);
-                    if(nodeMap['c:'+clientCo]!==undefined) links.push({source:nodeMap['c:'+clientCo], target:nodes.length-1, strength:0.5, color:'rgba(0,0,0,0.04)'});
-                }
-
-                // School connection link (the interesting one)
-                if(nodeMap[aId]!==undefined && nodeMap[cId]!==undefined){
-                    links.push({source:nodeMap[aId], target:nodeMap[cId], strength:1.0, color:'rgba(123,97,255,0.4)', school:o.school, dashed:true});
-                }
+                if(!companySeen[o.agency_co] && !companySeen[o.client_co]) return;
+                [[o.agency,o.agency_co,'agency'],[o.client,o.client_co,'client']].forEach(function(pair){
+                    var pId='p:'+pair[0]+'@'+pair[1];
+                    if(!peopleInGraph[pId] && companySeen[pair[1]]){
+                        peopleInGraph[pId]=true;
+                        var ph=(PI.profiles[pair[1]]||{}).holding||'';
+                        var parentIdx=nodeMap['c:'+pair[1]];
+                        var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*30:W*Math.random();
+                        var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*30:H*Math.random();
+                        var n={id:pId, label:pair[0], type:'person', company:pair[1], pool:pair[2],
+                            holding:ph, color:HC[ph]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
+                        nodeMap[pId]=nodes.length; nodes.push(n);
+                        if(parentIdx!==undefined)
+                            links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
+                    }
+                });
+                var aId='p:'+o.agency+'@'+o.agency_co, cId='p:'+o.client+'@'+o.client_co;
+                if(nodeMap[aId]!==undefined && nodeMap[cId]!==undefined)
+                    links.push({source:nodeMap[aId], target:nodeMap[cId], strength:1.5, color:'rgba(123,97,255,0.5)', school:o.school, dashed:true});
             });
         }
         buildGraph('all');
 
-        // Force simulation
-        var alpha=1, alphaDecay=0.003, alphaMin=0.01;
+        // Force simulation — optimized for small graph
+        var alpha=1, alphaDecay=0.008, alphaMin=0.005;
         var drag=null, hover=null;
 
         function tick(){
             if(alpha<alphaMin){ requestAnimationFrame(tick); draw(); return; }
             alpha*=(1-alphaDecay);
 
-            // Center gravity
-            var cx=W/2, cy=H/2;
-            nodes.forEach(function(n){
-                n.vx+=(cx-n.x)*0.0005;
-                n.vy+=(cy-n.y)*0.0005;
-            });
+            var cx=W/2, cy=H/2, N=nodes.length;
 
-            // Repulsion (quadratic, approximate)
-            for(var i=0;i<nodes.length;i++){
-                for(var j=i+1;j<nodes.length;j++){
+            // Center gravity (stronger for holdings)
+            for(var i=0;i<N;i++){
+                var g=nodes[i].type==='holding'?0.001:0.0003;
+                nodes[i].vx+=(cx-nodes[i].x)*g;
+                nodes[i].vy+=(cy-nodes[i].y)*g;
+            }
+
+            // Repulsion — skip pairs that are far apart
+            for(var i=0;i<N;i++){
+                for(var j=i+1;j<N;j++){
                     var dx=nodes[j].x-nodes[i].x, dy=nodes[j].y-nodes[i].y;
-                    var d2=dx*dx+dy*dy+1;
-                    var minD=nodes[i].r+nodes[j].r+10;
-                    var f=-(minD*minD*80)/d2;
-                    var fx=f*dx/Math.sqrt(d2), fy=f*dy/Math.sqrt(d2);
-                    nodes[i].vx+=fx; nodes[i].vy+=fy;
-                    nodes[j].vx-=fx; nodes[j].vy-=fy;
+                    var d2=dx*dx+dy*dy;
+                    if(d2>90000) continue; // skip if >300px apart
+                    d2=Math.max(d2,1);
+                    var minD=nodes[i].r+nodes[j].r+8;
+                    var f=-(minD*minD*60)/d2;
+                    var dist=Math.sqrt(d2);
+                    nodes[i].vx+=f*dx/dist; nodes[i].vy+=f*dy/dist;
+                    nodes[j].vx-=f*dx/dist; nodes[j].vy-=f*dy/dist;
                 }
             }
 
-            // Spring attraction along links
-            links.forEach(function(l){
-                var s=nodes[l.source], t=nodes[l.target];
+            // Spring links
+            for(var i=0;i<links.length;i++){
+                var l=links[i], s=nodes[l.source], t=nodes[l.target];
                 var dx=t.x-s.x, dy=t.y-s.y;
                 var d=Math.sqrt(dx*dx+dy*dy)+0.1;
-                var targetLen=s.type==='holding'?120:s.type==='company'?60:40;
-                var f=(d-targetLen)*0.003*l.strength;
-                var fx=f*dx/d, fy=f*dy/d;
-                s.vx+=fx; s.vy+=fy;
-                t.vx-=fx; t.vy-=fy;
-            });
+                var rest=s.type==='holding'?100:l.dashed?80:45;
+                var f=(d-rest)*0.004*l.strength;
+                s.vx+=f*dx/d; s.vy+=f*dy/d;
+                t.vx-=f*dx/d; t.vy-=f*dy/d;
+            }
 
-            // Velocity damping + position update
-            nodes.forEach(function(n){
-                if(n===drag) return;
-                n.vx*=0.85; n.vy*=0.85;
+            // Integrate
+            for(var i=0;i<N;i++){
+                var n=nodes[i];
+                if(n===drag) continue;
+                n.vx*=0.82; n.vy*=0.82;
                 n.x+=n.vx*alpha; n.y+=n.vy*alpha;
-                n.x=Math.max(n.r,Math.min(W-n.r,n.x));
-                n.y=Math.max(n.r,Math.min(H-n.r,n.y));
-            });
+                n.x=Math.max(n.r+5,Math.min(W-n.r-5,n.x));
+                n.y=Math.max(n.r+5,Math.min(H-n.r-5,n.y));
+            }
 
             draw();
             requestAnimationFrame(tick);
