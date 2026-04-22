@@ -478,7 +478,7 @@
         </div>
     </div>
     <script>
-    (function(){
+    function initForceGraph(){
         if(typeof PEOPLE_INTEL==='undefined') return;
         var PI=PEOPLE_INTEL;
         var canvas=document.getElementById('forceGraph');
@@ -765,7 +765,7 @@
         });
 
         requestAnimationFrame(tick);
-    })();
+    }
     </script>
 
     <!-- Company Browser + Profile Viewer -->
@@ -780,7 +780,7 @@
     </div>
 
     <script>
-    (function(){
+    function initPeopleBrowser(){
         if(typeof PEOPLE_INTEL==='undefined') return;
         var PI=PEOPLE_INTEL;
         var HC={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Havas':'#95a5a6','Mixed':'#C8C8CD','Dentsu':'#FF9F43'};
@@ -904,7 +904,8 @@
             document.getElementById('companyGrid').innerHTML=h;
             document.getElementById('companyGrid').scrollIntoView({behavior:'smooth'});
         };
-    })();
+    }
+    function initProfiles(){ initForceGraph(); initPeopleBrowser(); }
     </script>
 
 </div></div>
@@ -928,8 +929,8 @@
 <script src="advertisers_data.js"></script>
 <script src="advertiser_stats.js"></script>
 <script src="pitch_prediction.js"></script>
-<script src="comvergence_data.js"></script>
 <script src="people_intel_data.js"></script>
+<script src="comvergence_data.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
 const F = {WPP:'rgba(123,97,255,0.06)',Publicis:'rgba(74,234,220,0.06)',Omnicom:'rgba(255,107,53,0.06)'};
@@ -2463,6 +2464,7 @@ function show(p){
         if(p==='detail')initDetail();
         if(p==='intel')initIntel();
         if(p==='comvergence')initComvergence();
+        if(p==='profiles')initProfiles();
         inited[p]=true;
     }
 }
