@@ -464,6 +464,145 @@
     }
     </script>
 
+    <!-- Company Browser + Profile Viewer -->
+    <div id="peopleBrowser"></div>
+
+    <!-- Profile detail modal -->
+    <div id="profileModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background:rgba(0,0,0,0.5);overflow-y:auto" onclick="if(event.target===this)this.style.display='none'">
+        <div style="max-width:640px;margin:3rem auto;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:2rem;position:relative">
+            <button onclick="document.getElementById('profileModal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--faint);line-height:1">&times;</button>
+            <div id="profileModalContent"></div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        if(typeof PEOPLE_INTEL==='undefined') return;
+        var PI=PEOPLE_INTEL;
+        var HC={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Havas':'#95a5a6','Mixed':'#C8C8CD','Dentsu':'#FF9F43'};
+
+        // Build company list sorted by relationship score
+        var companies=Object.keys(PI.profiles).map(function(co){
+            var p=PI.profiles[co];
+            var sc=PI.scores[co]||{wpp_score:0,comp_score:0};
+            return {name:co, holding:p.holding, pool:p.pool, count:p.people.length, wpp_score:sc.wpp_score||0, comp_score:sc.comp_score||0};
+        });
+
+        var h='';
+        h+='<h2 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);font-weight:400;margin-bottom:0.5rem">PEOPLE BY COMPANY</h2>';
+        h+='<p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">'+PI.stats.total_profiles+' profiles across '+PI.stats.companies+' companies. '+PI.stats.school_connections+' school connections found. Click a company to see profiles.</p>';
+
+        // Filter pills
+        h+='<div class="pills" id="peoplePills" style="margin-bottom:1rem">';
+        h+='<button class="pill on" data-pf="all">All ('+companies.length+')</button>';
+        var clientCos=companies.filter(function(c){return c.pool==='client';});
+        var agencyCos=companies.filter(function(c){return c.pool==='agency';});
+        h+='<button class="pill" data-pf="client">Clients ('+clientCos.length+')</button>';
+        h+='<button class="pill" data-pf="agency">Agencies ('+agencyCos.length+')</button>';
+        h+='<button class="pill" data-pf="wpp">WPP Network</button>';
+        h+='</div>';
+
+        h+='<div id="companyGrid"></div>';
+        document.getElementById('peopleBrowser').innerHTML=h;
+
+        function renderCompanyGrid(filter){
+            var filtered=companies;
+            if(filter==='client') filtered=clientCos;
+            else if(filter==='agency') filtered=agencyCos;
+            else if(filter==='wpp') filtered=companies.filter(function(c){return c.holding==='WPP';});
+            filtered.sort(function(a,b){return b.wpp_score-a.wpp_score||b.count-a.count;});
+
+            var g='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.75rem">';
+            filtered.forEach(function(co){
+                var col=HC[co.holding]||'var(--faint)';
+                var poolTag=co.pool==='agency'?'<span style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;padding:1px 5px;border:1px solid '+col+';border-radius:2px;color:'+col+'">AGENCY</span>':'';
+                var scoreBar='';
+                if(co.wpp_score>0||co.comp_score>0){
+                    var total=Math.max(co.wpp_score+co.comp_score,1);
+                    var wPct=Math.round(co.wpp_score/total*100);
+                    scoreBar='<div style="display:flex;gap:1px;height:4px;border-radius:2px;overflow:hidden;margin-top:0.5rem">';
+                    scoreBar+='<div style="width:'+wPct+'%;background:var(--wpp)"></div>';
+                    scoreBar+='<div style="width:'+(100-wPct)+'%;background:var(--faint)"></div>';
+                    scoreBar+='</div>';
+                    scoreBar+='<div style="display:flex;justify-content:space-between;font-size:0.6rem;margin-top:2px"><span style="color:var(--wpp)">WPP '+co.wpp_score+'</span><span style="color:var(--faint)">Comp '+co.comp_score+'</span></div>';
+                }
+                g+='<div onclick="showCompanyPeople(\''+co.name.replace(/'/g,"\\'")+'\')" style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:3px;padding:0.75rem 1rem;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+                g+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+                g+='<div><span style="font-weight:500;font-size:0.85rem">'+co.name+'</span> '+poolTag;
+                g+='<div style="font-size:0.65rem;color:var(--faint);margin-top:2px">'+co.holding+' · '+co.count+' profiles</div></div>';
+                g+='<div style="font-size:1.1rem;font-weight:500;color:'+col+'">'+co.count+'</div>';
+                g+='</div>';
+                g+=scoreBar;
+                g+='</div>';
+            });
+            g+='</div>';
+            document.getElementById('companyGrid').innerHTML=g;
+        }
+        renderCompanyGrid('all');
+
+        document.querySelectorAll('#peoplePills .pill').forEach(function(btn){
+            btn.addEventListener('click',function(){
+                document.querySelectorAll('#peoplePills .pill').forEach(function(b){b.classList.remove('on');});
+                btn.classList.add('on');
+                renderCompanyGrid(btn.dataset.pf);
+            });
+        });
+
+        // Show people for a company
+        window.showCompanyPeople=function(coName){
+            var data=PI.profiles[coName];
+            if(!data) return;
+            var col=HC[data.holding]||'var(--faint)';
+            var sc=PI.scores[coName]||{};
+            var overlaps=PI.school_overlaps.filter(function(o){return o.client_co===coName||o.agency_co===coName;});
+
+            var h='<div style="max-width:720px;margin:2rem auto">';
+            h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">';
+            h+='<div><h2 style="font-size:1.3rem;font-weight:500;margin-bottom:0.25rem">'+coName+'</h2>';
+            h+='<span style="font-size:0.75rem;color:'+col+'">'+data.holding+'</span> <span style="font-size:0.75rem;color:var(--faint)">· '+data.pool+' · '+data.people.length+' profiles</span></div>';
+            h+='<button onclick="document.getElementById(\'companyGrid\').scrollIntoView({behavior:\'smooth\'}); document.getElementById(\'peopleBrowser\').querySelector(\'h2\').scrollIntoView({behavior:\'smooth\'});" style="font-size:0.7rem;padding:0.4rem 0.8rem;border:1px solid var(--border);border-radius:3px;background:none;color:var(--faint);cursor:pointer">Back</button>';
+            h+='</div>';
+
+            // School connections for this company
+            if(overlaps.length>0){
+                h+='<div style="margin-bottom:1.5rem;padding:1rem;border-left:3px solid var(--wpp);background:rgba(123,97,255,0.03);border-radius:0 3px 3px 0">';
+                h+='<h3 style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--wpp);font-weight:500;margin-bottom:0.5rem">SCHOOL CONNECTIONS ('+overlaps.length+')</h3>';
+                overlaps.forEach(function(o){
+                    var isAgency=o.agency_co===coName;
+                    h+='<div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.35rem">';
+                    h+='<span style="font-weight:500;color:var(--text)">'+o.agency+'</span> ('+o.agency_co+') ↔ ';
+                    h+='<span style="font-weight:500;color:var(--text)">'+o.client+'</span> ('+o.client_co+') ';
+                    h+='— <span style="color:var(--accent)">'+o.school+'</span>';
+                    h+='</div>';
+                });
+                h+='</div>';
+            }
+
+            // People grid
+            h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0.5rem">';
+            data.people.forEach(function(p){
+                var alumniTag=p.alumni?'<span style="font-size:0.55rem;padding:1px 5px;background:rgba(123,97,255,0.1);color:var(--wpp);border-radius:2px;margin-left:4px">WPP ALUM</span>':'';
+                h+='<div style="background:var(--elevated);border:1px solid var(--border);border-radius:3px;padding:0.75rem">';
+                h+='<div style="font-weight:500;font-size:0.8rem">'+p.name+alumniTag+'</div>';
+                h+='<div style="font-size:0.7rem;color:var(--muted);margin-top:2px">'+p.role+'</div>';
+                if(p.loc) h+='<div style="font-size:0.65rem;color:var(--faint);margin-top:2px">'+p.loc+'</div>';
+                if(p.school) h+='<div style="font-size:0.65rem;color:var(--accent);margin-top:4px">'+p.school+'</div>';
+                if(p.prev){
+                    var prevList=p.prev.split(' | ').slice(0,3).join(', ');
+                    h+='<div style="font-size:0.6rem;color:var(--faint);margin-top:3px">Previously: '+prevList+'</div>';
+                }
+                if(p.wpp_ex) h+='<div style="font-size:0.6rem;color:var(--wpp);margin-top:3px">Ex-WPP: '+p.wpp_ex+'</div>';
+                if(p.url) h+='<a href="'+p.url+'" target="_blank" rel="noopener" style="font-size:0.6rem;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block">LinkedIn →</a>';
+                h+='</div>';
+            });
+            h+='</div></div>';
+
+            document.getElementById('companyGrid').innerHTML=h;
+            document.getElementById('companyGrid').scrollIntoView({behavior:'smooth'});
+        };
+    })();
+    </script>
+
 </div></div>
 
 <div class="wrap"><footer>
@@ -486,6 +625,7 @@
 <script src="advertiser_stats.js"></script>
 <script src="pitch_prediction.js"></script>
 <script src="comvergence_data.js"></script>
+<script src="people_intel_data.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
 const F = {WPP:'rgba(123,97,255,0.06)',Publicis:'rgba(74,234,220,0.06)',Omnicom:'rgba(255,107,53,0.06)'};
