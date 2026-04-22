@@ -1,15 +1,16 @@
 /**
  * Advertiser-Agency Relationship Statistics
- * Generated from top100_global_advertisers.json + competition_data.js
+ * Cross-referenced with COMvergence c-dash CARD (40,592 assignments)
  * Last updated: April 2026
  */
 
 const ADVERTISER_STATS = {
   metadata: {
-    generated: "2026-04-21",
+    generated: "2026-04-22",
     total_advertisers: 100,
     total_spend_B: 194.5,
-    account_moves_tracked: 31,
+    account_moves_tracked: 3110,
+    comvergence_source: "c-dash CARD 40,592 assignments",
     time_span: "2016-Q1 to 2026-Q2"
   },
 
@@ -22,39 +23,34 @@ const ADVERTISER_STATS = {
     note: "Median tenure ~3.3 years before a brand reviews or switches"
   },
 
-  // Net wins/losses by holding group (2016-2026)
+  // Net wins/losses by holding group (COMvergence-verified, Big 3 flows only, 2016-2026)
   churn_by_group: {
-    WPP:      { wins: 7,  losses: 15, net: -8,  spend_won_M: 7700,  spend_lost_M: 15800, net_spend_M: -8100 },
-    Publicis: { wins: 15, losses: 7,  net: 8,   spend_won_M: 16700, spend_lost_M: 8400,  net_spend_M: 8300 },
-    Omnicom:  { wins: 9,  losses: 2,  net: 7,   spend_won_M: 13300, spend_lost_M: 1900,  net_spend_M: 11400 },
+    WPP:      { wins: 773,  losses: 1544, net: -771,  spend_won_M: 11942,  spend_lost_M: 25449, net_spend_M: -13507 },
+    Publicis: { wins: 1179, losses: 544,  net: 635,   spend_won_M: 23648,  spend_lost_M: 9100,  net_spend_M: 14548 },
+    Omnicom:  { wins: 1156, losses: 791,  net: 365,   spend_won_M: 15251,  spend_lost_M: 13449, net_spend_M: 1802 },
     Dentsu:   { wins: 0,  losses: 2,  net: -2,  spend_won_M: 0,     spend_lost_M: 1900,  net_spend_M: -1900 },
     IPG:      { wins: 0,  losses: 1,  net: -1,  spend_won_M: 0,     spend_lost_M: 2000,  net_spend_M: -2000 },
     Havas:    { wins: 0,  losses: 1,  net: -1,  spend_won_M: 0,     spend_lost_M: 900,   net_spend_M: -900 }
   },
 
-  // Current spend share of top 100 advertisers ($194.5B total)
+  // Current spend share — COMvergence 2025 portfolio ($288B total tracked)
   spend_share: {
-    Publicis:  { spend_M: 60870, pct: 31.3 },
-    Mixed:     { spend_M: 39950, pct: 20.5 },
-    WPP:       { spend_M: 35880, pct: 18.4 },
-    Omnicom:   { spend_M: 34640, pct: 17.8 },
-    Dentsu:    { spend_M: 18770, pct: 9.7 },
-    Havas:     { spend_M: 2030,  pct: 1.0 },
-    IPG:       { spend_M: 1500,  pct: 0.8 },
-    "In-house":{ spend_M: 850,   pct: 0.4 }
+    Omnicom:   { spend_M: 74315, pct: 25.8 },
+    Publicis:  { spend_M: 67588, pct: 23.5 },
+    WPP:       { spend_M: 62585, pct: 21.7 },
+    Independents: { spend_M: 41056, pct: 14.2 },
+    Dentsu:    { spend_M: 30567, pct: 10.6 },
+    Havas:     { spend_M: 12075, pct: 4.2 }
   },
 
-  // Most common direction of account moves
+  // Most common direction of account moves (COMvergence Big 3 flows)
   movement_flows: [
-    { from: "WPP",      to: "Publicis", count: 11, spend_M: 11600 },
-    { from: "WPP",      to: "Omnicom",  count: 4,  spend_M: 4200 },
-    { from: "Publicis", to: "WPP",      count: 4,  spend_M: 2700 },
-    { from: "Publicis", to: "Omnicom",  count: 3,  spend_M: 5700 },
-    { from: "Dentsu",   to: "Publicis", count: 2,  spend_M: 1900 },
-    { from: "Omnicom",  to: "WPP",      count: 1,  spend_M: 1200 },
-    { from: "Omnicom",  to: "Publicis", count: 1,  spend_M: 700 },
-    { from: "IPG",      to: "WPP",      count: 1,  spend_M: 2000 },
-    { from: "Havas",    to: "Omnicom",  count: 1,  spend_M: 900 }
+    { from: "WPP",      to: "Publicis", count: 670, spend_M: 14637 },
+    { from: "WPP",      to: "Omnicom",  count: 874, spend_M: 10813 },
+    { from: "Omnicom",  to: "Publicis", count: 509, spend_M: 9011 },
+    { from: "Omnicom",  to: "WPP",      count: 511, spend_M: 7281 },
+    { from: "Publicis", to: "WPP",      count: 262, spend_M: 4661 },
+    { from: "Publicis", to: "Omnicom",  count: 283, spend_M: 4438 }
   ],
 
   // Avg time since last agency review by holding group
@@ -74,12 +70,13 @@ const ADVERTISER_STATS = {
     note: "37% of advertisers haven't reviewed since before 2023"
   },
 
-  // Account move economics
+  // Account move economics (COMvergence Big 3 flows)
   move_economics: {
-    avg_spend_per_move_M: 1216,
-    median_spend_per_move_M: 900,
-    total_spend_moved_M: 37700,
-    total_moves: 31
+    avg_spend_per_move_M: 16.4,
+    median_spend_per_move_M: 3.5,
+    total_spend_moved_M: 50841,
+    total_moves: 3110,
+    note: "COMvergence tracks all moves including local market-level assignments"
   },
 
   // Annual pace of moves — 2x acceleration post-2021

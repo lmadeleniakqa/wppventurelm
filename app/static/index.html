@@ -86,6 +86,7 @@
         <button data-p="simulator">Simulator</button>
         <button data-p="detail">Detail</button>
         <button data-p="intel">Market Intelligence</button>
+        <button data-p="comvergence">COMvergence</button>
         <button data-p="profiles">People Intel</button>
     </nav>
 </div>
@@ -123,7 +124,7 @@
 
 <!-- ===== COMPETITION ===== -->
 <div class="wrap"><div class="panel" id="p-competition">
-    <div class="callout"><h3>Zero-Sum Dynamics</h3><p>When one holding group wins a major account, it almost always comes <strong>at the expense of another</strong>. Over 10 years, $31B in media spend changed hands between the Big 3. Publicis captured the most; WPP lost the most.</p></div>
+    <div class="callout"><h3>Zero-Sum Dynamics</h3><p>When one holding group wins a major account, it almost always comes <strong>at the expense of another</strong>. COMvergence data shows <strong>$50.9B</strong> in media spend changed hands between the Big 3 across 3,110 account moves. WPP lost <strong>$25.5B</strong> to Publicis and Omnicom combined, winning only <strong>$12.0B</strong> back — a <strong>$13.5B net deficit</strong>.</p></div>
     <div class="row r3" id="compKpis"></div>
     <div class="section">
         <h2>Cumulative Net Account Spend ($M)</h2>
@@ -138,7 +139,7 @@
 
 <!-- ===== WIN STREAKS ===== -->
 <div class="wrap"><div class="panel" id="p-streaks">
-    <div class="callout"><h3>The Magic Number Is 3</h3><p>When Publicis hit <strong>3 consecutive net-win quarters</strong>, average quarterly return was <strong>+24%</strong> with <strong>+15.5% excess vs S&P 500</strong>. WPP under Cindy Rose is currently at <strong>streak = 2</strong> (Estée Lauder Q1, Wendy's Q2). One more win in Q3 2026 triggers the pattern.</p></div>
+    <div class="callout"><h3>The Magic Number Is 3</h3><p>When Publicis hit <strong>3 consecutive net-win quarters</strong>, average quarterly return was <strong>+24%</strong> with <strong>+15.5% excess vs S&P 500</strong>. COMvergence confirms Publicis ran <strong>5 consecutive net-win quarters</strong> (2023-Q4 through 2025-Q2) — the longest streak on record. WPP's 2025 was devastating (lost Coca-Cola, Mars, Paramount, Bayer: <strong>-$2.5B net</strong>). The Estée Lauder win (Q1 2026, global consolidation) and Wendy's (Q2 2026, from Omnicom) start a potential recovery streak. One more win in Q3 2026 triggers the pattern.</p></div>
     <div class="section">
         <h2>Consecutive Wins → Stock Impact</h2>
         <div class="desc">Average quarterly return and excess vs S&P at each streak length.</div>
@@ -281,6 +282,58 @@
 
 </div></div>
 
+<!-- ===== COMVERGENCE ===== -->
+<div class="wrap"><div class="panel" id="p-comvergence">
+    <div class="callout"><h3>COMvergence Ground Truth</h3><p>40,592 agency assignments from COMvergence c-dash CARD — the definitive source for global media spend allocation. Click any account for full agency history.</p></div>
+
+    <!-- Portfolio KPIs -->
+    <div class="row r3" id="comvPortfolioKpis"></div>
+
+    <!-- Competitive Flow Matrix -->
+    <div class="section">
+        <h2>Competitive Flow Matrix</h2>
+        <div class="desc">Spend flows between holding groups. Each cell = $ moved from row to column via agency wins.</div>
+        <div style="overflow-x:auto" id="comvFlowMatrix"></div>
+    </div>
+
+    <!-- Win/Loss Timeline -->
+    <div class="section">
+        <h2>Net New Business by Year</h2>
+        <div class="desc">Account wins minus losses, weighted by spend. Based on COMvergence announcement dates.</div>
+        <div class="pills" id="comvTimelinePills"></div>
+        <div class="chart-wrap"><canvas id="comvTimelineChart"></canvas></div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="row r2">
+        <div class="section">
+            <h2>WPP Category Exposure</h2>
+            <div class="desc">Assignments and spend by sector — where is WPP most concentrated?</div>
+            <div id="comvCategories"></div>
+        </div>
+        <div class="section">
+            <h2>Geographic Footprint</h2>
+            <div class="desc">WPP assignments across regions.</div>
+            <div id="comvGeo"></div>
+        </div>
+    </div>
+
+    <!-- Top WPP Accounts (clickable) -->
+    <div class="section">
+        <h2>Largest WPP Accounts</h2>
+        <div class="desc">Click any account to see full COMvergence intelligence — agency history, competitive moves, market-by-market breakdown.</div>
+        <div id="comvTopAccounts"></div>
+    </div>
+</div></div>
+
+<!-- Advertiser Intelligence Modal -->
+<div id="advIntelModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background:rgba(0,0,0,0.5);overflow-y:auto" onclick="if(event.target===this)this.style.display='none'">
+    <div style="max-width:720px;margin:3rem auto;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:2rem;position:relative">
+        <button onclick="document.getElementById('advIntelModal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--faint);line-height:1">&times;</button>
+        <div id="advIntelContent"></div>
+    </div>
+</div>
+
 <!-- ===== PEOPLE INTEL ===== -->
 <div class="wrap"><div class="panel" id="p-profiles">
 
@@ -385,7 +438,7 @@
 <div class="wrap"><footer>
     <span>Source: Yahoo Finance. WPP (NYSE), Publicis (Euronext Paris), Omnicom (NYSE), S&P 500.</span><br>
     <span>Variance decomposition via OLS. Models trained in BigQuery ML (XGBoost, DNN, ARIMA+) and Vertex AI (PyTorch T4 GPU).</span><br>
-    <span>Account data from AdAge, Adweek, Campaign. 10 years, 7,443 daily observations, 17 features.</span>
+    <span>Account data from COMvergence c-dash CARD (40,592 assignments) + AdAge, Adweek, Campaign. 10 years, 7,443 daily observations, 22 features.</span>
 </footer></div>
 
 <script src="stock_data.js"></script>
@@ -401,6 +454,7 @@
 <script src="advertisers_data.js"></script>
 <script src="advertiser_stats.js"></script>
 <script src="pitch_prediction.js"></script>
+<script src="comvergence_data.js"></script>
 <script>
 const C = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',SP500:'#C8C8CD'};
 const F = {WPP:'rgba(123,97,255,0.06)',Publicis:'rgba(74,234,220,0.06)',Omnicom:'rgba(255,107,53,0.06)'};
@@ -1375,7 +1429,7 @@ function initIntel(){
             // Score bar width (out of 100)
             var barW = Math.min(100, p.composite_score);
 
-            h += '<div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:3px;padding:1rem 1.25rem">';
+            h += '<div onclick="openAdvIntel(\''+p.name.replace(/'/g,"\\'")+'\')" style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:3px;padding:1rem 1.25rem;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
 
             // Top line: name + score
             h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">';
@@ -1603,6 +1657,237 @@ function initIntel(){
     }
 }
 
+// ===================================================================
+// COMVERGENCE TAB — Ground truth agency intelligence
+// ===================================================================
+function openAdvIntel(name){
+    if(typeof COMVERGENCE==='undefined') return;
+    var intel = COMVERGENCE.advertiser_intel[name];
+    var el = document.getElementById('advIntelContent');
+    if(!intel){ el.innerHTML='<p style="color:var(--muted)">No COMvergence data for "'+name+'"</p>'; document.getElementById('advIntelModal').style.display='block'; return; }
+
+    var h='';
+    h+='<p class="eyebrow" style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);margin-bottom:0.25rem">ADVERTISER INTELLIGENCE</p>';
+    h+='<h2 style="font-size:1.5rem;font-weight:500;letter-spacing:-0.02em;margin-bottom:0.25rem">'+name+'</h2>';
+    h+='<p style="font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem">'+intel.parent_co+' · '+intel.category+' · '+intel.top_brands+'</p>';
+
+    // KPIs
+    h+='<div class="row r4" style="margin-bottom:1.5rem">';
+    h+='<div class="card"><h3>2025 Spend</h3><div class="big" style="font-size:1.5rem">$'+(intel.total_spend_2025_m>=1000?(intel.total_spend_2025_m/1000).toFixed(1)+'B':Math.round(intel.total_spend_2025_m)+'M')+'</div></div>';
+    h+='<div class="card"><h3>Markets</h3><div class="big" style="font-size:1.5rem">'+intel.n_markets+'</div></div>';
+    var mainHolding = intel.holdings.length>0 ? intel.holdings[0] : ['—',0];
+    h+='<div class="card"><h3>Primary Holder</h3><div class="big" style="font-size:1.2rem">'+mainHolding[0]+'</div><div class="sub">'+mainHolding[1]+' assignments</div></div>';
+    var holdingCount = intel.holdings.length;
+    h+='<div class="card"><h3>Fragmentation</h3><div class="big" style="font-size:1.5rem">'+holdingCount+'</div><div class="sub">holding groups involved</div></div>';
+    h+='</div>';
+
+    // Holdings breakdown
+    if(intel.holdings.length>0){
+        h+='<div style="margin-bottom:1.5rem">';
+        h+='<h3 style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);font-weight:400;margin-bottom:0.75rem">HOLDING GROUP SPLIT</h3>';
+        var totalAssign = intel.holdings.reduce(function(s,x){return s+x[1];},0);
+        intel.holdings.forEach(function(pair){
+            var pct = Math.round(pair[1]/totalAssign*100);
+            var barCol = pair[0]==='WPP'?'var(--wpp)':pair[0]==='Publicis Groupe'?'var(--pub)':pair[0]==='Omnicom'?'var(--omc)':'var(--faint)';
+            h+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;font-size:0.8rem">';
+            h+='<span style="min-width:120px">'+pair[0]+'</span>';
+            h+='<div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barCol+';border-radius:4px"></div></div>';
+            h+='<span style="min-width:50px;text-align:right;color:var(--muted)">'+pair[1]+' ('+pct+'%)</span>';
+            h+='</div>';
+        });
+        h+='</div>';
+    }
+
+    // Agency Move History
+    if(intel.moves && intel.moves.length>0){
+        h+='<h3 style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);font-weight:400;margin-bottom:0.75rem">AGENCY MOVE HISTORY</h3>';
+        h+='<table><thead><tr><th>Date</th><th style="text-align:left">From</th><th style="text-align:left">To</th><th style="text-align:left">Region</th><th>Spend</th></tr></thead><tbody>';
+        intel.moves.forEach(function(m){
+            var fromCol = m.from_h==='WPP'?'var(--wpp)':m.from_h==='Publicis Groupe'?'var(--pub)':m.from_h==='Omnicom'?'var(--omc)':'var(--muted)';
+            var toCol = m.to_h==='WPP'?'var(--wpp)':m.to_h==='Publicis Groupe'?'var(--pub)':m.to_h==='Omnicom'?'var(--omc)':'var(--muted)';
+            h+='<tr>';
+            h+='<td>'+m.date+'</td>';
+            h+='<td style="text-align:left"><span style="color:'+fromCol+';font-weight:500">'+m.from_h+'</span><br><span style="font-size:0.7rem;color:var(--faint)">'+m.from_a+'</span></td>';
+            h+='<td style="text-align:left"><span style="color:'+toCol+';font-weight:500">'+m.to_h+'</span><br><span style="font-size:0.7rem;color:var(--faint)">'+m.to_a+'</span></td>';
+            h+='<td style="text-align:left">'+m.zone+'</td>';
+            h+='<td>$'+m.spend_m+'M</td>';
+            h+='</tr>';
+        });
+        h+='</tbody></table>';
+    } else {
+        h+='<p style="font-size:0.8rem;color:var(--faint);margin-top:1rem">No competitive moves recorded — account has been stable.</p>';
+    }
+
+    el.innerHTML = h;
+    document.getElementById('advIntelModal').style.display='block';
+}
+
+function initComvergence(){
+    if(typeof COMVERGENCE==='undefined') return;
+    var CV = COMVERGENCE;
+    var HC = {WPP:'#7B61FF','Publicis Groupe':'#4AEADC',Omnicom:'#FF6B35',dentsu:'#FF9F43',Havas:'#95a5a6',Independents:'#999'};
+    var big3 = ['WPP','Publicis Groupe','Omnicom'];
+
+    // ====== Portfolio KPIs ======
+    var kH = '';
+    big3.forEach(function(h){
+        var p = CV.portfolio[h];
+        if(!p) return;
+        var col = HC[h];
+        var yoy = p.spend_yoy_pct;
+        var yoyClass = yoy>=0 ? 'c-up' : 'c-dn';
+        kH += '<div class="card" style="border-top:3px solid '+col+'">';
+        kH += '<h3>'+h+'</h3>';
+        kH += '<div class="big">$'+(p.spend_2025_m/1000).toFixed(1)+'B</div>';
+        kH += '<div class="sub">'+p.assignments.toLocaleString()+' assignments · '+p.digital_share_pct+'% digital</div>';
+        kH += '<div style="margin-top:0.5rem;font-size:0.75rem" class="'+yoyClass+'">'+(yoy>=0?'+':'')+yoy+'% YoY</div>';
+        kH += '</div>';
+    });
+    document.getElementById('comvPortfolioKpis').innerHTML = kH;
+
+    // ====== Competitive Flow Matrix ======
+    var allH = ['WPP','Publicis Groupe','Omnicom','dentsu','Havas'];
+    var matrix = {};
+    allH.forEach(function(f){ matrix[f]={}; allH.forEach(function(t){ matrix[f][t]={count:0,spend_m:0}; }); });
+    CV.flows.forEach(function(fl){
+        if(matrix[fl.from] && matrix[fl.from][fl.to]){
+            matrix[fl.from][fl.to] = {count:fl.count, spend_m:fl.spend_m};
+        }
+    });
+
+    var mH = '<table><thead><tr><th style="text-align:left">From ↓ / To →</th>';
+    allH.forEach(function(t){ mH+='<th style="color:'+HC[t]+'">'+t.replace('Publicis Groupe','Publicis')+'</th>'; });
+    mH+='<th style="color:var(--down)">Total Lost</th></tr></thead><tbody>';
+    allH.forEach(function(f){
+        mH+='<tr><td style="font-weight:500;color:'+HC[f]+'">'+f.replace('Publicis Groupe','Publicis')+'</td>';
+        var totalLost = 0;
+        allH.forEach(function(t){
+            if(f===t){ mH+='<td style="background:var(--border);color:var(--faint);font-size:0.7rem">—</td>'; return; }
+            var cell = matrix[f][t];
+            totalLost += cell.spend_m;
+            var intensity = Math.min(cell.spend_m/15000, 1);
+            var bg = cell.spend_m>0 ? 'rgba(222,53,11,'+(.05+intensity*.15)+')' : 'transparent';
+            mH+='<td style="background:'+bg+';font-size:0.75rem">';
+            if(cell.spend_m>0) mH+='$'+(cell.spend_m/1000).toFixed(1)+'B<br><span style="font-size:0.6rem;color:var(--faint)">'+cell.count+' accounts</span>';
+            else mH+='—';
+            mH+='</td>';
+        });
+        mH+='<td style="color:var(--down);font-weight:500">$'+(totalLost/1000).toFixed(1)+'B</td>';
+        mH+='</tr>';
+    });
+    mH+='</tbody></table>';
+    document.getElementById('comvFlowMatrix').innerHTML = mH;
+
+    // ====== Net New Business Timeline Chart ======
+    var tPills = '';
+    big3.forEach(function(h,i){ tPills+='<button class="pill'+(i===0?' on':'')+'" data-v="'+h+'" style="color:'+(i===0?HC[h]:'var(--faint)')+'">'+h.replace('Publicis Groupe','Publicis')+'</button>'; });
+    document.getElementById('comvTimelinePills').innerHTML = tPills;
+
+    function buildTimelineData(holding){
+        var tl = CV.timeline[holding]||{};
+        var years = Object.keys(tl).map(Number).filter(function(y){return y>=2016;}).sort();
+        return {
+            labels: years,
+            wins: years.map(function(y){ return tl[y]?tl[y].win_spend_m/1000:0; }),
+            losses: years.map(function(y){ return tl[y]?-tl[y].loss_spend_m/1000:0; }),
+            netCounts: years.map(function(y){ return tl[y]?(tl[y].wins-tl[y].losses):0; }),
+        };
+    }
+
+    var tlData = buildTimelineData('WPP');
+    var tlCtx = document.getElementById('comvTimelineChart').getContext('2d');
+    var tlChart = new Chart(tlCtx, {
+        type: 'bar',
+        data: {
+            labels: tlData.labels,
+            datasets: [
+                { label: 'Wins ($B)', data: tlData.wins, backgroundColor: 'rgba(34,160,107,0.7)', borderRadius: 2 },
+                { label: 'Losses ($B)', data: tlData.losses, backgroundColor: 'rgba(222,53,11,0.7)', borderRadius: 2 },
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: { grid:{display:false}, ticks:{font:{...cf,size:10},color:'#999'} },
+                y: { grid:{color:gc}, ticks:{font:{...cf,size:10},color:'#999',callback:function(v){return '$'+Math.abs(v).toFixed(1)+'B';}}, title:{display:true,text:'SPEND ($B)',font:{...cf,size:9},color:'#999'} }
+            },
+            plugins: {
+                legend:{position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'rect',padding:8}},
+                tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2,
+                    callbacks:{label:function(ctx){return ctx.dataset.label+': $'+Math.abs(ctx.raw).toFixed(1)+'B';}}}
+            }
+        }
+    });
+    charts.comvTimeline = tlChart;
+
+    document.querySelectorAll('#comvTimelinePills .pill').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('#comvTimelinePills .pill').forEach(function(b){b.classList.remove('on');b.style.color='var(--faint)';});
+            btn.classList.add('on');
+            btn.style.color=HC[btn.dataset.v]||'var(--faint)';
+            var d = buildTimelineData(btn.dataset.v);
+            tlChart.data.labels = d.labels;
+            tlChart.data.datasets[0].data = d.wins;
+            tlChart.data.datasets[1].data = d.losses;
+            tlChart.update();
+        });
+    });
+
+    // ====== Category Breakdown ======
+    var cats = CV.wpp_categories;
+    var catH = '<table><thead><tr><th style="text-align:left">Category</th><th>Accounts</th><th>Spend 2025</th><th style="text-align:left">Share</th></tr></thead><tbody>';
+    var totalCatSpend = Object.values(cats).reduce(function(s,c){return s+c.spend_m;},0);
+    Object.keys(cats).forEach(function(cat){
+        var c = cats[cat];
+        var pct = (c.spend_m/totalCatSpend*100).toFixed(1);
+        catH+='<tr><td style="text-align:left;font-weight:500">'+cat+'</td>';
+        catH+='<td>'+c.count+'</td>';
+        catH+='<td>$'+(c.spend_m/1000).toFixed(1)+'B</td>';
+        catH+='<td style="text-align:left"><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:60px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--wpp);border-radius:3px"></div></div><span style="font-size:0.7rem;color:var(--muted)">'+pct+'%</span></div></td>';
+        catH+='</tr>';
+    });
+    catH+='</tbody></table>';
+    document.getElementById('comvCategories').innerHTML = catH;
+
+    // ====== Geographic Footprint ======
+    var geo = CV.wpp_geo;
+    var gH = '';
+    var totalGeoSpend = Object.values(geo).reduce(function(s,g){return s+g.spend_m;},0);
+    var regionColors = {EMEA:'#7B61FF',APAC:'#4AEADC','N.A.':'#FF6B35',LATAM:'#FBBF24'};
+    Object.keys(geo).forEach(function(zone){
+        var g = geo[zone];
+        var pct = (g.spend_m/totalGeoSpend*100).toFixed(1);
+        gH+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">';
+        gH+='<span style="min-width:50px;font-weight:500;font-size:0.85rem">'+zone+'</span>';
+        gH+='<div style="flex:1;height:12px;background:var(--border);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(regionColors[zone]||'var(--faint)')+';border-radius:6px"></div></div>';
+        gH+='<span style="min-width:100px;text-align:right;font-size:0.8rem;color:var(--muted)">$'+(g.spend_m/1000).toFixed(1)+'B · '+g.assignments+'</span>';
+        gH+='</div>';
+    });
+    document.getElementById('comvGeo').innerHTML = gH;
+
+    // ====== Top WPP Accounts (clickable) ======
+    var accts = CV.wpp_top_accounts;
+    var aH = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0.75rem;margin-top:1rem">';
+    accts.forEach(function(a){
+        var advName = a.advertiser;
+        aH+='<div onclick="openAdvIntel(\''+advName.replace(/'/g,"\\'")+'\')" style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--wpp);border-radius:3px;padding:0.75rem 1rem;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+        aH+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        aH+='<div><div style="font-weight:500;font-size:0.85rem">'+advName+'</div>';
+        aH+='<div style="font-size:0.65rem;color:var(--faint)">'+a.category+' · '+a.zone+' · '+a.country+'</div></div>';
+        aH+='<div style="text-align:right"><div style="font-size:1.1rem;font-weight:500;letter-spacing:-0.02em">$'+(a.spend_2025_m>=1000?(a.spend_2025_m/1000).toFixed(1)+'B':Math.round(a.spend_2025_m)+'M')+'</div>';
+        aH+='<div style="font-size:0.6rem;color:var(--faint)">'+a.agency+'</div></div>';
+        aH+='</div></div>';
+    });
+    aH+='</div>';
+    document.getElementById('comvTopAccounts').innerHTML = aH;
+}
+
+// Also wire up advertiser click-through in Market Intelligence priority cards
+(function(){
+    var origRender = window._origRenderPriority;
+    // We patch renderPriority in initIntel after it runs
+})();
+
 function show(p){
     if(!inited[p]){
         if(p==='overview')initOverview();
@@ -1612,6 +1897,7 @@ function show(p){
         if(p==='simulator')initSimulator();
         if(p==='detail')initDetail();
         if(p==='intel')initIntel();
+        if(p==='comvergence')initComvergence();
         inited[p]=true;
     }
 }

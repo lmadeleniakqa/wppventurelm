@@ -217,4 +217,16 @@ def update_stock_data(request):
         "retrain_needed": retrain_needed,
     }
     results["gcs_updated"] = True
+
+    # 6. Check COMvergence daily features view is accessible (no-op if not loaded yet)
+    try:
+        comv_check = bq.query(f"""
+            SELECT COUNT(*) as n FROM `{PROJECT}.media_stocks.comvergence_daily_features`
+            WHERE date = CURRENT_DATE()
+        """).result()
+        for row in comv_check:
+            results["comvergence_features_today"] = row["n"]
+    except Exception as e:
+        results["comvergence_note"] = f"comvergence_daily_features not available yet: {e}"
+
     return json.dumps(results), 200, {"Content-Type": "application/json"}

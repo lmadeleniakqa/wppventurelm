@@ -26,6 +26,9 @@ FEATURE_COLS = [
     "sp_ret_1d", "sp_ret_5d", "sp_ret_20d",
     "rel_5d", "rel_20d", "vol_20d", "beta_60d", "rsi_14",
     "net_wins", "net_spend_bn", "gdelt_tone", "gdelt_volume",
+    "comv_net_wins_90d", "comv_net_spend_90d_bn",
+    "comv_market_share_pct", "comv_digital_share_pct",
+    "comv_competitive_pressure", "comv_concentration_hhi",
 ]
 
 
@@ -53,7 +56,9 @@ def train_evolved_v2(X_train, y_train, X_val, y_val):
         "reg_alpha": 0.0,
         "reg_lambda": 1.0,
         "random_state": 42,
-        "monotone_constraints": (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0),
+        # 22 features: net_wins(12)+1, comv_net_wins_90d(16)+1, comv_net_spend_90d_bn(17)+1,
+        # comv_market_share_pct(18)+1, comv_competitive_pressure(20)-1, comv_concentration_hhi(21)-1
+        "monotone_constraints": (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, -1, -1),
     }
 
     model = xgb.train(
@@ -80,8 +85,17 @@ def retrain_model(request):
     # 1. Load data from BigQuery
     bq = bigquery.Client(project=PROJECT)
     df = bq.query(f"""
-        SELECT * FROM `{PROJECT}.media_stocks.daily_features`
-        WHERE ticker = 'WPP' ORDER BY date
+        SELECT d.*,
+            COALESCE(c.comv_net_wins_90d, 0) AS comv_net_wins_90d,
+            COALESCE(c.comv_net_spend_90d_bn, 0) AS comv_net_spend_90d_bn,
+            COALESCE(c.comv_market_share_pct, 0) AS comv_market_share_pct,
+            COALESCE(c.comv_digital_share_pct, 0) AS comv_digital_share_pct,
+            COALESCE(c.comv_competitive_pressure, 0) AS comv_competitive_pressure,
+            COALESCE(c.comv_concentration_hhi, 0) AS comv_concentration_hhi
+        FROM `{PROJECT}.media_stocks.daily_features` d
+        LEFT JOIN `{PROJECT}.media_stocks.comvergence_daily_features` c
+            ON d.date = c.date AND d.ticker = c.ticker
+        WHERE d.ticker = 'WPP' ORDER BY d.date
     """).result().to_dataframe()
 
     X = df[FEATURE_COLS].values.astype(np.float32)

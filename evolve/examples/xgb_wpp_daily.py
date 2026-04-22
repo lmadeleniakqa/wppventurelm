@@ -45,9 +45,11 @@ PARAMS = {
     "scale_pos_weight": 1.0,
     "max_delta_step": 0,
     "random_state": 42,
-    # Monotonic constraint: net_wins (index 12) must increase prediction.
-    # This is the one evolved idea proven to transfer to real data.
-    "monotone_constraints": (0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
+    # Monotonic constraints (22 features):
+    # net_wins (12): +1, comv_net_wins_90d (16): +1, comv_net_spend_90d_bn (17): +1,
+    # comv_market_share_pct (18): +1, comv_digital_share_pct (19): 0,
+    # comv_competitive_pressure (20): -1, comv_concentration_hhi (21): -1
+    "monotone_constraints": (0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0,-1,-1),
 }
 NUM_BOOST_ROUND = 300
 EARLY_STOPPING_ROUNDS = 15
@@ -58,7 +60,7 @@ THRESHOLD = 0.5
 # EVOLVE-BLOCK-START: FEATURE_ENGINEERING
 def engineer_features(X, feature_names):
     """
-    Feature engineering on the 16 raw features.
+    Feature engineering on the 22 raw features.
     Returns (X_new, new_feature_names).
 
     Feature indices:
@@ -67,21 +69,27 @@ def engineer_features(X, feature_names):
         7: rel_5d, 8: rel_20d,
         9: vol_20d, 10: beta_60d, 11: rsi_14,
         12: net_wins, 13: net_spend_bn,
-        14: gdelt_tone, 15: gdelt_volume
+        14: gdelt_tone, 15: gdelt_volume,
+        --- COMvergence features (from 40K agency assignment records) ---
+        16: comv_net_wins_90d,        17: comv_net_spend_90d_bn,
+        18: comv_market_share_pct,    19: comv_digital_share_pct,
+        20: comv_competitive_pressure, 21: comv_concentration_hhi
 
     HIGH IMPACT ideas (these create new signal, not just tune existing):
-    - Interaction: net_wins * ret_20d (competition + momentum alignment)
+    - Interaction: comv_net_wins_90d * ret_20d (COMvergence competition + momentum)
+    - Interaction: comv_competitive_pressure * vol_20d (losses hurt more when volatile)
+    - Interaction: comv_market_share_pct * rsi_14 (share position + overbought/oversold)
     - Interaction: gdelt_tone * gdelt_volume (volume-weighted sentiment)
     - Volatility-adjusted returns: ret_5d / (vol_20d + 1e-6)
     - RSI regime flags: overbought (rsi > 70), oversold (rsi < 30)
     - Momentum crossover: ret_5d - ret_20d (short vs medium trend)
-    - Competition intensity: net_wins * net_spend_bn
+    - COMvergence spend velocity: comv_net_spend_90d_bn * ret_5d
     - Winsorize extreme values (clip at 1st/99th percentile)
 
     IMPORTANT: New features must help the model find signal it can't find
     from the raw features alone. XGBoost can already do splits on individual
     features, so polynomial/binning of single features adds little.
-    Focus on CROSS-FEATURE interactions.
+    Focus on CROSS-FEATURE interactions, especially COMvergence × price features.
     """
     return X, feature_names
 # EVOLVE-BLOCK-END: FEATURE_ENGINEERING
@@ -165,18 +173,31 @@ SYSTEM_PROMPT = """You are evolving an XGBoost classifier that predicts WPP stoc
 - Monotonic constraint on net_wins (index 12) → domain knowledge that transfers
 - The baseline moderate config is genuinely strong — don't blow it up
 
+## NEW: COMvergence Competition Data (features 16-21)
+Features 16-21 are from COMvergence c-dash CARD — 40,592 real agency assignment records
+with precise spend amounts and dates. This is ground-truth competitive intelligence.
+- comv_net_wins_90d (16): 90-day rolling net account wins, monotonic +1
+- comv_net_spend_90d_bn (17): 90-day net spend flow in $B, monotonic +1
+- comv_market_share_pct (18): WPP share of tracked spend, monotonic +1
+- comv_digital_share_pct (19): % of WPP portfolio that is digital
+- comv_competitive_pressure (20): spend lost to rivals in 180d ($B), monotonic -1
+- comv_concentration_hhi (21): category concentration risk (Herfindahl), monotonic -1
+
 ## High-Value Directions (focus here)
 
 ### Feature Engineering (HIGHEST IMPACT — creates new signal)
-- net_wins * ret_20d — competition momentum alignment
+- comv_net_wins_90d * ret_20d — COMvergence competition + momentum alignment
+- comv_competitive_pressure * vol_20d — losses amplified in volatile markets
+- comv_market_share_pct * rsi_14 — share position + overbought/oversold regime
+- comv_net_spend_90d_bn * ret_5d — spend velocity + short-term momentum
 - gdelt_tone * gdelt_volume — volume-weighted sentiment
 - ret_5d / (vol_20d + 1e-6) — volatility-adjusted momentum
 - ret_5d - ret_20d — short vs medium momentum crossover
-- net_wins * net_spend_bn — competition intensity
 - RSI regime flags: (rsi > 70) as overbought, (rsi < 30) as oversold
 - Winsorize features at 1st/99th percentile to reduce outlier impact
 
 ### Structural Constraints (transfers to real data)
+- Monotonic constraints on COMvergence features are already set — proven domain knowledge
 - Additional monotonic constraints: vol_20d should be negative (high vol = bearish)
 - Feature interaction constraints between correlated features
 - Sample weighting: upweight recent 3 years (market regimes change)
@@ -381,9 +402,12 @@ def _generate_synthetic_data(difficulty: str = "medium"):
         "vol_20d", "beta_60d", "rsi_14",
         "net_wins", "net_spend_bn",
         "gdelt_tone", "gdelt_volume",
+        "comv_net_wins_90d", "comv_net_spend_90d_bn",
+        "comv_market_share_pct", "comv_digital_share_pct",
+        "comv_competitive_pressure", "comv_concentration_hhi",
     ]
 
-    X = np.zeros((n_samples, 16), dtype=np.float32)
+    X = np.zeros((n_samples, 22), dtype=np.float32)
     X[:, 0] = np.random.normal(0.0, 1.5, n_samples)
     X[:, 1] = np.random.normal(0.05, 3.0, n_samples)
     X[:, 2] = np.random.normal(0.2, 6.0, n_samples)
@@ -401,10 +425,18 @@ def _generate_synthetic_data(difficulty: str = "medium"):
     X[:, 13] = np.abs(np.random.normal(0.5, 0.3, n_samples))
     X[:, 14] = np.random.normal(0.0, 1.0, n_samples)
     X[:, 15] = np.abs(np.random.normal(100, 50, n_samples))
+    # COMvergence synthetic features (correlated with net_wins for realism)
+    X[:, 16] = X[:, 12] * 3 + np.random.normal(0, 2, n_samples)  # comv_net_wins_90d
+    X[:, 17] = X[:, 13] * 0.5 + np.random.normal(0, 0.2, n_samples)  # comv_net_spend_90d_bn
+    X[:, 18] = np.clip(np.random.normal(18, 3, n_samples), 5, 35)  # comv_market_share_pct
+    X[:, 19] = np.clip(np.random.normal(55, 10, n_samples), 20, 90)  # comv_digital_share_pct
+    X[:, 20] = np.abs(np.random.normal(2.0, 1.0, n_samples))  # comv_competitive_pressure
+    X[:, 21] = np.clip(np.random.normal(0.12, 0.03, n_samples), 0.05, 0.3)  # comv_concentration_hhi
 
     noise_scale = {"easy": 0.3, "medium": 0.6, "hard": 1.0}[difficulty]
     signal = (0.15 * X[:, 12] - 0.008 * X[:, 9] + 0.01 * X[:, 6]
-              + 0.08 * X[:, 13] + 0.005 * X[:, 2] + 0.02 * X[:, 14])
+              + 0.08 * X[:, 13] + 0.005 * X[:, 2] + 0.02 * X[:, 14]
+              + 0.05 * X[:, 16] + 0.10 * X[:, 17] - 0.03 * X[:, 20])
     noise = noise_scale * np.random.randn(n_samples)
     y = (signal + noise > np.median(signal)).astype(np.float32)
 
@@ -432,9 +464,19 @@ def _load_bigquery_data():
     from google.cloud import bigquery
     client = bigquery.Client(project="na-analytics")
     query = """
-        SELECT * FROM `na-analytics.media_stocks.daily_features`
-        WHERE ticker = 'WPP'
-        ORDER BY date
+        SELECT
+            d.*,
+            COALESCE(c.comv_net_wins_90d, 0) AS comv_net_wins_90d,
+            COALESCE(c.comv_net_spend_90d_bn, 0) AS comv_net_spend_90d_bn,
+            COALESCE(c.comv_market_share_pct, 0) AS comv_market_share_pct,
+            COALESCE(c.comv_digital_share_pct, 0) AS comv_digital_share_pct,
+            COALESCE(c.comv_competitive_pressure, 0) AS comv_competitive_pressure,
+            COALESCE(c.comv_concentration_hhi, 0) AS comv_concentration_hhi
+        FROM `na-analytics.media_stocks.daily_features` d
+        LEFT JOIN `na-analytics.media_stocks.comvergence_daily_features` c
+            ON d.date = c.date AND d.ticker = c.ticker
+        WHERE d.ticker = 'WPP'
+        ORDER BY d.date
     """
     df = client.query(query).to_dataframe()
 
@@ -445,6 +487,9 @@ def _load_bigquery_data():
         "vol_20d", "beta_60d", "rsi_14",
         "net_wins", "net_spend_bn",
         "gdelt_tone", "gdelt_volume",
+        "comv_net_wins_90d", "comv_net_spend_90d_bn",
+        "comv_market_share_pct", "comv_digital_share_pct",
+        "comv_competitive_pressure", "comv_concentration_hhi",
     ]
     X = df[feature_cols].values.astype(np.float32)
     y = df["target_direction"].values.astype(np.float32)
