@@ -499,11 +499,12 @@
         // Build graph — only CLIENT companies with relationship scores
         var nodes=[], links=[], nodeMap={};
 
-        // Only client companies with scores > 0
+        // Client companies with relationship scores > 0
+        // pool may be 'client', '' (legacy), or missing — include all non-agency
         var scoredClients={};
         Object.keys(PI.scores).forEach(function(co){
             var s=PI.scores[co], p=PI.profiles[co];
-            if(p && p.pool==='client' && ((s.wpp_score||0)+(s.comp_score||0)>0))
+            if(p && p.pool!=='agency' && ((s.wpp_score||0)+(s.comp_score||0)>0))
                 scoredClients[co]=true;
         });
 
