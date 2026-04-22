@@ -496,33 +496,26 @@
         }
         resize();
 
-        // Build graph — only companies with connections (imminent competition)
+        // Build graph — only CLIENT companies with relationship scores
         var nodes=[], links=[], nodeMap={};
 
-        // Find companies that have school connections
-        var connectedCos={};
-        PI.school_overlaps.forEach(function(o){
-            connectedCos[o.agency_co]=true; connectedCos[o.client_co]=true;
-        });
-        // Also include companies with relationship scores
+        // Only client companies with scores > 0
+        var scoredClients={};
         Object.keys(PI.scores).forEach(function(co){
-            var s=PI.scores[co];
-            if((s.wpp_score||0)+(s.comp_score||0)>0) connectedCos[co]=true;
+            var s=PI.scores[co], p=PI.profiles[co];
+            if(p && p.pool==='client' && ((s.wpp_score||0)+(s.comp_score||0)>0))
+                scoredClients[co]=true;
         });
 
         function buildGraph(filterMode){
             nodes=[]; links=[]; nodeMap={};
             var holdingSeen={}, companySeen={};
-            var holdingAngles={'WPP':0,'Publicis Groupe':1.2,'Omnicom':2.4,'dentsu':3.6,'Havas':4.8,'Mixed':5.5};
+            var holdingAngles={'WPP':0,'Publicis Groupe':1.2,'Publicis':1.2,'Omnicom':2.4,'dentsu':3.6,'Dentsu':3.6,'Havas':4.8,'Mixed':5.5};
 
-            // Determine which companies to show
             var showCos={};
-            Object.keys(PI.profiles).forEach(function(co){
-                var p=PI.profiles[co];
-                var h=p.holding||'Other';
-                if(filterMode==='WPP' && h!=='WPP' && !connectedCos[co]) return;
-                if(filterMode==='connections' && !connectedCos[co]) return;
-                if(filterMode==='all' && !connectedCos[co]) return; // default: only connected
+            Object.keys(scoredClients).forEach(function(co){
+                var h=(PI.profiles[co]||{}).holding||'Other';
+                if(filterMode==='WPP' && h!=='WPP') return;
                 showCos[co]=true;
             });
 
@@ -556,26 +549,56 @@
                     links.push({source:nodeMap['h:'+h], target:nodes.length-1, strength:0.4, color:'rgba(0,0,0,0.08)'});
             });
 
-            // People with connections
-            var peopleInGraph={};
+            // People + agency nodes — only for overlaps touching visible client companies
+            var peopleInGraph={}, agencySeen={};
             PI.school_overlaps.forEach(function(o){
-                if(!companySeen[o.agency_co] && !companySeen[o.client_co]) return;
-                [[o.agency,o.agency_co,'agency'],[o.client,o.client_co,'client']].forEach(function(pair){
-                    var pId='p:'+pair[0]+'@'+pair[1];
-                    if(!peopleInGraph[pId] && companySeen[pair[1]]){
-                        peopleInGraph[pId]=true;
-                        var ph=(PI.profiles[pair[1]]||{}).holding||'';
-                        var parentIdx=nodeMap['c:'+pair[1]];
-                        var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*30:W*Math.random();
-                        var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*30:H*Math.random();
-                        var n={id:pId, label:pair[0], type:'person', company:pair[1], pool:pair[2],
-                            holding:ph, color:HC[ph]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
-                        nodeMap[pId]=nodes.length; nodes.push(n);
-                        if(parentIdx!==undefined)
-                            links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
-                    }
-                });
-                var aId='p:'+o.agency+'@'+o.agency_co, cId='p:'+o.client+'@'+o.client_co;
+                if(!companySeen[o.client_co]) return; // only if client company is visible
+
+                // Add agency company as a small node if not already
+                if(!agencySeen[o.agency_co] && PI.profiles[o.agency_co]){
+                    agencySeen[o.agency_co]=true;
+                    var ah=(PI.profiles[o.agency_co]||{}).holding||'';
+                    var angle=holdingAngles[ah]||0;
+                    var n={id:'a:'+o.agency_co, label:o.agency_co, type:'agency', holding:ah,
+                        color:HC[ah]||'#999', r:7, x:W/2+Math.cos(angle)*100+(Math.random()-0.5)*60,
+                        y:H/2+Math.sin(angle)*80+(Math.random()-0.5)*60, vx:0, vy:0};
+                    nodeMap[n.id]=nodes.length; nodes.push(n);
+                    // Link agency to its holding
+                    if(nodeMap['h:'+ah]!==undefined)
+                        links.push({source:nodeMap['h:'+ah], target:nodes.length-1, strength:0.3, color:'rgba(0,0,0,0.06)'});
+                }
+
+                // Agency person
+                var aId='p:'+o.agency+'@'+o.agency_co;
+                if(!peopleInGraph[aId]){
+                    peopleInGraph[aId]=true;
+                    var ah=(PI.profiles[o.agency_co]||{}).holding||'';
+                    var parentIdx=nodeMap['a:'+o.agency_co]||nodeMap['c:'+o.agency_co];
+                    var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*20:W/2;
+                    var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*20:H/2;
+                    var n={id:aId, label:o.agency, type:'person', company:o.agency_co, pool:'agency',
+                        holding:ah, color:HC[ah]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
+                    nodeMap[aId]=nodes.length; nodes.push(n);
+                    if(parentIdx!==undefined)
+                        links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
+                }
+
+                // Client person
+                var cId='p:'+o.client+'@'+o.client_co;
+                if(!peopleInGraph[cId]){
+                    peopleInGraph[cId]=true;
+                    var ch=(PI.profiles[o.client_co]||{}).holding||'';
+                    var parentIdx=nodeMap['c:'+o.client_co];
+                    var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*20:W/2;
+                    var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*20:H/2;
+                    var n={id:cId, label:o.client, type:'person', company:o.client_co, pool:'client',
+                        holding:ch, color:HC[ch]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
+                    nodeMap[cId]=nodes.length; nodes.push(n);
+                    if(parentIdx!==undefined)
+                        links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
+                }
+
+                // School connection (the key edge)
                 if(nodeMap[aId]!==undefined && nodeMap[cId]!==undefined)
                     links.push({source:nodeMap[aId], target:nodeMap[cId], strength:1.5, color:'rgba(123,97,255,0.5)', school:o.school, dashed:true});
             });
@@ -666,9 +689,15 @@
                 } else if(n.type==='company'){
                     ctx.fillStyle=isHover?n.color:(n.color+'CC'); ctx.fill();
                     if(isHover){ctx.strokeStyle=n.color;ctx.lineWidth=2;ctx.stroke();}
-                    ctx.fillStyle='#333'; ctx.font=(isHover?'bold ':'')+' 8px -apple-system,sans-serif';
+                    ctx.fillStyle='#333'; ctx.font=(isHover?'bold ':'')+'9px -apple-system,sans-serif';
                     ctx.textAlign='center'; ctx.textBaseline='top';
                     ctx.fillText(n.label.length>18?n.label.substring(0,16)+'..':n.label,n.x,n.y+n.r+3);
+                } else if(n.type==='agency'){
+                    ctx.fillStyle=n.color+'88'; ctx.fill();
+                    ctx.strokeStyle=n.color; ctx.lineWidth=1; ctx.stroke();
+                    ctx.fillStyle='#666'; ctx.font='7px -apple-system,sans-serif';
+                    ctx.textAlign='center'; ctx.textBaseline='top';
+                    ctx.fillText(n.label,n.x,n.y+n.r+2);
                 } else {
                     ctx.fillStyle=isHover?n.color:'rgba(123,97,255,0.6)'; ctx.fill();
                     if(isHover){
