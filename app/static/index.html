@@ -426,15 +426,43 @@
 
     </div>
 
-    <!-- Run instructions -->
-    <div class="callout">
-        <h3>How to Run</h3>
-        <p>
-            <code style="font-size:0.75rem;background:var(--elevated);padding:2px 6px;border-radius:2px">python scripts/run_linkedin_profiler.py --pool agency</code> → Scrape WPP + competitor agency people<br>
-            <code style="font-size:0.75rem;background:var(--elevated);padding:2px 6px;border-radius:2px">python scripts/run_linkedin_profiler.py --pool client</code> → Scrape advertiser marketing leaders<br>
-            <code style="font-size:0.75rem;background:var(--elevated);padding:2px 6px;border-radius:2px">python scripts/run_linkedin_profiler.py --relationships-only</code> → Recompute scores from existing data
-        </p>
+    <!-- Run controls -->
+    <h2 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);font-weight:400;margin-bottom:1rem">UPDATE DATA</h2>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem">
+        <button onclick="runProfiler('agency')" id="btnAgency" style="padding:0.6rem 1.25rem;background:var(--wpp);color:#fff;border:none;border-radius:3px;font-family:var(--font);font-size:0.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em">Scrape Agency Pool</button>
+        <button onclick="runProfiler('client')" id="btnClient" style="padding:0.6rem 1.25rem;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:var(--font);font-size:0.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em">Scrape Client Pool</button>
+        <button onclick="runProfiler('relationships')" id="btnRels" style="padding:0.6rem 1.25rem;background:var(--text);color:#fff;border:none;border-radius:3px;font-family:var(--font);font-size:0.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em">Recompute Relationships</button>
     </div>
+    <div id="profilerStatus" style="font-size:0.75rem;color:var(--muted);margin-bottom:2rem"></div>
+    <script>
+    function runProfiler(pool){
+        var btn=document.getElementById(pool==='agency'?'btnAgency':pool==='client'?'btnClient':'btnRels');
+        btn.disabled=true;btn.style.opacity='0.5';
+        document.getElementById('profilerStatus').textContent='Starting '+pool+' profiler...';
+        fetch('/api/profiler/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pool:pool})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+            document.getElementById('profilerStatus').innerHTML='<span style="color:var(--up)">Job started:</span> '+d.job_id+' ('+d.pool+'). Streaming to BigQuery. Check status below.';
+            // Poll status
+            var interval=setInterval(function(){
+                fetch('/api/profiler/status').then(function(r){return r.json();}).then(function(s){
+                    var jobs=Object.entries(s);
+                    var latest=jobs.filter(function(j){return j[1].pool===pool;}).pop();
+                    if(latest && !latest[1].running){
+                        clearInterval(interval);
+                        btn.disabled=false;btn.style.opacity='1';
+                        var resultColor=latest[1].result==='done'?'var(--up)':'var(--down)';
+                        document.getElementById('profilerStatus').innerHTML='<span style="color:'+resultColor+'">'+latest[1].result+'</span> — '+pool+' pool completed.';
+                    }
+                });
+            },10000);
+        })
+        .catch(function(e){
+            btn.disabled=false;btn.style.opacity='1';
+            document.getElementById('profilerStatus').innerHTML='<span style="color:var(--down)">Error: '+e+'</span>';
+        });
+    }
+    </script>
 
 </div></div>
 

@@ -334,14 +334,34 @@ def parse_profile(raw, company):
 
 
 def store_profiles(bq, profiles):
-    """Insert parsed profiles into BigQuery."""
+    """Insert parsed profiles into BigQuery using streaming insert with retry.
+
+    Streams each batch immediately so data is persisted even if later
+    companies fail. Retries once on transient errors.
+    """
     if not profiles:
         return 0
     table_ref = f"{PROJECT}.{DATASET}.linkedin_profiles"
-    errors = bq.insert_rows_json(table_ref, profiles)
-    if errors:
-        print(f"BQ insert errors: {errors[:3]}")
-    return len(profiles)
+    stored = 0
+    # Insert in batches of 50 to avoid payload limits
+    for i in range(0, len(profiles), 50):
+        batch = profiles[i:i+50]
+        for attempt in range(2):
+            errors = bq.insert_rows_json(table_ref, batch)
+            if not errors:
+                stored += len(batch)
+                break
+            elif attempt == 0:
+                print(f"    BQ insert retry ({len(errors)} errors)...")
+                time.sleep(2)
+            else:
+                print(f"    BQ insert FAILED: {errors[:2]}")
+                # Store failed batch to local file as backup
+                backup_path = f"/tmp/linkedin_profiles_failed_{int(time.time())}.json"
+                with open(backup_path, "w") as f:
+                    json.dump(batch, f)
+                print(f"    Saved failed batch to {backup_path}")
+    return stored
 
 
 def update_company_summary(bq, company, profile_count):
