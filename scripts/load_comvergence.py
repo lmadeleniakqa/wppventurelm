@@ -115,6 +115,83 @@ def load_excel(filepath):
     return df
 
 
+def aggregate_global_events(df, window_days=28, min_spend_m=50):
+    """Aggregate local market-level moves into global events.
+
+    COMvergence tracks at the local level (e.g., Coca-Cola moving in China, France,
+    Brazil are separate rows). This function clusters moves for the same advertiser,
+    from/to the same holdings, within a window_days period into a single global event.
+
+    Only includes events with total spend >= min_spend_m.
+
+    Returns a DataFrame of global move events.
+    """
+    moves = df[df["move_type"].isin(["Agency", "New-assignment"])].copy()
+    moves["spend"] = moves["total_spend_2025_m"].fillna(
+        moves["total_spend_2024_m"]).fillna(
+        moves["total_spend_2023_m"]).fillna(0)
+    moves["announce_date"] = pd.to_datetime(moves["last_announcement_date"], errors="coerce")
+    moves = moves.dropna(subset=["announce_date"])
+    moves = moves[moves["holding"] != moves["last_incumbent_holding"]]
+
+    global_events = []
+    grouped = moves.groupby(["advertiser", "holding", "last_incumbent_holding"])
+
+    for (adv, to_h, from_h), group_df in grouped:
+        sorted_df = group_df.sort_values("announce_date")
+        cluster = []
+        cluster_start = None
+
+        for _, row in sorted_df.iterrows():
+            if cluster_start is None or (row["announce_date"] - cluster_start).days <= window_days:
+                cluster.append(row)
+                if cluster_start is None:
+                    cluster_start = row["announce_date"]
+            else:
+                # Emit cluster
+                total_spend = sum(r["spend"] for r in cluster)
+                if total_spend >= min_spend_m:
+                    markets = list(set(r["country"] for r in cluster if pd.notna(r.get("country"))))
+                    global_events.append({
+                        "advertiser": adv,
+                        "from_holding": from_h,
+                        "to_holding": to_h,
+                        "date": cluster[0]["announce_date"],
+                        "quarter": str(cluster[0].get("last_announcement_quarter", "")),
+                        "spend_m": round(total_spend, 1),
+                        "n_markets": len(cluster),
+                        "markets": markets[:5],
+                        "category": str(cluster[0].get("category_gama", "")),
+                        "to_network": str(cluster[0].get("agency_network", "")),
+                        "from_network": str(cluster[0].get("last_incumbent_agency_network", "")),
+                    })
+                cluster = [row]
+                cluster_start = row["announce_date"]
+
+        # Final cluster
+        if cluster:
+            total_spend = sum(r["spend"] for r in cluster)
+            if total_spend >= min_spend_m:
+                markets = list(set(r["country"] for r in cluster if pd.notna(r.get("country"))))
+                global_events.append({
+                    "advertiser": adv,
+                    "from_holding": from_h,
+                    "to_holding": to_h,
+                    "date": cluster[0]["announce_date"],
+                    "quarter": str(cluster[0].get("last_announcement_quarter", "")),
+                    "spend_m": round(total_spend, 1),
+                    "n_markets": len(cluster),
+                    "markets": markets[:5],
+                    "category": str(cluster[0].get("category_gama", "")),
+                    "to_network": str(cluster[0].get("agency_network", "")),
+                    "from_network": str(cluster[0].get("last_incumbent_agency_network", "")),
+                })
+
+    result = pd.DataFrame(global_events).sort_values("date", ascending=False) if global_events else pd.DataFrame()
+    print(f"\n  Global event aggregation: {len(moves)} local moves → {len(result)} global events (window={window_days}d, min=${min_spend_m}M)")
+    return result
+
+
 def validate(df):
     """Run validation checks on loaded data."""
     print("\nValidation:")
@@ -388,7 +465,7 @@ def _create_aggregation_view(client):
     print(f"  View created: {view_id}")
 
 
-def generate_comvergence_js(df, output_path=None):
+def generate_comvergence_js(df, output_path=None, global_events=None):
     """Generate comvergence_data.js for the dashboard from the raw DataFrame."""
     if output_path is None:
         output_path = os.path.join(ROOT, "app", "static", "comvergence_data.js")
@@ -451,55 +528,62 @@ def generate_comvergence_js(df, output_path=None):
             "networks": dict(sorted(networks.items(), key=lambda x: -x[1]["spend_m"])),
         }
 
-    # 2. Competitive flow matrix (spend flows between holdings)
+    # 2. Competitive flow matrix — from global events ($50M+ aggregated moves)
     flows = {}
-    agency_moves = df[
-        (df["move_type"].isin(["Agency", "New-assignment"]))
-        & (df["holding"].isin(big6))
-        & (df["last_incumbent_holding"].isin(big6))
-        & (df["holding"] != df["last_incumbent_holding"])
-    ]
-    for _, row in agency_moves.iterrows():
-        key = f"{row['last_incumbent_holding']}|{row['holding']}"
-        spend = safe_spend(row)
-        if key not in flows:
-            flows[key] = {"from": row["last_incumbent_holding"], "to": row["holding"], "count": 0, "spend_m": 0}
-        flows[key]["count"] += 1
-        flows[key]["spend_m"] += spend
+    if global_events is not None and len(global_events) > 0:
+        ge_flows = global_events[
+            global_events["from_holding"].isin(big6) & global_events["to_holding"].isin(big6)
+        ]
+        for _, row in ge_flows.iterrows():
+            key = f"{row['from_holding']}|{row['to_holding']}"
+            if key not in flows:
+                flows[key] = {"from": row["from_holding"], "to": row["to_holding"], "count": 0, "spend_m": 0}
+            flows[key]["count"] += 1
+            flows[key]["spend_m"] += row["spend_m"]
     flow_list = sorted(flows.values(), key=lambda x: -x["spend_m"])
     for f in flow_list:
         f["spend_m"] = round(f["spend_m"], 1)
 
-    # 3. WPP movement timeline by year
+    # 3. Movement timeline by year — from global events
     timeline = {}
     for h in ["WPP", "Publicis Groupe", "Omnicom"]:
-        moves_df = df[
-            ((df["holding"] == h) | (df["last_incumbent_holding"] == h))
-            & (df["move_type"].isin(["Agency", "New-assignment"]))
-            & (df["last_announcement_quarter"].notna())
-        ].copy()
         yearly = {}
-        for _, row in moves_df.iterrows():
-            q = str(row["last_announcement_quarter"])
-            year = q[:4] if len(q) >= 4 else None
-            if not year or not year.isdigit():
-                continue
-            year = int(year)
-            if year < 2015:
-                continue
-            if year not in yearly:
-                yearly[year] = {"wins": 0, "losses": 0, "win_spend_m": 0, "loss_spend_m": 0}
-            spend = safe_spend(row)
-            if row["holding"] == h and row["last_incumbent_holding"] != h:
-                yearly[year]["wins"] += 1
-                yearly[year]["win_spend_m"] += spend
-            elif row["last_incumbent_holding"] == h and row["holding"] != h:
-                yearly[year]["losses"] += 1
-                yearly[year]["loss_spend_m"] += spend
+        if global_events is not None and len(global_events) > 0:
+            h_events = global_events[
+                (global_events["to_holding"] == h) | (global_events["from_holding"] == h)
+            ]
+            for _, row in h_events.iterrows():
+                year = row["date"].year if pd.notna(row.get("date")) else None
+                if not year or year < 2015:
+                    continue
+                if year not in yearly:
+                    yearly[year] = {"wins": 0, "losses": 0, "win_spend_m": 0, "loss_spend_m": 0}
+                if row["to_holding"] == h:
+                    yearly[year]["wins"] += 1
+                    yearly[year]["win_spend_m"] += row["spend_m"]
+                if row["from_holding"] == h:
+                    yearly[year]["losses"] += 1
+                    yearly[year]["loss_spend_m"] += row["spend_m"]
         for y in yearly:
             yearly[y]["win_spend_m"] = round(yearly[y]["win_spend_m"], 1)
             yearly[y]["loss_spend_m"] = round(yearly[y]["loss_spend_m"], 1)
         timeline[h] = dict(sorted(yearly.items()))
+
+    # 3b. Global moves ledger for the dashboard (top 300 by spend)
+    global_moves_js = []
+    if global_events is not None and len(global_events) > 0:
+        for _, row in global_events.head(300).iterrows():
+            global_moves_js.append({
+                "advertiser": row["advertiser"],
+                "from_h": row["from_holding"],
+                "to_h": row["to_holding"],
+                "date": str(row["quarter"]),
+                "spend_m": round(row["spend_m"], 1),
+                "n_markets": int(row["n_markets"]),
+                "category": row.get("category", ""),
+                "to_net": row.get("to_network", ""),
+                "from_net": row.get("from_network", ""),
+            })
 
     # 4. Category breakdown for WPP
     wpp_cats = {}
@@ -618,6 +702,7 @@ def generate_comvergence_js(df, output_path=None):
         "wpp_categories": wpp_cats,
         "wpp_top_accounts": top_accounts,
         "wpp_geo": geo,
+        "global_moves": global_moves_js,
         "advertiser_intel": advertiser_intel,
         "_generated": datetime.now(tz=__import__('datetime').timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
@@ -724,7 +809,7 @@ def generate_advertisers_js(df, output_path=None):
     print(f"Generated {output_path} ({len(advertisers)} advertisers)")
 
 
-def generate_pitch_prediction_params(df, output_path=None):
+def generate_pitch_prediction_params(df, output_path=None, global_events=None):
     """Compute COMvergence-derived parameters for the pitch prediction model.
 
     Updates SECTOR_FREQ (sector churn rates), GROUP_VULN (holding vulnerability),
@@ -795,9 +880,10 @@ def main():
     validate(df)
 
     if not args.skip_js:
-        generate_comvergence_js(df)
+        global_events = aggregate_global_events(df)
+        generate_comvergence_js(df, global_events=global_events)
         generate_advertisers_js(df)
-        generate_pitch_prediction_params(df)
+        generate_pitch_prediction_params(df, global_events=global_events)
 
     if args.dry_run:
         print("\n--dry-run: Skipping BigQuery upload.")

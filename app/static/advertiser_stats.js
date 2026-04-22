@@ -79,10 +79,10 @@ const ADVERTISER_STATS = {
     note: "COMvergence tracks all moves including local market-level assignments"
   },
 
-  // Annual pace of moves — 2.7x acceleration post-2021 (COMvergence)
+  // Annual pace of global move events ($50M+, 28-day clustering) — COMvergence
   yearly_pace: {
-    pre_2021_avg: 1318,
-    post_2021_avg: 3501,
+    pre_2021_avg: 22,
+    post_2021_avg: 56,
     by_year: {
       2016: { moves: 745 },
       2017: { moves: 827 },
@@ -97,7 +97,7 @@ const ADVERTISER_STATS = {
       2026: { moves: 476 }
     },
     peak_year: 2025,
-    peak_year_note: "COMvergence: 3,794 competitive moves in 2025 — highest on record. 2.7x acceleration since pre-2021."
+    peak_year_note: "COMvergence: 76 global move events ($50M+) in 2025 — highest on record. 2.5x vs pre-2021."
   },
 
   // Seasonality: when account moves get announced (COMvergence, 27,025 moves with quarter data)
@@ -122,7 +122,7 @@ const ADVERTISER_STATS = {
     wpp_net_loss: "WPP net -$13.5B in spend vs Big 3 (lost $25.5B, won $12.0B)",
     publicis_dominance: "Publicis: $67.6B in managed spend, 23.5% market share",
     wpp_to_publicis: "WPP → Publicis: 670 accounts, $14.7B — largest flow between any two holdings",
-    acceleration: "Competitive moves 2.7x: 1,318/yr pre-2021 → 3,501/yr post-2021",
+    acceleration: "Global move events 2.5x: ~22/yr pre-2021 → ~56/yr post-2021 ($50M+ threshold)",
     omnicom_leads: "Omnicom: $74.3B managed spend, 8,777 assignments — largest portfolio",
     publicis_26q_streak: "Publicis: 26 consecutive net-win quarters (2020-Q1 through 2026-Q2)",
     q1_is_busiest: "Q1 is busiest quarter: 33.9% of all competitive moves (budget cycle start)",
