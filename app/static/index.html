@@ -464,6 +464,263 @@
     }
     </script>
 
+    <!-- Force-Directed Relationship Graph -->
+    <div class="section" style="margin-bottom:2rem">
+        <h2>Relationship Network</h2>
+        <div class="desc">Holdings → Advertisers → People. Edges = school connections and shared employers. Drag nodes to explore. Hover for details.</div>
+        <div class="pills" id="graphPills" style="margin-bottom:0.75rem">
+            <button class="pill on" data-gf="all">All Holdings</button>
+            <button class="pill" data-gf="WPP" style="color:var(--faint)">WPP Only</button>
+            <button class="pill" data-gf="connections" style="color:var(--faint)">Connections Only</button>
+        </div>
+        <div style="position:relative;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:#FAFAFA">
+            <canvas id="forceGraph" width="1080" height="600" style="width:100%;height:600px;cursor:grab"></canvas>
+            <div id="graphTooltip" style="display:none;position:absolute;padding:8px 12px;background:#fff;border:1px solid var(--border);border-radius:3px;font-size:0.7rem;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:280px;z-index:10"></div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        if(typeof PEOPLE_INTEL==='undefined') return;
+        var PI=PEOPLE_INTEL;
+        var canvas=document.getElementById('forceGraph');
+        var ctx=canvas.getContext('2d');
+        var tooltip=document.getElementById('graphTooltip');
+        var HC={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Havas':'#95a5a6','Mixed':'#999','Dentsu':'#FF9F43','Independents':'#bbb'};
+        var W,H,dpr=window.devicePixelRatio||1;
+
+        function resize(){
+            var rect=canvas.parentElement.getBoundingClientRect();
+            W=rect.width; H=600;
+            canvas.width=W*dpr; canvas.height=H*dpr;
+            canvas.style.width=W+'px'; canvas.style.height=H+'px';
+            ctx.setTransform(dpr,0,0,dpr,0,0);
+        }
+        resize();
+
+        // Build graph data
+        var nodes=[], links=[], nodeMap={};
+        var filter='all';
+
+        function buildGraph(filterMode){
+            nodes=[]; links=[]; nodeMap={};
+            var holdingSeen={}, companySeen={};
+
+            // Holdings as big nodes
+            Object.keys(PI.profiles).forEach(function(co){
+                var p=PI.profiles[co];
+                var h=p.holding||'Other';
+                if(!holdingSeen[h]){
+                    holdingSeen[h]=true;
+                    var n={id:'h:'+h, label:h, type:'holding', color:HC[h]||'#999', r:28, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
+                    nodeMap[n.id]=nodes.length; nodes.push(n);
+                }
+            });
+
+            // Companies as medium nodes
+            Object.keys(PI.profiles).forEach(function(co){
+                var p=PI.profiles[co];
+                var h=p.holding||'Other';
+                if(filterMode==='WPP' && h!=='WPP') return;
+                var sc=PI.scores[co]||{};
+                var hasConnection=(sc.wpp_score||0)+(sc.comp_score||0)>0;
+                if(filterMode==='connections' && !hasConnection) return;
+
+                var n={id:'c:'+co, label:co, type:'company', pool:p.pool, holding:h, color:HC[h]||'#999', r:10+Math.min(p.people.length*0.3,8), count:p.people.length, wpp_score:sc.wpp_score||0, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
+                nodeMap[n.id]=nodes.length; nodes.push(n);
+                companySeen[co]=true;
+
+                // Link company → holding
+                if(nodeMap['h:'+h]!==undefined){
+                    links.push({source:nodeMap['h:'+h], target:nodes.length-1, strength:0.3, color:'rgba(0,0,0,0.06)'});
+                }
+            });
+
+            // People nodes (only those with school connections)
+            var peopleInGraph={};
+            PI.school_overlaps.forEach(function(o){
+                var agencyCo=o.agency_co, clientCo=o.client_co;
+                if(!companySeen[agencyCo] && !companySeen[clientCo]) return;
+
+                // Agency person node
+                var aId='p:'+o.agency+'@'+agencyCo;
+                if(!peopleInGraph[aId]){
+                    peopleInGraph[aId]=true;
+                    var ah=PI.profiles[agencyCo]?PI.profiles[agencyCo].holding:'';
+                    var n={id:aId, label:o.agency, type:'person', company:agencyCo, holding:ah, color:HC[ah]||'#999', r:4, school:o.school, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
+                    nodeMap[aId]=nodes.length; nodes.push(n);
+                    if(nodeMap['c:'+agencyCo]!==undefined) links.push({source:nodeMap['c:'+agencyCo], target:nodes.length-1, strength:0.5, color:'rgba(0,0,0,0.04)'});
+                }
+
+                // Client person node
+                var cId='p:'+o.client+'@'+clientCo;
+                if(!peopleInGraph[cId]){
+                    peopleInGraph[cId]=true;
+                    var ch=PI.profiles[clientCo]?PI.profiles[clientCo].holding:'';
+                    var n={id:cId, label:o.client, type:'person', company:clientCo, holding:ch, color:HC[ch]||'#999', r:4, school:o.school, x:W*Math.random(), y:H*Math.random(), vx:0, vy:0};
+                    nodeMap[cId]=nodes.length; nodes.push(n);
+                    if(nodeMap['c:'+clientCo]!==undefined) links.push({source:nodeMap['c:'+clientCo], target:nodes.length-1, strength:0.5, color:'rgba(0,0,0,0.04)'});
+                }
+
+                // School connection link (the interesting one)
+                if(nodeMap[aId]!==undefined && nodeMap[cId]!==undefined){
+                    links.push({source:nodeMap[aId], target:nodeMap[cId], strength:1.0, color:'rgba(123,97,255,0.4)', school:o.school, dashed:true});
+                }
+            });
+        }
+        buildGraph('all');
+
+        // Force simulation
+        var alpha=1, alphaDecay=0.003, alphaMin=0.01;
+        var drag=null, hover=null;
+
+        function tick(){
+            if(alpha<alphaMin){ requestAnimationFrame(tick); draw(); return; }
+            alpha*=(1-alphaDecay);
+
+            // Center gravity
+            var cx=W/2, cy=H/2;
+            nodes.forEach(function(n){
+                n.vx+=(cx-n.x)*0.0005;
+                n.vy+=(cy-n.y)*0.0005;
+            });
+
+            // Repulsion (quadratic, approximate)
+            for(var i=0;i<nodes.length;i++){
+                for(var j=i+1;j<nodes.length;j++){
+                    var dx=nodes[j].x-nodes[i].x, dy=nodes[j].y-nodes[i].y;
+                    var d2=dx*dx+dy*dy+1;
+                    var minD=nodes[i].r+nodes[j].r+10;
+                    var f=-(minD*minD*80)/d2;
+                    var fx=f*dx/Math.sqrt(d2), fy=f*dy/Math.sqrt(d2);
+                    nodes[i].vx+=fx; nodes[i].vy+=fy;
+                    nodes[j].vx-=fx; nodes[j].vy-=fy;
+                }
+            }
+
+            // Spring attraction along links
+            links.forEach(function(l){
+                var s=nodes[l.source], t=nodes[l.target];
+                var dx=t.x-s.x, dy=t.y-s.y;
+                var d=Math.sqrt(dx*dx+dy*dy)+0.1;
+                var targetLen=s.type==='holding'?120:s.type==='company'?60:40;
+                var f=(d-targetLen)*0.003*l.strength;
+                var fx=f*dx/d, fy=f*dy/d;
+                s.vx+=fx; s.vy+=fy;
+                t.vx-=fx; t.vy-=fy;
+            });
+
+            // Velocity damping + position update
+            nodes.forEach(function(n){
+                if(n===drag) return;
+                n.vx*=0.85; n.vy*=0.85;
+                n.x+=n.vx*alpha; n.y+=n.vy*alpha;
+                n.x=Math.max(n.r,Math.min(W-n.r,n.x));
+                n.y=Math.max(n.r,Math.min(H-n.r,n.y));
+            });
+
+            draw();
+            requestAnimationFrame(tick);
+        }
+
+        function draw(){
+            ctx.clearRect(0,0,W,H);
+
+            // Links
+            links.forEach(function(l){
+                var s=nodes[l.source], t=nodes[l.target];
+                ctx.beginPath();
+                ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y);
+                if(l.dashed){ ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(123,97,255,0.35)'; ctx.lineWidth=1.5; }
+                else { ctx.setLineDash([]); ctx.strokeStyle=l.color; ctx.lineWidth=0.5; }
+                ctx.stroke(); ctx.setLineDash([]);
+            });
+
+            // Nodes
+            nodes.forEach(function(n){
+                ctx.beginPath();
+                ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+                var isHover=n===hover;
+                if(n.type==='holding'){
+                    ctx.fillStyle=n.color; ctx.fill();
+                    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+                    ctx.fillStyle='#fff'; ctx.font='bold 10px -apple-system,sans-serif';
+                    ctx.textAlign='center'; ctx.textBaseline='middle';
+                    ctx.fillText(n.label.replace('Publicis Groupe','Publicis'),n.x,n.y);
+                } else if(n.type==='company'){
+                    ctx.fillStyle=isHover?n.color:(n.color+'CC'); ctx.fill();
+                    if(isHover){ctx.strokeStyle=n.color;ctx.lineWidth=2;ctx.stroke();}
+                    ctx.fillStyle='#333'; ctx.font=(isHover?'bold ':'')+' 8px -apple-system,sans-serif';
+                    ctx.textAlign='center'; ctx.textBaseline='top';
+                    ctx.fillText(n.label.length>18?n.label.substring(0,16)+'..':n.label,n.x,n.y+n.r+3);
+                } else {
+                    ctx.fillStyle=isHover?n.color:'rgba(123,97,255,0.6)'; ctx.fill();
+                    if(isHover){
+                        ctx.fillStyle='#333'; ctx.font='7px -apple-system,sans-serif';
+                        ctx.textAlign='center'; ctx.textBaseline='top';
+                        ctx.fillText(n.label,n.x,n.y+n.r+2);
+                    }
+                }
+            });
+        }
+
+        // Interaction
+        function getNode(mx,my){
+            for(var i=nodes.length-1;i>=0;i--){
+                var n=nodes[i], dx=mx-n.x, dy=my-n.y;
+                if(dx*dx+dy*dy<(n.r+4)*(n.r+4)) return n;
+            }
+            return null;
+        }
+        function canvasXY(e){
+            var r=canvas.getBoundingClientRect();
+            return {x:e.clientX-r.left, y:e.clientY-r.top};
+        }
+
+        canvas.addEventListener('mousedown',function(e){
+            var p=canvasXY(e); var n=getNode(p.x,p.y);
+            if(n){ drag=n; canvas.style.cursor='grabbing'; alpha=Math.max(alpha,0.3); }
+        });
+        canvas.addEventListener('mousemove',function(e){
+            var p=canvasXY(e);
+            if(drag){ drag.x=p.x; drag.y=p.y; drag.vx=0; drag.vy=0; }
+            var n=getNode(p.x,p.y);
+            hover=n;
+            if(n){
+                canvas.style.cursor=drag?'grabbing':'pointer';
+                var tt='';
+                if(n.type==='holding') tt='<strong>'+n.label+'</strong>';
+                else if(n.type==='company') tt='<strong>'+n.label+'</strong><br>'+n.holding+' · '+n.pool+'<br>'+n.count+' profiles'+(n.wpp_score?' · WPP score: '+n.wpp_score:'');
+                else tt='<strong>'+n.label+'</strong><br>'+n.company+(n.school?'<br>'+n.school:'');
+                tooltip.innerHTML=tt;
+                tooltip.style.display='block';
+                tooltip.style.left=Math.min(p.x+12,W-200)+'px';
+                tooltip.style.top=(p.y-10)+'px';
+            } else {
+                canvas.style.cursor=drag?'grabbing':'grab';
+                tooltip.style.display='none';
+            }
+        });
+        canvas.addEventListener('mouseup',function(){
+            if(drag && hover && hover.type==='company') showCompanyPeople(hover.label);
+            drag=null; canvas.style.cursor='grab';
+        });
+        canvas.addEventListener('mouseleave',function(){ drag=null; tooltip.style.display='none'; canvas.style.cursor='grab'; });
+
+        // Filter pills
+        document.querySelectorAll('#graphPills .pill').forEach(function(btn){
+            btn.addEventListener('click',function(){
+                document.querySelectorAll('#graphPills .pill').forEach(function(b){b.classList.remove('on');b.style.color='var(--faint)';});
+                btn.classList.add('on');
+                filter=btn.dataset.gf;
+                buildGraph(filter);
+                alpha=1;
+            });
+        });
+
+        requestAnimationFrame(tick);
+    })();
+    </script>
+
     <!-- Company Browser + Profile Viewer -->
     <div id="peopleBrowser"></div>
 
