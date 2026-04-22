@@ -414,6 +414,35 @@ def generate_comvergence_js(df, output_path=None):
             ),
         }
 
+    # 1b. Agency hierarchy — Holding → Group → Agency Network → Agency (with spend)
+    hierarchy = {}
+    for h in big6:
+        hdf = df[df["holding"] == h]
+        networks = {}
+        for network, ndf in hdf.groupby("agency_network"):
+            net_spend = float(ndf["total_spend_2025_m"].sum())
+            if net_spend < 100:
+                continue
+            agencies = {}
+            for agency, adf in ndf.groupby("agency"):
+                a_spend = float(adf["total_spend_2025_m"].sum())
+                if a_spend < 100:
+                    continue
+                agencies[agency] = {
+                    "assignments": int(len(adf)),
+                    "spend_m": round(a_spend, 1),
+                }
+            networks[network] = {
+                "assignments": int(len(ndf)),
+                "spend_m": round(net_spend, 1),
+                "agencies": agencies,
+            }
+        hierarchy[h] = {
+            "total_assignments": int(len(hdf)),
+            "total_spend_m": round(float(hdf["total_spend_2025_m"].sum()), 1),
+            "networks": dict(sorted(networks.items(), key=lambda x: -x[1]["spend_m"])),
+        }
+
     # 2. Competitive flow matrix (spend flows between holdings)
     flows = {}
     agency_moves = df[
@@ -483,7 +512,9 @@ def generate_comvergence_js(df, output_path=None):
             "parent_co": str(row.get("parent_co", "")),
             "category": str(row.get("category_gama", "")),
             "spend_2025_m": round(float(row.get("total_spend_2025_m") or 0), 1),
+            "agency_network": str(row.get("agency_network", "")),
             "agency": str(row.get("agency", "")),
+            "group_name": str(row.get("group_name", "")),
             "first_win": str(row.get("first_win_date", ""))[:10] if pd.notna(row.get("first_win_date")) else None,
             "move_type": str(row.get("move_type", "")),
             "zone": str(row.get("zone", "")),
@@ -543,19 +574,37 @@ def generate_comvergence_js(df, output_path=None):
                     "spend_m": a["spend_2025_m"],
                 })
 
+        # Build holding → agency network breakdown
+        holding_detail = []
+        for holding_name, hgrp in adf.groupby("holding"):
+            h_spend = float(hgrp["total_spend_2025_m"].sum())
+            networks = {}
+            for net, ngrp in hgrp.groupby("agency_network"):
+                n_spend = float(ngrp["total_spend_2025_m"].sum())
+                if n_spend > 0:
+                    networks[net] = round(n_spend, 1)
+            holding_detail.append({
+                "holding": holding_name,
+                "spend_m": round(h_spend, 1),
+                "count": int(len(hgrp)),
+                "networks": dict(sorted(networks.items(), key=lambda x: -x[1])[:4]),
+            })
+        holding_detail.sort(key=lambda x: -x["spend_m"])
+
         advertiser_intel[adv_name] = {
             "parent_co": parent_co,
             "total_spend_2025_m": round(total_spend, 1),
             "n_markets": len(assignments),
-            "holdings": list(adf["holding"].value_counts().head(4).to_dict().items()),
+            "holdings": holding_detail[:6],
             "top_brands": str(adf.iloc[0].get("top_brands", ""))[:80],
             "category": str(adf.iloc[0].get("category_gama", "")),
-            "moves": moves[:6],  # cap at 6 most relevant moves
+            "moves": moves[:6],
         }
 
     import json
     data = {
         "portfolio": portfolio,
+        "hierarchy": hierarchy,
         "flows": flow_list,
         "timeline": timeline,
         "wpp_categories": wpp_cats,

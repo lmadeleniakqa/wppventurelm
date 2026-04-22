@@ -289,6 +289,14 @@
     <!-- Portfolio KPIs -->
     <div class="row r3" id="comvPortfolioKpis"></div>
 
+    <!-- Agency Family Tree -->
+    <div class="section">
+        <h2>Agency Family Tree</h2>
+        <div class="desc">Holding → Agency Network → Agency. Every row maps back to the parent holding company.</div>
+        <div class="pills" id="comvHierarchyPills"></div>
+        <div id="comvHierarchy"></div>
+    </div>
+
     <!-- Competitive Flow Matrix -->
     <div class="section">
         <h2>Competitive Flow Matrix</h2>
@@ -1675,24 +1683,36 @@ function openAdvIntel(name){
     h+='<div class="row r4" style="margin-bottom:1.5rem">';
     h+='<div class="card"><h3>2025 Spend</h3><div class="big" style="font-size:1.5rem">$'+(intel.total_spend_2025_m>=1000?(intel.total_spend_2025_m/1000).toFixed(1)+'B':Math.round(intel.total_spend_2025_m)+'M')+'</div></div>';
     h+='<div class="card"><h3>Markets</h3><div class="big" style="font-size:1.5rem">'+intel.n_markets+'</div></div>';
-    var mainHolding = intel.holdings.length>0 ? intel.holdings[0] : ['—',0];
-    h+='<div class="card"><h3>Primary Holder</h3><div class="big" style="font-size:1.2rem">'+mainHolding[0]+'</div><div class="sub">'+mainHolding[1]+' assignments</div></div>';
-    var holdingCount = intel.holdings.length;
-    h+='<div class="card"><h3>Fragmentation</h3><div class="big" style="font-size:1.5rem">'+holdingCount+'</div><div class="sub">holding groups involved</div></div>';
+    var mainH = intel.holdings.length>0 ? intel.holdings[0] : {holding:'—',count:0};
+    h+='<div class="card"><h3>Primary Holder</h3><div class="big" style="font-size:1.2rem">'+mainH.holding+'</div><div class="sub">'+mainH.count+' assignments · $'+(mainH.spend_m>=1000?(mainH.spend_m/1000).toFixed(1)+'B':Math.round(mainH.spend_m)+'M')+'</div></div>';
+    h+='<div class="card"><h3>Fragmentation</h3><div class="big" style="font-size:1.5rem">'+intel.holdings.length+'</div><div class="sub">holding groups involved</div></div>';
     h+='</div>';
 
-    // Holdings breakdown
+    // Holdings → Agency Network breakdown
     if(intel.holdings.length>0){
         h+='<div style="margin-bottom:1.5rem">';
-        h+='<h3 style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);font-weight:400;margin-bottom:0.75rem">HOLDING GROUP SPLIT</h3>';
-        var totalAssign = intel.holdings.reduce(function(s,x){return s+x[1];},0);
-        intel.holdings.forEach(function(pair){
-            var pct = Math.round(pair[1]/totalAssign*100);
-            var barCol = pair[0]==='WPP'?'var(--wpp)':pair[0]==='Publicis Groupe'?'var(--pub)':pair[0]==='Omnicom'?'var(--omc)':'var(--faint)';
-            h+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;font-size:0.8rem">';
-            h+='<span style="min-width:120px">'+pair[0]+'</span>';
+        h+='<h3 style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);font-weight:400;margin-bottom:0.75rem">HOLDING → AGENCY NETWORK BREAKDOWN</h3>';
+        var totalSpend = intel.holdings.reduce(function(s,x){return s+x.spend_m;},0);
+        intel.holdings.forEach(function(hld){
+            var pct = totalSpend>0?Math.round(hld.spend_m/totalSpend*100):0;
+            var barCol = hld.holding==='WPP'?'var(--wpp)':hld.holding==='Publicis Groupe'?'var(--pub)':hld.holding==='Omnicom'?'var(--omc)':hld.holding==='dentsu'?'#FF9F43':hld.holding==='Havas'?'#95a5a6':'var(--faint)';
+            h+='<div style="margin-bottom:0.75rem">';
+            h+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.35rem;font-size:0.8rem">';
+            h+='<span style="min-width:130px;font-weight:500;color:'+barCol+'">'+hld.holding+'</span>';
             h+='<div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barCol+';border-radius:4px"></div></div>';
-            h+='<span style="min-width:50px;text-align:right;color:var(--muted)">'+pair[1]+' ('+pct+'%)</span>';
+            h+='<span style="min-width:90px;text-align:right;font-size:0.75rem;color:var(--muted)">$'+(hld.spend_m>=1000?(hld.spend_m/1000).toFixed(1)+'B':Math.round(hld.spend_m)+'M')+' ('+pct+'%)</span>';
+            h+='</div>';
+            // Show agency networks under this holding
+            var nets = hld.networks||{};
+            var netKeys = Object.keys(nets);
+            if(netKeys.length>0){
+                h+='<div style="margin-left:142px;display:flex;flex-wrap:wrap;gap:0.35rem">';
+                netKeys.forEach(function(net){
+                    h+='<span style="font-size:0.65rem;padding:2px 6px;background:var(--elevated);border:1px solid var(--border);border-radius:2px;color:var(--muted)">';
+                    h+=net+' <span style="color:var(--faint)">$'+(nets[net]>=1000?(nets[net]/1000).toFixed(1)+'B':Math.round(nets[net])+'M')+'</span></span>';
+                });
+                h+='</div>';
+            }
             h+='</div>';
         });
         h+='</div>';
@@ -1744,6 +1764,62 @@ function initComvergence(){
         kH += '</div>';
     });
     document.getElementById('comvPortfolioKpis').innerHTML = kH;
+
+    // ====== Agency Family Tree ======
+    var hierHoldings = ['WPP','Publicis Groupe','Omnicom','dentsu','Havas'];
+    var hpH = '';
+    hierHoldings.forEach(function(h,i){ hpH+='<button class="pill'+(i===0?' on':'')+'" data-hh="'+h+'" style="color:'+(i===0?HC[h]||'var(--faint)':'var(--faint)')+'">'+h.replace('Publicis Groupe','Publicis')+'</button>'; });
+    document.getElementById('comvHierarchyPills').innerHTML = hpH;
+
+    function renderHierarchy(holdingName){
+        var hData = CV.hierarchy[holdingName];
+        if(!hData){ document.getElementById('comvHierarchy').innerHTML='<p style="color:var(--faint)">No data</p>'; return; }
+        var col = HC[holdingName]||'var(--faint)';
+        var h='';
+        h+='<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">';
+        h+='<span style="font-size:2rem;font-weight:500;color:'+col+';letter-spacing:-0.02em">$'+(hData.total_spend_m/1000).toFixed(1)+'B</span>';
+        h+='<span style="font-size:0.75rem;color:var(--muted)">'+hData.total_assignments.toLocaleString()+' assignments across '+Object.keys(hData.networks).length+' agency networks</span>';
+        h+='</div>';
+
+        var nets = hData.networks;
+        Object.keys(nets).forEach(function(netName){
+            var net = nets[netName];
+            var pct = (net.spend_m/hData.total_spend_m*100).toFixed(1);
+            h+='<div style="margin-bottom:1.25rem">';
+            h+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">';
+            h+='<div style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0"></div>';
+            h+='<span style="font-weight:500;font-size:0.9rem">'+netName+'</span>';
+            h+='<span style="font-size:0.7rem;color:var(--muted)">'+net.assignments+' acc · $'+(net.spend_m/1000).toFixed(1)+'B · '+pct+'%</span>';
+            h+='</div>';
+            // Bar
+            h+='<div style="margin-left:22px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:0.5rem"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:3px;opacity:0.7"></div></div>';
+            // Sub-agencies
+            var agencies = net.agencies||{};
+            var aKeys = Object.keys(agencies);
+            if(aKeys.length>0){
+                h+='<div style="margin-left:22px;display:flex;flex-wrap:wrap;gap:0.5rem">';
+                aKeys.forEach(function(aName){
+                    var ag = agencies[aName];
+                    h+='<span style="font-size:0.7rem;padding:3px 8px;background:var(--elevated);border:1px solid var(--border);border-radius:2px;color:var(--muted)">';
+                    h+=aName+' <span style="color:var(--faint)">'+ag.assignments+' · $'+(ag.spend_m>=1000?(ag.spend_m/1000).toFixed(1)+'B':Math.round(ag.spend_m)+'M')+'</span>';
+                    h+='</span>';
+                });
+                h+='</div>';
+            }
+            h+='</div>';
+        });
+        document.getElementById('comvHierarchy').innerHTML = h;
+    }
+    renderHierarchy('WPP');
+
+    document.querySelectorAll('#comvHierarchyPills .pill').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('#comvHierarchyPills .pill').forEach(function(b){b.classList.remove('on');b.style.color='var(--faint)';});
+            btn.classList.add('on');
+            btn.style.color=HC[btn.dataset.hh]||'var(--faint)';
+            renderHierarchy(btn.dataset.hh);
+        });
+    });
 
     // ====== Competitive Flow Matrix ======
     var allH = ['WPP','Publicis Groupe','Omnicom','dentsu','Havas'];
@@ -1875,7 +1951,8 @@ function initComvergence(){
         aH+='<div><div style="font-weight:500;font-size:0.85rem">'+advName+'</div>';
         aH+='<div style="font-size:0.65rem;color:var(--faint)">'+a.category+' · '+a.zone+' · '+a.country+'</div></div>';
         aH+='<div style="text-align:right"><div style="font-size:1.1rem;font-weight:500;letter-spacing:-0.02em">$'+(a.spend_2025_m>=1000?(a.spend_2025_m/1000).toFixed(1)+'B':Math.round(a.spend_2025_m)+'M')+'</div>';
-        aH+='<div style="font-size:0.6rem;color:var(--faint)">'+a.agency+'</div></div>';
+        var netLabel = (a.agency_network||a.agency||'');
+        aH+='<div style="font-size:0.6rem;color:var(--wpp)">'+netLabel+'</div></div>';
         aH+='</div></div>';
     });
     aH+='</div>';
