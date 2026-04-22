@@ -14,13 +14,13 @@ const ADVERTISER_STATS = {
     time_span: "2016-Q1 to 2026-Q2"
   },
 
-  // How long brands stay before switching
+  // How long brands stay before switching — COMvergence verified
   relationship_duration: {
-    mean_years: 4.2,
-    median_years: 3.3,
+    mean_years: 5.4,
+    median_years: 3.8,
     min_years: 0.1,
-    max_years: 10.1,
-    note: "Median tenure ~3.3 years before a brand reviews or switches"
+    max_years: 28.1,
+    note: "Median tenure ~3.8 years before a brand reviews or switches (COMvergence)"
   },
 
   // Net wins/losses by holding group (COMvergence-verified, Big 3 flows only, 2016-2026)
@@ -79,78 +79,53 @@ const ADVERTISER_STATS = {
     note: "COMvergence tracks all moves including local market-level assignments"
   },
 
-  // Annual pace of moves — 2x acceleration post-2021
+  // Annual pace of moves — 2.7x acceleration post-2021 (COMvergence)
   yearly_pace: {
-    pre_2021_avg: 1.8,
-    post_2021_avg: 3.7,
+    pre_2021_avg: 1318,
+    post_2021_avg: 3501,
     by_year: {
-      2016: { moves: 3, spend_M: 3800 },
-      2017: { moves: 2, spend_M: 2400 },
-      2018: { moves: 1, spend_M: 1200 },
-      2019: { moves: 1, spend_M: 1500 },
-      2020: { moves: 2, spend_M: 3200 },
-      2021: { moves: 4, spend_M: 2300 },
-      2022: { moves: 2, spend_M: 3000 },
-      2023: { moves: 7, spend_M: 11300 },
-      2024: { moves: 5, spend_M: 4800 },
-      2025: { moves: 1, spend_M: 1700 },
-      2026: { moves: 3, spend_M: 2500 }
+      2016: { moves: 745 },
+      2017: { moves: 827 },
+      2018: { moves: 1254 },
+      2019: { moves: 1607 },
+      2020: { moves: 2157 },
+      2021: { moves: 2981 },
+      2022: { moves: 3450 },
+      2023: { moves: 3702 },
+      2024: { moves: 3580 },
+      2025: { moves: 3794 },
+      2026: { moves: 476 }
     },
-    peak_year: 2023,
-    peak_year_note: "7 moves worth $11.3B — most active year. 2023-2024 combined = 39% of all moves."
+    peak_year: 2025,
+    peak_year_note: "COMvergence: 3,794 competitive moves in 2025 — highest on record. 2.7x acceleration since pre-2021."
   },
 
-  // Seasonality: when account moves get announced
+  // Seasonality: when account moves get announced (COMvergence, 27,025 moves with quarter data)
   seasonality: {
     by_quarter: {
-      Q1: { moves: 6, pct: 19.4, spend_M: 7100, spend_pct: 18.8 },
-      Q2: { moves: 13, pct: 41.9, spend_M: 19100, spend_pct: 50.7 },
-      Q3: { moves: 7, pct: 22.6, spend_M: 8000, spend_pct: 21.2 },
-      Q4: { moves: 5, pct: 16.1, spend_M: 3500, spend_pct: 9.3 }
-    },
-    by_month: {
-      Jan: 2, Feb: 0, Mar: 4, Apr: 5, May: 1, Jun: 7,
-      Jul: 1, Aug: 2, Sep: 4, Oct: 3, Nov: 1, Dec: 1
+      Q1: { moves: 9172, pct: 33.9 },
+      Q2: { moves: 6716, pct: 24.9 },
+      Q3: { moves: 5035, pct: 18.6 },
+      Q4: { moves: 6102, pct: 22.6 }
     },
     by_half: {
-      H1: { moves: 19, spend_M: 26200 },
-      H2: { moves: 12, spend_M: 11500 }
+      H1: { moves: 15888 },
+      H2: { moves: 11137 }
     },
-    peak_month: "June (7 moves, 22.6%)",
-    peak_quarter: "Q2 (13 moves, 41.9% — half of all spend moved)",
-    note: "Reviews kick off in Q1 after budget cycles, decisions land in Q2. H1 accounts for 61% of moves and 69% of spend.",
-
-    // Per-group win/loss timing
-    wpp_timing: {
-      wins_by_q:   { Q1: 1, Q2: 3, Q3: 2, Q4: 1 },
-      losses_by_q: { Q1: 2, Q2: 6, Q3: 4, Q4: 3 },
-      note: "WPP loses most in Q2 (6 of 15 losses) — same quarter Publicis wins most"
-    },
-    publicis_timing: {
-      wins_by_q:   { Q1: 3, Q2: 6, Q3: 3, Q4: 3 },
-      losses_by_q: { Q1: 2, Q2: 3, Q3: 1, Q4: 1 },
-      note: "Publicis wins peak in Q2 (6 of 15 wins) — post-review decision cycle"
-    },
-    omnicom_timing: {
-      wins_by_q:   { Q1: 2, Q2: 4, Q3: 2, Q4: 1 },
-      losses_by_q: { Q1: 0, Q2: 0, Q3: 1, Q4: 1 },
-      note: "Omnicom never loses in H1 — defensively strongest in pitch season"
-    }
+    peak_quarter: "Q1 (33.9% of all moves — contract renewals and new budget cycles)",
+    note: "COMvergence: Q1 is busiest for all moves (budget cycle start). H1 accounts for 59% of competitive moves."
   },
 
-  // Key headlines
+  // Key headlines — COMvergence verified
   headlines: {
-    avg_tenure: "3.3 years median before a brand switches agencies",
-    wpp_net_loss: "WPP net -$8.1B in spend over 10 years (15 losses vs 7 wins)",
-    publicis_dominance: "Publicis controls 31.3% of top-100 spend, up from ~20% in 2016",
-    wpp_to_publicis: "35% of all account moves flow WPP → Publicis ($11.6B)",
-    acceleration: "Account move pace doubled: 1.8/yr pre-2021 → 3.7/yr post-2021",
-    stale_accounts: "37% of top 100 haven't reviewed since before 2023 — ripe for pitches",
-    omnicom_efficient: "Omnicom: +$11.4B net spend from just 9 wins and only 2 losses",
-    dentsu_hemorrhaging: "Dentsu: 0 wins, 2 losses — lost AstraZeneca and Microsoft",
-    q2_is_decision_season: "Q2 is decision season: 42% of moves and 51% of spend ($19.1B) land Apr-Jun",
-    june_peak: "June is the single busiest month (7 of 31 moves, 22.6%)",
-    h1_dominance: "H1 accounts for 61% of moves and 69% of spend moved",
-    omnicom_never_loses_h1: "Omnicom has never lost an account in H1 over 10 years"
+    avg_tenure: "3.8 years median before a brand switches agencies (COMvergence)",
+    wpp_net_loss: "WPP net -$13.5B in spend vs Big 3 (lost $25.5B, won $12.0B)",
+    publicis_dominance: "Publicis: $67.6B in managed spend, 23.5% market share",
+    wpp_to_publicis: "WPP → Publicis: 670 accounts, $14.7B — largest flow between any two holdings",
+    acceleration: "Competitive moves 2.7x: 1,318/yr pre-2021 → 3,501/yr post-2021",
+    omnicom_leads: "Omnicom: $74.3B managed spend, 8,777 assignments — largest portfolio",
+    publicis_26q_streak: "Publicis: 26 consecutive net-win quarters (2020-Q1 through 2026-Q2)",
+    q1_is_busiest: "Q1 is busiest quarter: 33.9% of all competitive moves (budget cycle start)",
+    h1_dominance: "H1 accounts for 59% of competitive moves"
   }
 };

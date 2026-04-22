@@ -176,14 +176,14 @@
             <span style="color:var(--faint)">#1 feature</span><span>net_wins (account competition) — 29% of total importance</span>
             <span style="color:var(--faint)">Weights</span><span style="font-family:monospace;font-size:0.7rem">gs://na-analytics-media-stocks/models/xgb_wpp_evolved_v2/model.bst</span>
             <span style="color:var(--faint)">Training code</span><span style="font-family:monospace;font-size:0.7rem">evolve_results/xgb_wpp_real_v2/best_program.py</span>
-            <span style="color:var(--faint)">Data</span><span style="font-family:monospace;font-size:0.7rem">na-analytics.media_stocks.daily_features (7,443 rows, 16 features)</span>
+            <span style="color:var(--faint)">Data</span><span style="font-family:monospace;font-size:0.7rem">na-analytics.media_stocks.daily_features + comvergence_daily_features (22 features, COMvergence-enhanced)</span>
         </div>
     </div>
 </div></div>
 
 <!-- ===== SIMULATOR ===== -->
 <div class="wrap"><div class="panel" id="p-simulator">
-    <div class="callout"><h3>Account Move Simulator</h3><p>Powered by the <strong>Evolved XGBoost v2</strong> model (58.2% accuracy, Sharpe 0.86, +202% P&L) — evolved by Gemini from 217 candidates on real BigQuery data. Select from the <strong>top 100 global advertisers</strong> ($194.5B total spend), set when the move happens, and see the predicted impact.</p></div>
+    <div class="callout"><h3>Account Move Simulator</h3><p>Powered by the <strong>Evolved XGBoost v2</strong> model (58.2% accuracy, Sharpe 0.86, +202% P&L) — evolved by Gemini from 217 candidates on real BigQuery data. Select from the <strong>top 100 global advertisers</strong> (COMvergence-sourced), set when the move happens, and see the predicted impact.</p></div>
 
     <div class="row r2">
         <div class="section">
@@ -539,14 +539,14 @@ function initOverview(){
 
         // Context
         bH+=`<div class="card" style="border-top:3px solid var(--accent)"><h3>CONTEXT</h3>`;
-        bH+=`<div class="big" style="font-size:1.4rem;line-height:1.3">Q2 is decision season</div>`;
-        bH+=`<div class="sub">42% of all moves land Apr-Jun</div>`;
+        bH+=`<div class="big" style="font-size:1.4rem;line-height:1.3">Q1 is busiest quarter</div>`;
+        bH+=`<div class="sub">34% of all moves — budget cycle start</div>`;
         bH+=`<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);line-height:1.7">`;
         if(stats){
-            bH+=`&#8227; WPP share: ${stats.spend_share.WPP.pct}% of top-100 spend<br>`;
-            bH+=`&#8227; Publicis: ${stats.spend_share.Publicis.pct}% — largest holder<br>`;
+            bH+=`&#8227; WPP share: ${stats.spend_share.WPP.pct}% of tracked spend<br>`;
+            bH+=`&#8227; Omnicom: ${stats.spend_share.Omnicom.pct}% — largest holder<br>`;
             bH+=`&#8227; Median tenure before switch: ${stats.relationship_duration.median_years}yr<br>`;
-            bH+=`&#8227; Move pace 2x since 2021 (${stats.yearly_pace.post_2021_avg}/yr)`;
+            bH+=`&#8227; Move pace 2.7x since 2021 (${stats.yearly_pace.post_2021_avg.toLocaleString()}/yr)`;
         }
         bH+=`</div></div>`;
 
@@ -1421,14 +1421,14 @@ function initIntel(){
     var stats = typeof ADVERTISER_STATS !== 'undefined' ? ADVERTISER_STATS : null;
     bH += '<div class="card" style="border-top:3px solid var(--accent)">';
     bH += '<h3>Context</h3>';
-    bH += '<div class="big" style="font-size:1.4rem;line-height:1.3">Q2 is decision season</div>';
-    bH += '<div class="sub">42% of all moves land Apr-Jun</div>';
+    bH += '<div class="big" style="font-size:1.4rem;line-height:1.3">Q1 is busiest quarter</div>';
+    bH += '<div class="sub">34% of all moves — budget cycle start</div>';
     bH += '<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);line-height:1.7">';
     if(stats) {
-        bH += '‣ WPP share: '+stats.spend_share.WPP.pct+'% of top-100 spend<br>';
-        bH += '‣ Publicis: '+stats.spend_share.Publicis.pct+'% — largest holder<br>';
+        bH += '‣ WPP share: '+stats.spend_share.WPP.pct+'% of tracked spend<br>';
+        bH += '‣ Omnicom: '+stats.spend_share.Omnicom.pct+'% — largest holder<br>';
         bH += '‣ Median tenure before switch: '+stats.relationship_duration.median_years+'yr<br>';
-        bH += '‣ Move pace 2x since 2021 ('+stats.yearly_pace.post_2021_avg+'/yr)';
+        bH += '‣ Move pace 2.7x since 2021 ('+stats.yearly_pace.post_2021_avg.toLocaleString()+'/yr)';
     }
     bH += '</div></div>';
 

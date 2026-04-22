@@ -17,7 +17,7 @@
   "use strict";
 
   var NOW = 2026.33; // April 2026
-  var MEDIAN_TENURE = 3.3;
+  var MEDIAN_TENURE = 3.8; // COMvergence-derived
   var QUARTERS = [
     "2026-Q2","2026-Q3","2026-Q4",
     "2027-Q1","2027-Q2","2027-Q3","2027-Q4",
@@ -32,8 +32,8 @@
   };
 
   // Seasonality: normalized so they center around 1.0 (sum = 4.0)
-  // Raw: Q1=19.4%, Q2=41.9%, Q3=22.6%, Q4=16.1% → normalized to multiplier
-  var Q_SEASON = { Q1: 0.78, Q2: 1.68, Q3: 0.90, Q4: 0.64 };
+  // COMvergence: Q1=33.9%, Q2=24.9%, Q3=18.6%, Q4=22.6% → normalized to multiplier
+  var Q_SEASON = { Q1: 1.36, Q2: 1.00, Q3: 0.74, Q4: 0.90 };
 
   // Sector churn frequency — COMvergence-derived from 40,592 assignments
   // Rate = proportion of assignments that were competitive moves (Agency/New-assignment)
