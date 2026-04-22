@@ -395,6 +395,14 @@ def generate_comvergence_js(df, output_path=None):
 
     big6 = ["WPP", "Publicis Groupe", "Omnicom", "dentsu", "Havas", "Independents"]
 
+    def safe_spend(row):
+        """Get spend from row, handling NaN. Prefers 2025, falls back to 2024, then 2023."""
+        for col in ["total_spend_2025_m", "total_spend_2024_m", "total_spend_2023_m"]:
+            v = row.get(col)
+            if pd.notna(v):
+                return float(v)
+        return 0.0
+
     # 1. Portfolio summary per holding
     portfolio = {}
     for h in big6:
@@ -453,7 +461,7 @@ def generate_comvergence_js(df, output_path=None):
     ]
     for _, row in agency_moves.iterrows():
         key = f"{row['last_incumbent_holding']}|{row['holding']}"
-        spend = float(row.get("total_spend_2025_m") or row.get("total_spend_2024_m") or 0)
+        spend = safe_spend(row)
         if key not in flows:
             flows[key] = {"from": row["last_incumbent_holding"], "to": row["holding"], "count": 0, "spend_m": 0}
         flows[key]["count"] += 1
@@ -481,7 +489,7 @@ def generate_comvergence_js(df, output_path=None):
                 continue
             if year not in yearly:
                 yearly[year] = {"wins": 0, "losses": 0, "win_spend_m": 0, "loss_spend_m": 0}
-            spend = float(row.get("total_spend_2025_m") or row.get("total_spend_2024_m") or 0)
+            spend = safe_spend(row)
             if row["holding"] == h and row["last_incumbent_holding"] != h:
                 yearly[year]["wins"] += 1
                 yearly[year]["win_spend_m"] += spend
@@ -511,7 +519,7 @@ def generate_comvergence_js(df, output_path=None):
             "advertiser": str(row.get("advertiser", "")),
             "parent_co": str(row.get("parent_co", "")),
             "category": str(row.get("category_gama", "")),
-            "spend_2025_m": round(float(row.get("total_spend_2025_m") or 0), 1),
+            "spend_2025_m": round(safe_spend(row), 1),
             "agency_network": str(row.get("agency_network", "")),
             "agency": str(row.get("agency", "")),
             "group_name": str(row.get("group_name", "")),
@@ -544,9 +552,9 @@ def generate_comvergence_js(df, output_path=None):
                 "zone": str(row.get("zone", "")),
                 "country": str(row.get("country", "")),
                 "category": str(row.get("category_gama", "")),
-                "spend_2025_m": round(float(row.get("total_spend_2025_m") or 0), 1),
-                "spend_2024_m": round(float(row.get("total_spend_2024_m") or 0), 1),
-                "digital_share_pct": round(float(row.get("digital_share_2025_pct") or 0), 1),
+                "spend_2025_m": round(safe_spend(row), 1),
+                "spend_2024_m": round(float(row["total_spend_2024_m"]) if pd.notna(row.get("total_spend_2024_m")) else 0, 1),
+                "digital_share_pct": round(float(row["digital_share_2025_pct"]) if pd.notna(row.get("digital_share_2025_pct")) else 0, 1),
                 "move_type": str(row.get("move_type", "")),
                 "last_announcement": str(row.get("last_announcement_quarter", "")),
                 "first_win": str(row.get("first_win_date", ""))[:10] if pd.notna(row.get("first_win_date")) else None,
