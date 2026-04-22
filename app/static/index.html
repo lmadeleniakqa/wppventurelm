@@ -611,15 +611,47 @@ function initCompetition(){
         scales:{x:{type:'time',time:{unit:'year'},grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9}},border:{display:false}},
             y:{grid:{color:gc,drawBorder:false},ticks:{color:'#999',font:{...cf,size:9},callback:v=>'$'+(v/1000).toFixed(1)+'B'},border:{display:false}}}}});
 
-    // Move table
-    const moves=COMPETITION_DATA.account_moves.filter(m=>m.spend>0).sort((a,b)=>b.date.localeCompare(a.date));
-    let t='<table><thead><tr><th>Date</th><th>Brand</th><th>Spend</th><th>From → To</th></tr></thead><tbody>';
-    for(const m of moves){
-        const fg=GRP.includes(m.from)?`<span style="color:${C[m.from]}">${m.from}</span>`:m.from;
-        const tg=GRP.includes(m.to)?`<span style="color:${C[m.to]}">${m.to}</span>`:m.to;
-        t+=`<tr><td>${m.date}</td><td><strong>${m.brand}</strong></td><td>$${m.spend}M</td><td>${fg} → ${tg}</td></tr>`;
+    // Move table — use COMvergence ground truth if available, else fall back to curated data
+    if(typeof COMVERGENCE!=='undefined' && COMVERGENCE.advertiser_intel){
+        // Build move ledger from COMvergence advertiser_intel moves
+        var allMoves=[];
+        var HC2={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Havas':'#95a5a6'};
+        Object.keys(COMVERGENCE.advertiser_intel).forEach(function(advName){
+            var intel=COMVERGENCE.advertiser_intel[advName];
+            if(!intel.moves) return;
+            intel.moves.forEach(function(m){
+                if(m.spend_m>=100){
+                    allMoves.push({date:m.date||'',brand:advName,spend_m:m.spend_m,from_h:m.from_h,to_h:m.to_h,from_a:m.from_a,to_a:m.to_a,zone:m.zone});
+                }
+            });
+        });
+        allMoves.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+        var t='<table><thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Advertiser</th><th>Spend</th><th style="text-align:left">From</th><th style="text-align:left">To</th><th style="text-align:left">Region</th></tr></thead><tbody>';
+        allMoves.slice(0,200).forEach(function(m){
+            var fc=HC2[m.from_h]||'var(--muted)', tc=HC2[m.to_h]||'var(--muted)';
+            t+='<tr onclick="openAdvIntel(\''+m.brand.replace(/'/g,"\\'")+'\')" style="cursor:pointer">';
+            t+='<td style="text-align:left;white-space:nowrap">'+m.date+'</td>';
+            t+='<td style="text-align:left;font-weight:500">'+m.brand+'</td>';
+            t+='<td>$'+(m.spend_m>=1000?(m.spend_m/1000).toFixed(1)+'B':Math.round(m.spend_m)+'M')+'</td>';
+            t+='<td style="text-align:left"><span style="color:'+fc+'">'+m.from_h+'</span><br><span style="font-size:0.65rem;color:var(--faint)">'+m.from_a+'</span></td>';
+            t+='<td style="text-align:left"><span style="color:'+tc+'">'+m.to_h+'</span><br><span style="font-size:0.65rem;color:var(--faint)">'+m.to_a+'</span></td>';
+            t+='<td style="text-align:left">'+m.zone+'</td>';
+            t+='</tr>';
+        });
+        t+='</tbody></table>';
+        if(allMoves.length>200) t+='<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--faint)">Showing 200 of '+allMoves.length+' moves ($100M+). Source: COMvergence c-dash CARD.</div>';
+        else t+='<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--faint)">'+allMoves.length+' moves ($100M+). Source: COMvergence c-dash CARD.</div>';
+        document.getElementById('moveTable').innerHTML=t;
+    } else {
+        const moves=COMPETITION_DATA.account_moves.filter(m=>m.spend>0).sort((a,b)=>b.date.localeCompare(a.date));
+        let t='<table><thead><tr><th>Date</th><th>Brand</th><th>Spend</th><th>From → To</th></tr></thead><tbody>';
+        for(const m of moves){
+            const fg=GRP.includes(m.from)?`<span style="color:${C[m.from]}">${m.from}</span>`:m.from;
+            const tg=GRP.includes(m.to)?`<span style="color:${C[m.to]}">${m.to}</span>`:m.to;
+            t+=`<tr><td>${m.date}</td><td><strong>${m.brand}</strong></td><td>$${m.spend}M</td><td>${fg} → ${tg}</td></tr>`;
+        }
+        document.getElementById('moveTable').innerHTML=t+'</tbody></table>';
     }
-    document.getElementById('moveTable').innerHTML=t+'</tbody></table>';
 }
 
 // === STREAKS ===
