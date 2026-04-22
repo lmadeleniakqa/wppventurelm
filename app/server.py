@@ -36,6 +36,13 @@ class AuthHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    # Start background data updater (fetches prices daily after market close)
+    try:
+        from updater import start_background_updater
+        start_background_updater()
+    except Exception as e:
+        print(f"WARNING: updater failed to start: {e}")
+
     server = HTTPServer(("0.0.0.0", PORT), AuthHandler)
     print(f"Server running on port {PORT}")
     server.serve_forever()

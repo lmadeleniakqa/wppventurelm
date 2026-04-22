@@ -91,9 +91,24 @@
 
 <!-- ===== OVERVIEW ===== -->
 <div class="wrap"><div class="panel on" id="p-overview">
-    <div class="row r3" id="kpis"></div>
-    <div class="section">
-        <h2>10-Year Price Performance</h2>
+
+    <!-- Hero strip — compact price ticker -->
+    <div id="heroStrip" style="display:flex;gap:1.5rem;align-items:baseline;padding:0.6rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap"></div>
+
+    <!-- Strategic Brief — THE HEADLINE -->
+    <div id="overviewIntelSection">
+        <h2 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);font-weight:400;margin-bottom:1.25rem">STRATEGIC POSITION</h2>
+        <div class="row r3" id="overviewIntelBrief"></div>
+    </div>
+
+    <!-- Market Pulse — editorial summary -->
+    <div id="marketPulse" style="margin-top:2rem;border-left:3px solid var(--accent);padding:1rem 1.25rem;background:rgba(123,97,255,0.03)">
+        <h3 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:500;margin-bottom:0.5rem">MARKET PULSE</h3>
+        <p id="marketPulseText" style="font-family:var(--serif);font-size:0.9rem;color:var(--muted);line-height:1.65"></p>
+    </div>
+
+    <!-- Hidden: price chart kept for other references but not rendered on overview -->
+    <div style="display:none">
         <div class="pills" id="pricePills">
             <button class="pill on" data-v="WPP">WPP</button>
             <button class="pill on" data-v="Publicis">Publicis</button>
@@ -102,11 +117,7 @@
         </div>
         <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
     </div>
-    <div class="row r3">
-        <div class="card" style="border-top:3px solid var(--wpp)"><h3>WPP</h3><div class="big c-dn" id="wpp-ret"></div><div class="sub">β 0.99 · R² 0.27 · 74% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: Cindy Rose (Jan 2026). Under Elevate28 transformation.</div></div>
-        <div class="card" style="border-top:3px solid var(--pub)"><h3>Publicis</h3><div class="big c-up" id="pub-ret"></div><div class="sub">β 0.52 · R² 0.10 · 90% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: Arthur Sadoun. Epsilon data moat + AI-first strategy.</div></div>
-        <div class="card" style="border-top:3px solid var(--omc)"><h3>Omnicom</h3><div class="big" id="omc-ret"></div><div class="sub">β 0.85 · R² 0.29 · 71% idiosyncratic variance</div><div class="sub" style="margin-top:0.5rem">CEO: John Wren (29 years). IPG merger completed 2025.</div></div>
-    </div>
+
 </div></div>
 
 <!-- ===== COMPETITION ===== -->
@@ -227,37 +238,46 @@
 </div></div>
 
 <div class="wrap"><div class="panel" id="p-intel">
-    <div class="callout"><h3>Pitch Prediction Model v2</h3><p>Scoring <strong>100 global advertisers</strong> across 7 signals — tenure staleness, recency dampener, sector churn, spend magnitude, holding-group vulnerability, industry catalysts (Omnicom-IPG merger, WPP Elevate28), and seasonality. Recently reviewed accounts (2025-2026) are dampened. <strong>Q2 is decision season</strong>: 42% of all moves and 51% of spend land Apr–Jun.</p></div>
-    <div class="row r4" id="intelKpis"></div>
-    <div class="section">
-        <h2>Competition Timeline — 24 Months Forward</h2>
-        <div class="desc">Estimated review windows for at-risk accounts. Bar = RFI start → decision → transition complete. Based on spend tier (mega $3B+: ~8 months, large $1B+: ~6 months, mid: ~5 months). Darker = higher risk score.</div>
-        <div class="pills" id="ganttPills"></div>
+
+    <!-- HERO: The one number that matters -->
+    <div id="intelHero" style="padding:2.5rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem"></div>
+
+    <!-- STRATEGIC BRIEF: Three-column situation report -->
+    <div id="intelBrief" class="row r3" style="margin-bottom:2.5rem"></div>
+
+    <!-- PRIORITY ACCOUNTS: The shortlist an exec actually reads -->
+    <div class="section" id="intelPrioritySection" style="margin-bottom:2rem">
+        <h2>Priority Accounts</h2>
+        <div class="desc">The accounts that demand attention now — sorted by urgency, sized by spend.</div>
+        <div class="pills" id="intelViewPills"></div>
+        <div id="intelPriority"></div>
+    </div>
+
+    <!-- TIMELINE: Simplified, decision-focused -->
+    <div class="section" id="intelTimelineSection" style="margin-bottom:2rem">
+        <h2>Decision Calendar</h2>
+        <div class="desc">When pitches land. Each row is a decision window — plan resourcing accordingly.</div>
         <div style="overflow-x:auto" id="ganttContainer"></div>
     </div>
-    <div class="section">
-        <h2>24-Month Pitch Heatmap</h2>
-        <div class="desc">Risk score per quarter for top advertisers. Red = imminent (≥75), orange = likely (55-74), yellow = elevated (35-54). Sorted by nearest-quarter score.</div>
-        <div class="pills" id="intelPills"></div>
-        <div style="overflow-x:auto"><table id="intelHeatmap"></table></div>
+
+    <!-- DETAIL LAYER: Expandable heatmap for analysts -->
+    <div id="intelDetailToggle" style="margin-bottom:1.5rem">
+        <button id="intelExpandBtn" style="font-family:var(--font);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.6rem 1.2rem;border:1px solid var(--border);border-radius:3px;background:none;color:var(--faint);cursor:pointer;transition:all 0.15s">Show Full Heatmap</button>
     </div>
-    <div class="section">
-        <h2>Predicted Pitch Volume by Quarter</h2>
-        <div class="desc">Number of accounts predicted to pitch (score ≥ 55) per quarter, by current holding group.</div>
-        <div class="chart-wrap sm"><canvas id="intelBarChart"></canvas></div>
-    </div>
-    <div class="row r2">
+    <div id="intelDetailPanel" style="display:none">
         <div class="section">
-            <h2>Defensive — WPP at Risk</h2>
-            <div class="desc">WPP accounts most likely to pitch. Higher score = more urgent.</div>
-            <div style="overflow-x:auto"><table id="intelDefense"></table></div>
+            <h2>Quarterly Risk Heatmap</h2>
+            <div class="desc">All 100 accounts scored across 8 quarters. Red = imminent, orange = likely, gold = elevated.</div>
+            <div class="pills" id="intelPills"></div>
+            <div style="overflow-x:auto"><table id="intelHeatmap"></table></div>
         </div>
         <div class="section">
-            <h2>Offensive — WPP Opportunities</h2>
-            <div class="desc">Competitor accounts most likely to pitch. Potential WPP wins.</div>
-            <div style="overflow-x:auto"><table id="intelOffense"></table></div>
+            <h2>Pitch Volume Forecast</h2>
+            <div class="desc">Expected review activity by quarter and holding group.</div>
+            <div class="chart-wrap sm"><canvas id="intelBarChart"></canvas></div>
         </div>
     </div>
+
 </div></div>
 
 <div class="wrap"><footer>
@@ -301,18 +321,90 @@ document.querySelectorAll('nav button').forEach(b=>{
 
 // === OVERVIEW ===
 function initOverview(){
-    // KPIs
-    const el=document.getElementById('kpis');
-    let h='';
+    // Hero strip — compact one-line-per-stock price ticker
+    const strip=document.getElementById('heroStrip');
+    let sh='';
     for(const n of GRP){
-        const d=STOCK_DATA[n],c=d.closes,l=c[c.length-1],f5=c[Math.max(0,c.length-1260)];
-        const r=((l-f5)/f5*100).toFixed(1);
-        h+=`<div class="card"><h3><span class="dot" style="background:${C[n]}"></span> ${n}</h3><div class="big">${CUR[n]}${l.toFixed(2)}</div><div class="sub ${r>0?'c-up':'c-dn'}">${r>0?'+':''}${r}% (5Y)</div></div>`;
-        document.getElementById(n==='WPP'?'wpp-ret':n==='Publicis'?'pub-ret':'omc-ret').textContent=(r>0?'+':'')+r+'% (10Y)';
+        const d=STOCK_DATA[n],c=d.closes,l=c[c.length-1],prev=c[c.length-2];
+        const dayChg=((l-prev)/prev*100).toFixed(2);
+        const dayUp=dayChg>=0;
+        sh+=`<span style="display:inline-flex;align-items:baseline;gap:0.4rem;font-size:0.8rem">`;
+        sh+=`<span class="dot" style="background:${C[n]}"></span>`;
+        sh+=`<span style="font-weight:500;letter-spacing:-0.01em">${n}</span>`;
+        sh+=`<span style="color:var(--muted)">${CUR[n]}${l.toFixed(2)}</span>`;
+        sh+=`<span class="${dayUp?'c-up':'c-dn'}" style="font-size:0.7rem;font-weight:500">${dayUp?'+':''}${dayChg}%</span>`;
+        sh+=`</span>`;
     }
-    el.innerHTML=h;
-    // Price chart
-    buildPriceChart();
+    strip.innerHTML=sh;
+
+    // Strategic brief (Defend / Attack / Context) — THE HEADLINE
+    if(typeof PITCH_PREDICTIONS!=='undefined'){
+        const PP=PITCH_PREDICTIONS;
+        const sc=v=>v>=75?'var(--down)':v>=55?'var(--orange)':v>=35?'var(--warn)':'var(--up)';
+        const wppRisk=PP.getAtRisk('WPP'), wppOpp=PP.getOpportunities('WPP');
+        const wppRiskSpend=wppRisk.reduce((s,p)=>s+p.spend,0);
+        const wppOppSpend=wppOpp.reduce((s,p)=>s+p.spend,0);
+        const stats=typeof ADVERTISER_STATS!=='undefined'?ADVERTISER_STATS:null;
+
+        let bH='';
+        // Defend
+        bH+=`<div class="card" style="border-top:3px solid var(--down)"><h3>DEFEND</h3>`;
+        bH+=`<div class="big c-dn">${wppRisk.length}</div>`;
+        bH+=`<div class="sub">WPP accounts likely to pitch</div>`;
+        bH+=`<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">`;
+        bH+=`<div style="font-size:0.8rem;color:var(--muted)">$${(wppRiskSpend/1000).toFixed(1)}B exposed</div>`;
+        wppRisk.slice(0,3).forEach(p=>{
+            bH+=`<div style="font-size:0.75rem;margin-top:0.35rem;display:flex;justify-content:space-between">`;
+            bH+=`<span style="font-weight:500">${p.name}</span>`;
+            bH+=`<span style="color:${sc(p.composite_score)};font-weight:600">${p.composite_score}</span></div>`;
+        });
+        bH+=`</div></div>`;
+
+        // Attack
+        bH+=`<div class="card" style="border-top:3px solid var(--up)"><h3>ATTACK</h3>`;
+        bH+=`<div class="big c-up">${wppOpp.length}</div>`;
+        bH+=`<div class="sub">Competitor accounts in play</div>`;
+        bH+=`<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">`;
+        bH+=`<div style="font-size:0.8rem;color:var(--muted)">$${(wppOppSpend/1000).toFixed(1)}B addressable</div>`;
+        wppOpp.slice(0,3).forEach(p=>{
+            bH+=`<div style="font-size:0.75rem;margin-top:0.35rem;display:flex;justify-content:space-between">`;
+            bH+=`<span style="font-weight:500">${p.name} <span style="color:var(--faint);font-weight:400">${p.group}</span></span>`;
+            bH+=`<span style="color:${sc(p.composite_score)};font-weight:600">${p.composite_score}</span></div>`;
+        });
+        bH+=`</div></div>`;
+
+        // Context
+        bH+=`<div class="card" style="border-top:3px solid var(--accent)"><h3>CONTEXT</h3>`;
+        bH+=`<div class="big" style="font-size:1.4rem;line-height:1.3">Q2 is decision season</div>`;
+        bH+=`<div class="sub">42% of all moves land Apr-Jun</div>`;
+        bH+=`<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);line-height:1.7">`;
+        if(stats){
+            bH+=`&#8227; WPP share: ${stats.spend_share.WPP.pct}% of top-100 spend<br>`;
+            bH+=`&#8227; Publicis: ${stats.spend_share.Publicis.pct}% — largest holder<br>`;
+            bH+=`&#8227; Median tenure before switch: ${stats.relationship_duration.median_years}yr<br>`;
+            bH+=`&#8227; Move pace 2x since 2021 (${stats.yearly_pace.post_2021_avg}/yr)`;
+        }
+        bH+=`</div></div>`;
+
+        document.getElementById('overviewIntelBrief').innerHTML=bH;
+
+        // Market Pulse — editorial summary
+        let pulse='';
+        const totalExposed=(wppRiskSpend+wppOppSpend)/1000;
+        pulse+=`<strong>$${totalExposed.toFixed(0)}B in play.</strong> `;
+        pulse+=`${wppRisk.length} WPP accounts show elevated pitch signals — $${(wppRiskSpend/1000).toFixed(1)}B in billings at risk. `;
+        pulse+=`On offense, ${wppOpp.length} competitor accounts worth $${(wppOppSpend/1000).toFixed(1)}B are showing review indicators. `;
+        if(stats){
+            const wppLoss=stats.churn_by_group.WPP;
+            const pubGain=stats.churn_by_group.Publicis;
+            pulse+=`Over the past decade, WPP has shed $${(Math.abs(wppLoss.net_spend_M)/1000).toFixed(1)}B net while Publicis gained $${(pubGain.net_spend_M/1000).toFixed(1)}B. `;
+            pulse+=`Q2 decisions will define the next chapter.`;
+        }
+        document.getElementById('marketPulseText').innerHTML=pulse;
+    } else {
+        document.getElementById('overviewIntelSection').style.display='none';
+        document.getElementById('marketPulse').style.display='none';
+    }
 }
 
 function buildPriceChart(){
@@ -1047,10 +1139,10 @@ const inited={overview:false};
 // === MARKET INTELLIGENCE ===
 function initIntel(){
     if(typeof PITCH_PREDICTIONS==='undefined') return;
-    const PP = PITCH_PREDICTIONS;
-    const preds = PP.predictions;
-    const QS = PP.metadata.quarters;
-    const cal = PP.competition_calendar || [];
+    var PP = PITCH_PREDICTIONS;
+    var preds = PP.predictions;
+    var QS = PP.metadata.quarters;
+    var cal = PP.competition_calendar || [];
 
     // Color helpers
     function sc(v){ return v>=75?'var(--down)':v>=55?'var(--orange)':v>=35?'var(--warn)':'var(--up)'; }
@@ -1058,68 +1150,219 @@ function initIntel(){
     function bracketLabel(b){ return b==='3mo'?'Imminent':b==='6mo'?'Likely':b==='9mo'?'Elevated':'Low'; }
     var GC = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',Dentsu:'#FF9F43',Mixed:'#C8C8CD',IPG:'#e67e22',Havas:'#95a5a6',Other:'#999'};
 
-    // --- KPIs ---
+    // Core data
     var wppRisk = PP.getAtRisk('WPP');
     var wppOpp = PP.getOpportunities('WPP');
-    var total55 = preds.filter(p=>p.composite_score>=55);
-    var topPred = preds[0];
-    var kH = '';
-    kH += '<div class="card"><h3>Accounts in Play (Score ≥ 55)</h3><div class="big">'+total55.length+'</div><div class="sub">$'+(total55.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B total spend at risk</div></div>';
-    kH += '<div class="card"><h3>WPP Defensive Alerts</h3><div class="big c-dn">'+wppRisk.length+'</div><div class="sub">$'+(wppRisk.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B WPP spend exposed</div></div>';
-    kH += '<div class="card"><h3>WPP Offensive Targets</h3><div class="big c-up">'+wppOpp.length+'</div><div class="sub">$'+(wppOpp.reduce((s,p)=>s+p.spend,0)/1000).toFixed(1)+'B competitor spend in play</div></div>';
-    kH += '<div class="card"><h3>Highest Risk Account</h3><div class="big" style="font-size:1.4rem">'+topPred.name+'</div><div class="sub">Score '+topPred.composite_score+' · '+topPred.group+' · Peak '+topPred.peak_quarter+'</div></div>';
-    document.getElementById('intelKpis').innerHTML = kH;
+    var total55 = preds.filter(function(p){ return p.composite_score>=55; });
+    var totalSpendInPlay = total55.reduce(function(s,p){ return s+p.spend; },0);
+    var wppRiskSpend = wppRisk.reduce(function(s,p){ return s+p.spend; },0);
+    var wppOppSpend = wppOpp.reduce(function(s,p){ return s+p.spend; },0);
+    var netOpportunity = wppOppSpend - wppRiskSpend;
 
-    // --- GANTT TIMELINE ---
-    var ganttFilters = ['All','WPP at Risk','WPP Opportunities','3mo Imminent','6mo Likely'];
-    var gfH = '';
-    ganttFilters.forEach(function(f,i){ gfH += '<button class="pill'+(i===0?' on':'')+'" data-gf="'+f+'">'+f+'</button>'; });
-    document.getElementById('ganttPills').innerHTML = gfH;
+    // =====================================================================
+    // HERO — One number. One insight. One call to action.
+    // =====================================================================
+    var heroEl = document.getElementById('intelHero');
+    var heroH = '';
+    heroH += '<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem">';
+    heroH += '<span style="font-size:3.5rem;font-weight:500;letter-spacing:-0.04em;line-height:1">';
+    heroH += '$'+(totalSpendInPlay/1000).toFixed(1)+'B';
+    heroH += '</span>';
+    heroH += '<span style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint)">in play over 24 months</span>';
+    heroH += '</div>';
+    heroH += '<p style="font-family:var(--serif);font-size:1.05rem;color:var(--muted);max-width:640px;line-height:1.6">';
+    heroH += '<strong style="color:var(--text)">'+total55.length+' accounts</strong> are likely to pitch across ';
+    heroH += total55.map(function(p){return p.group;}).filter(function(v,i,a){return a.indexOf(v)===i;}).length+' holding groups. ';
+    if(netOpportunity > 0) {
+        heroH += 'WPP\'s net opportunity is <strong style="color:var(--up)">+$'+(netOpportunity/1000).toFixed(1)+'B</strong> — ';
+        heroH += 'more competitor spend is vulnerable than our own.';
+    } else {
+        heroH += 'WPP faces <strong style="color:var(--down)">$'+(Math.abs(netOpportunity)/1000).toFixed(1)+'B</strong> net exposure — ';
+        heroH += 'defensive posture is critical.';
+    }
+    heroH += '</p>';
+    heroEl.innerHTML = heroH;
 
-    // Month labels for timeline header
+    // =====================================================================
+    // STRATEGIC BRIEF — Three cards: Defend / Attack / Context
+    // =====================================================================
+    var briefEl = document.getElementById('intelBrief');
+    var bH = '';
+
+    // Defend card
+    bH += '<div class="card" style="border-top:3px solid var(--down)">';
+    bH += '<h3>Defend</h3>';
+    bH += '<div class="big c-dn">'+wppRisk.length+'</div>';
+    bH += '<div class="sub">WPP accounts likely to pitch</div>';
+    bH += '<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">';
+    bH += '<div style="font-size:0.8rem;color:var(--muted)">$'+(wppRiskSpend/1000).toFixed(1)+'B exposed</div>';
+    // Top 3 at-risk names
+    wppRisk.slice(0,3).forEach(function(p){
+        bH += '<div style="font-size:0.75rem;margin-top:0.35rem;display:flex;justify-content:space-between">';
+        bH += '<span style="font-weight:500">'+p.name+'</span>';
+        bH += '<span style="color:'+sc(p.composite_score)+';font-weight:600">'+p.composite_score+'</span>';
+        bH += '</div>';
+    });
+    bH += '</div></div>';
+
+    // Attack card
+    bH += '<div class="card" style="border-top:3px solid var(--up)">';
+    bH += '<h3>Attack</h3>';
+    bH += '<div class="big c-up">'+wppOpp.length+'</div>';
+    bH += '<div class="sub">Competitor accounts in play</div>';
+    bH += '<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">';
+    bH += '<div style="font-size:0.8rem;color:var(--muted)">$'+(wppOppSpend/1000).toFixed(1)+'B addressable</div>';
+    // Top 3 opportunities
+    wppOpp.slice(0,3).forEach(function(p){
+        bH += '<div style="font-size:0.75rem;margin-top:0.35rem;display:flex;justify-content:space-between">';
+        bH += '<span style="font-weight:500">'+p.name+' <span style="color:var(--faint);font-weight:400">'+p.group+'</span></span>';
+        bH += '<span style="color:'+sc(p.composite_score)+';font-weight:600">'+p.composite_score+'</span>';
+        bH += '</div>';
+    });
+    bH += '</div></div>';
+
+    // Context card — competitive position
+    var stats = typeof ADVERTISER_STATS !== 'undefined' ? ADVERTISER_STATS : null;
+    bH += '<div class="card" style="border-top:3px solid var(--accent)">';
+    bH += '<h3>Context</h3>';
+    bH += '<div class="big" style="font-size:1.4rem;line-height:1.3">Q2 is decision season</div>';
+    bH += '<div class="sub">42% of all moves land Apr-Jun</div>';
+    bH += '<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);line-height:1.7">';
+    if(stats) {
+        bH += '‣ WPP share: '+stats.spend_share.WPP.pct+'% of top-100 spend<br>';
+        bH += '‣ Publicis: '+stats.spend_share.Publicis.pct+'% — largest holder<br>';
+        bH += '‣ Median tenure before switch: '+stats.relationship_duration.median_years+'yr<br>';
+        bH += '‣ Move pace 2x since 2021 ('+stats.yearly_pace.post_2021_avg+'/yr)';
+    }
+    bH += '</div></div>';
+
+    briefEl.innerHTML = bH;
+
+    // =====================================================================
+    // PRIORITY ACCOUNTS — The shortlist. Cards, not spreadsheets.
+    // =====================================================================
+    var viewFilters = ['All in Play','Defend WPP','Attack Competitors','Imminent (90 days)'];
+    var vH = '';
+    viewFilters.forEach(function(f,i){ vH += '<button class="pill'+(i===0?' on':'')+'" data-vf="'+f+'">'+f+'</button>'; });
+    document.getElementById('intelViewPills').innerHTML = vH;
+
+    function filterPriority(f){
+        if(f==='Defend WPP') return wppRisk;
+        if(f==='Attack Competitors') return wppOpp;
+        if(f==='Imminent (90 days)') return preds.filter(function(p){ return p.risk_bracket==='3mo'; });
+        return total55;
+    }
+
+    function renderPriority(items){
+        var h = '';
+        if(items.length === 0){
+            h = '<div style="padding:2rem;text-align:center;color:var(--faint);font-size:0.85rem">No accounts match this filter.</div>';
+            document.getElementById('intelPriority').innerHTML = h;
+            return;
+        }
+
+        h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;margin-top:1rem">';
+        items.slice(0,12).forEach(function(p){
+            var dest = p.likely_destination[0];
+            var timeline = p.competition_timeline;
+            var isWpp = p.group === 'WPP';
+            var borderColor = isWpp ? 'var(--down)' : 'var(--up)';
+            var stanceLabel = isWpp ? 'DEFEND' : 'OPPORTUNITY';
+            var stanceColor = isWpp ? 'var(--down)' : 'var(--up)';
+
+            // Score bar width (out of 100)
+            var barW = Math.min(100, p.composite_score);
+
+            h += '<div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:3px;padding:1rem 1.25rem">';
+
+            // Top line: name + score
+            h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">';
+            h += '<div>';
+            h += '<div style="font-weight:500;font-size:0.9rem">'+p.name+'</div>';
+            h += '<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint);margin-top:2px">';
+            h += p.group+' · '+p.sector+' · $'+p.spend+'M';
+            h += '</div>';
+            h += '</div>';
+            h += '<div style="text-align:right">';
+            h += '<div style="font-size:1.5rem;font-weight:500;color:'+sc(p.composite_score)+';letter-spacing:-0.02em;line-height:1">'+p.composite_score+'</div>';
+            h += '<div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:'+stanceColor+';margin-top:2px">'+stanceLabel+'</div>';
+            h += '</div>';
+            h += '</div>';
+
+            // Score bar
+            h += '<div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:0.75rem">';
+            h += '<div style="height:100%;width:'+barW+'%;background:'+sc(p.composite_score)+';border-radius:2px"></div>';
+            h += '</div>';
+
+            // Details row
+            h += '<div style="display:flex;gap:1.5rem;font-size:0.7rem;color:var(--muted)">';
+            h += '<div><span style="color:var(--faint)">Bracket</span><br><span style="color:'+sc(p.composite_score)+';font-weight:500">'+bracketLabel(p.risk_bracket)+'</span></div>';
+            h += '<div><span style="color:var(--faint)">Peak</span><br><span style="font-weight:500">'+p.peak_quarter.replace('20','\'')+'</span></div>';
+            if(timeline){
+                h += '<div><span style="color:var(--faint)">Decision</span><br><span style="font-weight:500">'+timeline.decision+'</span></div>';
+            }
+            if(dest){
+                h += '<div><span style="color:var(--faint)">Likely flow</span><br><span style="font-weight:500">'+dest.group+' '+Math.round(dest.probability*100)+'%</span></div>';
+            }
+            h += '</div>';
+
+            h += '</div>';
+        });
+        h += '</div>';
+
+        if(items.length > 12){
+            h += '<div style="text-align:center;padding:1rem;font-size:0.75rem;color:var(--faint)">'+
+                 'Showing 12 of '+items.length+' accounts. Expand heatmap below for the full list.</div>';
+        }
+
+        document.getElementById('intelPriority').innerHTML = h;
+    }
+
+    renderPriority(filterPriority('All in Play'));
+
+    document.querySelectorAll('#intelViewPills .pill').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('#intelViewPills .pill').forEach(function(b){b.classList.remove('on');});
+            btn.classList.add('on');
+            renderPriority(filterPriority(btn.dataset.vf));
+        });
+    });
+
+    // =====================================================================
+    // DECISION CALENDAR — Simplified Gantt, only accounts score >= 55
+    // =====================================================================
     var monthLabels = [];
     for(var m=0; m<27; m++){
         var yr = 2026 + Math.floor(m/12);
-        var mo = (m%12)+1;
         var mName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m%12];
-        monthLabels.push({ label: (mo===1||m===0)? mName+"'"+String(yr).slice(2) : mName, month: m });
+        monthLabels.push({ label: ((m%12)===0||m===0)? mName+"'"+String(yr).slice(2) : mName, month: m });
     }
 
-    function filterCal(f){
-        if(f==='All') return cal.filter(c=>c.score>=35).slice(0,30);
-        if(f==='WPP at Risk') return cal.filter(c=>c.group==='WPP'&&c.score>=35);
-        if(f==='WPP Opportunities') return cal.filter(c=>c.group!=='WPP'&&c.score>=55);
-        if(f==='3mo Imminent') return cal.filter(c=>c.bracket==='3mo');
-        if(f==='6mo Likely') return cal.filter(c=>c.bracket==='6mo');
-        return cal.slice(0,30);
-    }
+    var calItems = cal.filter(function(c){ return c.score>=50; }).slice(0,20);
+    calItems.sort(function(a,b){ return a.decision_offset - b.decision_offset; });
 
-    function renderGantt(items){
-        items.sort(function(a,b){ return a.review_start_offset - b.review_start_offset; });
+    (function renderGantt(items){
         var totalMonths = 27;
-        var colW = 36; // px per month
-        var rowH = 28;
-        var labelW = 190;
-        var chartW = totalMonths * colW;
+        var colW = 36;
+        var rowH = 32;
+        var labelW = 200;
 
         var h = '<div style="position:relative;font-size:0.7rem">';
         // Header
         h += '<div style="display:flex;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px">';
-        h += '<div style="min-width:'+labelW+'px;font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;font-size:0.6rem;padding:4px 8px">Advertiser</div>';
+        h += '<div style="min-width:'+labelW+'px;font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;font-size:0.6rem;padding:4px 8px">Account</div>';
         h += '<div style="display:flex;flex:1">';
         monthLabels.forEach(function(ml){
-            var isCurrent = ml.month === 3; // April 2026
+            var isCurrent = ml.month === 3;
             h += '<div style="width:'+colW+'px;text-align:center;color:'+(isCurrent?'var(--accent)':'var(--faint)')+';font-size:0.55rem;padding:2px 0;'+(ml.label.includes("'")?'font-weight:600':'')+'">'+ ml.label+'</div>';
         });
         h += '</div></div>';
 
-        // "Now" marker label
+        // Now line container
         h += '<div style="display:flex">';
         h += '<div style="min-width:'+labelW+'px"></div>';
         h += '<div style="position:relative;flex:1">';
-        // Now line at month 3 (April 2026)
-        h += '<div style="position:absolute;left:'+(3*colW + colW/2)+'px;top:0;bottom:0;width:1px;background:var(--accent);opacity:0.3;z-index:0"></div>';
-        // Q shading
+        h += '<div style="position:absolute;left:'+(3*colW + colW/2)+'px;top:0;bottom:0;width:1px;background:var(--accent);opacity:0.25;z-index:0"></div>';
         for(var qi=0;qi<8;qi++){
             var qStart = [3,6,9,12,15,18,21,24][qi];
             if(qi%2===0) h += '<div style="position:absolute;left:'+(qStart*colW)+'px;width:'+(3*colW)+'px;top:0;bottom:0;background:rgba(0,0,0,0.015);z-index:0"></div>';
@@ -1129,144 +1372,133 @@ function initIntel(){
         // Rows
         items.forEach(function(item){
             var barColor = GC[item.group]||'#999';
-            var opacity = item.score >= 75 ? 1.0 : item.score >= 55 ? 0.7 : 0.45;
+            var opacity = item.score >= 75 ? 1.0 : item.score >= 55 ? 0.75 : 0.5;
             var startPx = Math.max(0, item.review_start_offset) * colW;
             var decisionPx = item.decision_offset * colW;
             var endPx = Math.min(totalMonths, item.transition_end_offset) * colW;
             var reviewW = decisionPx - startPx;
             var transW = endPx - decisionPx;
+            var isWpp = item.group === 'WPP';
 
-            h += '<div style="display:flex;align-items:center;height:'+rowH+'px;border-bottom:1px solid rgba(0,0,0,0.04)">';
-            // Label
-            h += '<div style="min-width:'+labelW+'px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+item.name+' ($'+item.spend+'M, '+item.group+')">';
-            h += '<span style="color:'+barColor+';font-size:0.5rem">●</span> ';
-            h += '<span style="font-weight:500">'+item.name.substring(0,22)+'</span> ';
-            h += '<span style="color:var(--faint)">$'+item.spend+'M</span>';
+            h += '<div style="display:flex;align-items:center;height:'+rowH+'px;border-bottom:1px solid rgba(0,0,0,0.04)'+(isWpp?';background:rgba(123,97,255,0.03)':'')+'">';
+            h += '<div style="min-width:'+labelW+'px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px" title="'+item.name+' ($'+item.spend+'M, '+item.group+')">';
+            h += '<span style="font-size:0.5rem;color:'+(isWpp?'var(--down)':'var(--up)')+'">'+( isWpp?'&#9679;':'&#9651;')+'</span>';
+            h += '<span style="font-weight:500">'+item.name.substring(0,20)+'</span>';
+            h += '<span style="color:var(--faint);font-size:0.65rem">$'+(item.spend>=1000?(item.spend/1000).toFixed(1)+'B':item.spend+'M')+'</span>';
             h += '</div>';
-            // Bar area
             h += '<div style="position:relative;flex:1;height:'+rowH+'px">';
-            // Review phase (RFI + pitch)
             if(reviewW > 0) {
-                h += '<div style="position:absolute;left:'+startPx+'px;width:'+reviewW+'px;top:8px;height:12px;background:'+barColor+';opacity:'+opacity+';border-radius:2px 0 0 2px" title="Review: '+item.review_start+' → Decision: '+item.decision+'"></div>';
+                h += '<div style="position:absolute;left:'+startPx+'px;width:'+reviewW+'px;top:10px;height:12px;background:'+barColor+';opacity:'+opacity+';border-radius:2px 0 0 2px" title="Review: '+item.review_start+' to '+item.decision+'"></div>';
             }
-            // Transition phase (lighter)
             if(transW > 0) {
-                h += '<div style="position:absolute;left:'+decisionPx+'px;width:'+transW+'px;top:8px;height:12px;background:'+barColor+';opacity:'+(opacity*0.35)+';border-radius:0 2px 2px 0" title="Transition ends: '+item.transition_end+'"></div>';
+                h += '<div style="position:absolute;left:'+decisionPx+'px;width:'+transW+'px;top:10px;height:12px;background:'+barColor+';opacity:'+(opacity*0.3)+';border-radius:0 2px 2px 0"></div>';
             }
-            // Decision diamond
-            h += '<div style="position:absolute;left:'+(decisionPx-4)+'px;top:6px;width:8px;height:8px;background:'+barColor+';transform:rotate(45deg);border:1px solid #fff;z-index:1" title="Decision: '+item.decision+'"></div>';
+            h += '<div style="position:absolute;left:'+(decisionPx-4)+'px;top:8px;width:8px;height:8px;background:'+barColor+';transform:rotate(45deg);border:1.5px solid #fff;z-index:1" title="Decision: '+item.decision+'"></div>';
             h += '</div></div>';
         });
 
+        if(items.length === 0){
+            h += '<div style="padding:2rem;text-align:center;color:var(--faint)">No accounts meet the threshold.</div>';
+        }
+
         h += '</div>';
         document.getElementById('ganttContainer').innerHTML = h;
-    }
+    })(calItems);
 
-    renderGantt(filterCal('All'));
+    // =====================================================================
+    // PROGRESSIVE DISCLOSURE — Expand for full heatmap + bar chart
+    // =====================================================================
+    var detailExpanded = false;
+    document.getElementById('intelExpandBtn').addEventListener('click', function(){
+        detailExpanded = !detailExpanded;
+        document.getElementById('intelDetailPanel').style.display = detailExpanded ? 'block' : 'none';
+        this.textContent = detailExpanded ? 'Hide Full Heatmap' : 'Show Full Heatmap';
+        this.style.color = detailExpanded ? 'var(--accent)' : 'var(--faint)';
+        this.style.borderColor = detailExpanded ? 'var(--accent)' : 'var(--border)';
 
-    document.querySelectorAll('#ganttPills .pill').forEach(function(btn){
-        btn.addEventListener('click',function(){
-            document.querySelectorAll('#ganttPills .pill').forEach(function(b){b.classList.remove('on');});
-            btn.classList.add('on');
-            renderGantt(filterCal(btn.dataset.gf));
-        });
-    });
-
-    // --- Heatmap pills ---
-    var filters = ['All','WPP at Risk','WPP Opportunities','FMCG','Auto','Tech','Pharma','Finance'];
-    var pillH = '';
-    filters.forEach(function(f,i){
-        pillH += '<button class="pill'+(i===0?' on':'')+'" data-filter="'+f+'">'+f+'</button>';
-    });
-    document.getElementById('intelPills').innerHTML = pillH;
-
-    function filterPreds(f){
-        if(f==='All') return preds.filter(p=>p.composite_score>=25);
-        if(f==='WPP at Risk') return preds.filter(p=>p.wpp_stance==='at_risk');
-        if(f==='WPP Opportunities') return preds.filter(p=>p.wpp_stance==='opportunity');
-        return preds.filter(p=>p.sector.indexOf(f)>=0 && p.composite_score>=25);
-    }
-
-    function renderHeatmap(filtered){
-        var top = filtered.slice(0,35);
-        var h = '<thead><tr><th style="text-align:left;min-width:170px">Advertiser</th><th>Group</th><th>Spend</th>';
-        QS.forEach(function(q){ h += '<th>'+q.replace('20','\'')+'</th>'; });
-        h += '<th>Peak</th><th>Likely →</th></tr></thead><tbody>';
-        top.forEach(function(p){
-            h += '<tr><td style="text-align:left;font-weight:500">'+p.name+'</td>';
-            h += '<td><span style="color:'+(GC[p.group]||'var(--muted)')+'">'+p.group+'</span></td>';
-            h += '<td>$'+p.spend+'M</td>';
-            QS.forEach(function(q){
-                var v = p.quarterly_risk[q]||0;
-                h += '<td style="background:'+bg(v)+';color:'+sc(v)+';font-weight:600;font-size:0.75rem">'+v+'</td>';
-            });
-            h += '<td style="font-size:0.7rem">'+p.peak_quarter.replace('20','\'')+'</td>';
-            var dest = p.likely_destination[0];
-            h += '<td style="font-size:0.7rem">'+(dest?dest.group+' ('+Math.round(dest.probability*100)+'%)':'—')+'</td>';
-            h += '</tr>';
-        });
-        h += '</tbody>';
-        document.getElementById('intelHeatmap').innerHTML = h;
-    }
-
-    renderHeatmap(filterPreds('All'));
-
-    document.querySelectorAll('#intelPills .pill').forEach(function(btn){
-        btn.addEventListener('click',function(){
-            document.querySelectorAll('#intelPills .pill').forEach(function(b){b.classList.remove('on');});
-            btn.classList.add('on');
-            renderHeatmap(filterPreds(btn.dataset.filter));
-        });
-    });
-
-    // --- Stacked bar: pitch volume by quarter ---
-    var barGroups = ['WPP','Publicis','Omnicom','Dentsu','Mixed','Other'];
-    var barColors = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',Dentsu:'#FF9F43',Mixed:'#C8C8CD',Other:'#999'};
-    var barDatasets = barGroups.map(function(g){
-        return {
-            label: g,
-            data: QS.map(function(q){
-                return (PP.timeline[q]||[]).filter(function(t){ return t.group===g||(g==='Other'&&barGroups.indexOf(t.group)<0); }).length;
-            }),
-            backgroundColor: barColors[g]||'#999'
-        };
-    });
-    new Chart(document.getElementById('intelBarChart').getContext('2d'),{
-        type:'bar',
-        data:{ labels: QS.map(function(q){return q.replace('20','\'');}), datasets: barDatasets },
-        options:{
-            responsive:true, maintainAspectRatio:false,
-            scales:{
-                x:{ stacked:true, grid:{display:false}, ticks:{font:{...cf,size:10},color:'#999'} },
-                y:{ stacked:true, grid:{color:gc}, ticks:{font:{...cf,size:10},color:'#999',stepSize:5}, title:{display:true,text:'Accounts predicted to pitch',font:{...cf,size:10},color:'#999'} }
-            },
-            plugins:{
-                legend:{position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'rect',padding:8}},
-                tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2}
-            }
+        if(detailExpanded && !document.getElementById('intelHeatmap').innerHTML){
+            renderDetailLayer();
         }
     });
 
-    // --- Defensive / Offensive tables ---
-    function renderTable(elId, rows, showDest){
-        var h = '<thead><tr><th style="text-align:left">Advertiser</th><th>Spend</th>'+(showDest?'<th>Current</th>':'')+'<th>Score</th><th>Bracket</th><th>Est. Decision</th><th>'+(showDest?'Likely Winner':'Likely Dest.')+'</th></tr></thead><tbody>';
-        rows.slice(0,15).forEach(function(p){
-            var dest = p.likely_destination[0];
-            var timeline = p.competition_timeline;
-            h += '<tr><td style="text-align:left;font-weight:500">'+p.name+'</td>';
-            h += '<td>$'+p.spend+'M</td>';
-            if(showDest) h += '<td>'+p.group+'</td>';
-            h += '<td style="color:'+sc(p.composite_score)+';font-weight:600">'+p.composite_score+'</td>';
-            h += '<td><span style="font-size:0.65rem;text-transform:uppercase;padding:2px 6px;border-radius:2px;background:'+bg(p.composite_score)+';color:'+sc(p.composite_score)+'">'+bracketLabel(p.risk_bracket)+'</span></td>';
-            h += '<td style="font-size:0.7rem">'+(timeline?timeline.decision:'—')+'</td>';
-            h += '<td>'+(dest?dest.group+' ('+Math.round(dest.probability*100)+'%)':'—')+'</td></tr>';
+    function renderDetailLayer(){
+        // Heatmap filters
+        var filters = ['All','WPP at Risk','WPP Opportunities','FMCG','Auto','Tech','Pharma','Finance'];
+        var pillH = '';
+        filters.forEach(function(f,i){
+            pillH += '<button class="pill'+(i===0?' on':'')+'" data-filter="'+f+'">'+f+'</button>';
         });
-        h += '</tbody>';
-        document.getElementById(elId).innerHTML = h;
-    }
+        document.getElementById('intelPills').innerHTML = pillH;
 
-    renderTable('intelDefense', wppRisk, false);
-    renderTable('intelOffense', wppOpp, true);
+        function filterPreds(f){
+            if(f==='All') return preds.filter(function(p){return p.composite_score>=25;});
+            if(f==='WPP at Risk') return preds.filter(function(p){return p.wpp_stance==='at_risk';});
+            if(f==='WPP Opportunities') return preds.filter(function(p){return p.wpp_stance==='opportunity';});
+            return preds.filter(function(p){return p.sector.indexOf(f)>=0 && p.composite_score>=25;});
+        }
+
+        function renderHeatmap(filtered){
+            var top = filtered.slice(0,35);
+            var h = '<thead><tr><th style="text-align:left;min-width:170px">Advertiser</th><th>Group</th><th>Spend</th>';
+            QS.forEach(function(q){ h += '<th>'+q.replace('20','\'')+'</th>'; });
+            h += '<th>Peak</th><th>Likely flow</th></tr></thead><tbody>';
+            top.forEach(function(p){
+                var isWpp = p.group === 'WPP';
+                h += '<tr'+(isWpp?' style="background:rgba(123,97,255,0.03)"':'')+'>';
+                h += '<td style="text-align:left;font-weight:500">'+p.name+'</td>';
+                h += '<td><span style="color:'+(GC[p.group]||'var(--muted)')+'">'+p.group+'</span></td>';
+                h += '<td>$'+p.spend+'M</td>';
+                QS.forEach(function(q){
+                    var v = p.quarterly_risk[q]||0;
+                    h += '<td style="background:'+bg(v)+';color:'+sc(v)+';font-weight:600;font-size:0.75rem">'+v+'</td>';
+                });
+                h += '<td style="font-size:0.7rem">'+p.peak_quarter.replace('20','\'')+'</td>';
+                var dest = p.likely_destination[0];
+                h += '<td style="font-size:0.7rem">'+(dest?dest.group+' ('+Math.round(dest.probability*100)+'%)':'--')+'</td>';
+                h += '</tr>';
+            });
+            h += '</tbody>';
+            document.getElementById('intelHeatmap').innerHTML = h;
+        }
+
+        renderHeatmap(filterPreds('All'));
+
+        document.querySelectorAll('#intelPills .pill').forEach(function(btn){
+            btn.addEventListener('click',function(){
+                document.querySelectorAll('#intelPills .pill').forEach(function(b){b.classList.remove('on');});
+                btn.classList.add('on');
+                renderHeatmap(filterPreds(btn.dataset.filter));
+            });
+        });
+
+        // Bar chart
+        var barGroups = ['WPP','Publicis','Omnicom','Dentsu','Mixed','Other'];
+        var barColors = {WPP:'#7B61FF',Publicis:'#4AEADC',Omnicom:'#FF6B35',Dentsu:'#FF9F43',Mixed:'#C8C8CD',Other:'#999'};
+        var barDatasets = barGroups.map(function(g){
+            return {
+                label: g,
+                data: QS.map(function(q){
+                    return (PP.timeline[q]||[]).filter(function(t){ return t.group===g||(g==='Other'&&barGroups.indexOf(t.group)<0); }).length;
+                }),
+                backgroundColor: barColors[g]||'#999'
+            };
+        });
+        new Chart(document.getElementById('intelBarChart').getContext('2d'),{
+            type:'bar',
+            data:{ labels: QS.map(function(q){return q.replace('20','\'');}), datasets: barDatasets },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                scales:{
+                    x:{ stacked:true, grid:{display:false}, ticks:{font:{...cf,size:10},color:'#999'} },
+                    y:{ stacked:true, grid:{color:gc}, ticks:{font:{...cf,size:10},color:'#999',stepSize:5}, title:{display:true,text:'ACCOUNTS PREDICTED TO PITCH',font:{...cf,size:9,weight:'normal'},color:'#999'} }
+                },
+                plugins:{
+                    legend:{position:'top',align:'start',labels:{color:'#999',font:{...cf,size:9},usePointStyle:true,pointStyle:'rect',padding:8}},
+                    tooltip:{backgroundColor:'#fff',borderColor:'#e5e5ea',borderWidth:1,titleColor:'#0a0a0a',bodyColor:'#6b6b6b',padding:12,cornerRadius:2}
+                }
+            }
+        });
+    }
 }
 
 function show(p){
