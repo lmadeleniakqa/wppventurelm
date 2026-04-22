@@ -464,307 +464,136 @@
     }
     </script>
 
-    <!-- Force-Directed Relationship Graph -->
+    <!-- Relationship Map — bipartite: agencies left, clients right -->
     <div class="section" style="margin-bottom:2rem">
-        <h2>Relationship Network</h2>
-        <div class="desc">Holdings → Advertisers → People. Edges = school connections and shared employers. Drag nodes to explore. Hover for details.</div>
-        <div class="pills" id="graphPills" style="margin-bottom:0.75rem">
-            <button class="pill on" data-gf="all">Connected Accounts</button>
-            <button class="pill" data-gf="WPP" style="color:var(--faint)">WPP Network</button>
-        </div>
-        <div style="position:relative;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:#FAFAFA">
-            <canvas id="forceGraph" width="1080" height="600" style="width:100%;height:600px;cursor:grab"></canvas>
-            <div id="graphTooltip" style="display:none;position:absolute;padding:8px 12px;background:#fff;border:1px solid var(--border);border-radius:3px;font-size:0.7rem;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:280px;z-index:10"></div>
-        </div>
+        <h2>Relationship Map</h2>
+        <div class="desc">WPP agencies (left) connected to target advertisers (right) via shared school alumni. Line thickness = number of connections. Hover a line for details.</div>
+        <div id="relationshipMap"></div>
     </div>
     <script>
     function initForceGraph(){
         if(typeof PEOPLE_INTEL==='undefined') return;
         var PI=PEOPLE_INTEL;
-        var canvas=document.getElementById('forceGraph');
-        var ctx=canvas.getContext('2d');
-        var tooltip=document.getElementById('graphTooltip');
-        var HC={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Havas':'#95a5a6','Mixed':'#999','Dentsu':'#FF9F43','Independents':'#bbb'};
-        var W,H,dpr=window.devicePixelRatio||1;
+        var HC={'WPP':'#7B61FF','Publicis Groupe':'#4AEADC','Publicis':'#4AEADC','Omnicom':'#FF6B35','dentsu':'#FF9F43','Dentsu':'#FF9F43','Havas':'#95a5a6','Mixed':'#999'};
+        var el=document.getElementById('relationshipMap');
 
-        function resize(){
-            var rect=canvas.parentElement.getBoundingClientRect();
-            W=rect.width; H=600;
-            canvas.width=W*dpr; canvas.height=H*dpr;
-            canvas.style.width=W+'px'; canvas.style.height=H+'px';
-            ctx.setTransform(dpr,0,0,dpr,0,0);
-        }
-        resize();
+        // Aggregate: for each client company, count connections per agency
+        var agencyTotals={}, clientList=[];
+        var connByPair={}; // "agency|client" → [{school, agencyPerson, clientPerson}]
 
-        // Build graph — only CLIENT companies with relationship scores
-        var nodes=[], links=[], nodeMap={};
+        PI.school_overlaps.forEach(function(o){
+            var key=o.agency_co+'|'+o.client_co;
+            if(!connByPair[key]) connByPair[key]=[];
+            connByPair[key].push({school:o.school, ap:o.agency, cp:o.client});
+            agencyTotals[o.agency_co]=(agencyTotals[o.agency_co]||0)+1;
+        });
 
-        // Client companies with relationship scores > 0
-        // pool may be 'client', '' (legacy), or missing — include all non-agency
-        var scoredClients={};
+        // Get scored clients sorted by WPP score
+        var clients=[];
         Object.keys(PI.scores).forEach(function(co){
             var s=PI.scores[co], p=PI.profiles[co];
-            if(p && p.pool!=='agency' && ((s.wpp_score||0)+(s.comp_score||0)>0))
-                scoredClients[co]=true;
+            if(!p || p.pool==='agency') return;
+            if((s.wpp_score||0)+(s.comp_score||0)<=0) return;
+            clients.push({name:co, holding:p.holding||'', wpp:s.wpp_score||0, comp:s.comp_score||0});
         });
+        clients.sort(function(a,b){return (b.wpp+b.comp)-(a.wpp+a.comp);});
 
-        function buildGraph(filterMode){
-            nodes=[]; links=[]; nodeMap={};
-            var holdingSeen={}, companySeen={};
-            var holdingAngles={'WPP':0,'Publicis Groupe':1.2,'Publicis':1.2,'Omnicom':2.4,'dentsu':3.6,'Dentsu':3.6,'Havas':4.8,'Mixed':5.5};
-
-            var showCos={};
-            Object.keys(scoredClients).forEach(function(co){
-                var h=(PI.profiles[co]||{}).holding||'Other';
-                if(filterMode==='WPP' && h!=='WPP') return;
-                showCos[co]=true;
-            });
-
-            // Holdings — only those with visible companies
-            var holdingForCo={};
-            Object.keys(showCos).forEach(function(co){
-                var h=(PI.profiles[co]||{}).holding||'Other';
-                holdingForCo[co]=h;
-                if(!holdingSeen[h]){
-                    holdingSeen[h]=true;
-                    var angle=holdingAngles[h]||Math.random()*6.28;
-                    var n={id:'h:'+h, label:h, type:'holding', color:HC[h]||'#999', r:30,
-                        x:W/2+Math.cos(angle)*160, y:H/2+Math.sin(angle)*130, vx:0, vy:0};
-                    nodeMap[n.id]=nodes.length; nodes.push(n);
-                }
-            });
-
-            // Companies
-            Object.keys(showCos).forEach(function(co){
-                var p=PI.profiles[co]; var h=holdingForCo[co];
-                var sc=PI.scores[co]||{};
-                var angle=holdingAngles[h]||0;
-                var jitter=(Math.random()-0.5)*1.5;
-                var n={id:'c:'+co, label:co, type:'company', pool:p.pool, holding:h,
-                    color:HC[h]||'#999', r:8+Math.min((sc.wpp_score||0)*0.8,10),
-                    count:p.people.length, wpp_score:sc.wpp_score||0, comp_score:sc.comp_score||0,
-                    x:W/2+Math.cos(angle+jitter)*220+Math.random()*40,
-                    y:H/2+Math.sin(angle+jitter)*180+Math.random()*40, vx:0, vy:0};
-                nodeMap[n.id]=nodes.length; nodes.push(n); companySeen[co]=true;
-                if(nodeMap['h:'+h]!==undefined)
-                    links.push({source:nodeMap['h:'+h], target:nodes.length-1, strength:0.4, color:'rgba(0,0,0,0.08)'});
-            });
-
-            // People + agency nodes — only for overlaps touching visible client companies
-            var peopleInGraph={}, agencySeen={};
-            PI.school_overlaps.forEach(function(o){
-                if(!companySeen[o.client_co]) return; // only if client company is visible
-
-                // Add agency company as a small node if not already
-                if(!agencySeen[o.agency_co] && PI.profiles[o.agency_co]){
-                    agencySeen[o.agency_co]=true;
-                    var ah=(PI.profiles[o.agency_co]||{}).holding||'';
-                    var angle=holdingAngles[ah]||0;
-                    var n={id:'a:'+o.agency_co, label:o.agency_co, type:'agency', holding:ah,
-                        color:HC[ah]||'#999', r:7, x:W/2+Math.cos(angle)*100+(Math.random()-0.5)*60,
-                        y:H/2+Math.sin(angle)*80+(Math.random()-0.5)*60, vx:0, vy:0};
-                    nodeMap[n.id]=nodes.length; nodes.push(n);
-                    // Link agency to its holding
-                    if(nodeMap['h:'+ah]!==undefined)
-                        links.push({source:nodeMap['h:'+ah], target:nodes.length-1, strength:0.3, color:'rgba(0,0,0,0.06)'});
-                }
-
-                // Agency person
-                var aId='p:'+o.agency+'@'+o.agency_co;
-                if(!peopleInGraph[aId]){
-                    peopleInGraph[aId]=true;
-                    var ah=(PI.profiles[o.agency_co]||{}).holding||'';
-                    var parentIdx=nodeMap['a:'+o.agency_co]||nodeMap['c:'+o.agency_co];
-                    var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*20:W/2;
-                    var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*20:H/2;
-                    var n={id:aId, label:o.agency, type:'person', company:o.agency_co, pool:'agency',
-                        holding:ah, color:HC[ah]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
-                    nodeMap[aId]=nodes.length; nodes.push(n);
-                    if(parentIdx!==undefined)
-                        links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
-                }
-
-                // Client person
-                var cId='p:'+o.client+'@'+o.client_co;
-                if(!peopleInGraph[cId]){
-                    peopleInGraph[cId]=true;
-                    var ch=(PI.profiles[o.client_co]||{}).holding||'';
-                    var parentIdx=nodeMap['c:'+o.client_co];
-                    var px=parentIdx!==undefined?nodes[parentIdx].x+(Math.random()-0.5)*20:W/2;
-                    var py=parentIdx!==undefined?nodes[parentIdx].y+(Math.random()-0.5)*20:H/2;
-                    var n={id:cId, label:o.client, type:'person', company:o.client_co, pool:'client',
-                        holding:ch, color:HC[ch]||'#999', r:5, school:o.school, x:px, y:py, vx:0, vy:0};
-                    nodeMap[cId]=nodes.length; nodes.push(n);
-                    if(parentIdx!==undefined)
-                        links.push({source:parentIdx, target:nodes.length-1, strength:0.6, color:'rgba(0,0,0,0.05)'});
-                }
-
-                // School connection (the key edge)
-                if(nodeMap[aId]!==undefined && nodeMap[cId]!==undefined)
-                    links.push({source:nodeMap[aId], target:nodeMap[cId], strength:1.5, color:'rgba(123,97,255,0.5)', school:o.school, dashed:true});
-            });
-        }
-        buildGraph('all');
-
-        // Force simulation — optimized for small graph
-        var alpha=1, alphaDecay=0.008, alphaMin=0.005;
-        var drag=null, hover=null;
-
-        function tick(){
-            if(alpha<alphaMin){ requestAnimationFrame(tick); draw(); return; }
-            alpha*=(1-alphaDecay);
-
-            var cx=W/2, cy=H/2, N=nodes.length;
-
-            // Center gravity (stronger for holdings)
-            for(var i=0;i<N;i++){
-                var g=nodes[i].type==='holding'?0.001:0.0003;
-                nodes[i].vx+=(cx-nodes[i].x)*g;
-                nodes[i].vy+=(cy-nodes[i].y)*g;
-            }
-
-            // Repulsion — skip pairs that are far apart
-            for(var i=0;i<N;i++){
-                for(var j=i+1;j<N;j++){
-                    var dx=nodes[j].x-nodes[i].x, dy=nodes[j].y-nodes[i].y;
-                    var d2=dx*dx+dy*dy;
-                    if(d2>90000) continue; // skip if >300px apart
-                    d2=Math.max(d2,1);
-                    var minD=nodes[i].r+nodes[j].r+8;
-                    var f=-(minD*minD*60)/d2;
-                    var dist=Math.sqrt(d2);
-                    nodes[i].vx+=f*dx/dist; nodes[i].vy+=f*dy/dist;
-                    nodes[j].vx-=f*dx/dist; nodes[j].vy-=f*dy/dist;
-                }
-            }
-
-            // Spring links
-            for(var i=0;i<links.length;i++){
-                var l=links[i], s=nodes[l.source], t=nodes[l.target];
-                var dx=t.x-s.x, dy=t.y-s.y;
-                var d=Math.sqrt(dx*dx+dy*dy)+0.1;
-                var rest=s.type==='holding'?100:l.dashed?80:45;
-                var f=(d-rest)*0.004*l.strength;
-                s.vx+=f*dx/d; s.vy+=f*dy/d;
-                t.vx-=f*dx/d; t.vy-=f*dy/d;
-            }
-
-            // Integrate
-            for(var i=0;i<N;i++){
-                var n=nodes[i];
-                if(n===drag) continue;
-                n.vx*=0.82; n.vy*=0.82;
-                n.x+=n.vx*alpha; n.y+=n.vy*alpha;
-                n.x=Math.max(n.r+5,Math.min(W-n.r-5,n.x));
-                n.y=Math.max(n.r+5,Math.min(H-n.r-5,n.y));
-            }
-
-            draw();
-            requestAnimationFrame(tick);
-        }
-
-        function draw(){
-            ctx.clearRect(0,0,W,H);
-
-            // Links
-            links.forEach(function(l){
-                var s=nodes[l.source], t=nodes[l.target];
-                ctx.beginPath();
-                ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y);
-                if(l.dashed){ ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(123,97,255,0.35)'; ctx.lineWidth=1.5; }
-                else { ctx.setLineDash([]); ctx.strokeStyle=l.color; ctx.lineWidth=0.5; }
-                ctx.stroke(); ctx.setLineDash([]);
-            });
-
-            // Nodes
-            nodes.forEach(function(n){
-                ctx.beginPath();
-                ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-                var isHover=n===hover;
-                if(n.type==='holding'){
-                    ctx.fillStyle=n.color; ctx.fill();
-                    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-                    ctx.fillStyle='#fff'; ctx.font='bold 10px -apple-system,sans-serif';
-                    ctx.textAlign='center'; ctx.textBaseline='middle';
-                    ctx.fillText(n.label.replace('Publicis Groupe','Publicis'),n.x,n.y);
-                } else if(n.type==='company'){
-                    ctx.fillStyle=isHover?n.color:(n.color+'CC'); ctx.fill();
-                    if(isHover){ctx.strokeStyle=n.color;ctx.lineWidth=2;ctx.stroke();}
-                    ctx.fillStyle='#333'; ctx.font=(isHover?'bold ':'')+'9px -apple-system,sans-serif';
-                    ctx.textAlign='center'; ctx.textBaseline='top';
-                    ctx.fillText(n.label.length>18?n.label.substring(0,16)+'..':n.label,n.x,n.y+n.r+3);
-                } else if(n.type==='agency'){
-                    ctx.fillStyle=n.color+'88'; ctx.fill();
-                    ctx.strokeStyle=n.color; ctx.lineWidth=1; ctx.stroke();
-                    ctx.fillStyle='#666'; ctx.font='7px -apple-system,sans-serif';
-                    ctx.textAlign='center'; ctx.textBaseline='top';
-                    ctx.fillText(n.label,n.x,n.y+n.r+2);
-                } else {
-                    ctx.fillStyle=isHover?n.color:'rgba(123,97,255,0.6)'; ctx.fill();
-                    if(isHover){
-                        ctx.fillStyle='#333'; ctx.font='7px -apple-system,sans-serif';
-                        ctx.textAlign='center'; ctx.textBaseline='top';
-                        ctx.fillText(n.label,n.x,n.y+n.r+2);
-                    }
-                }
-            });
-        }
-
-        // Interaction
-        function getNode(mx,my){
-            for(var i=nodes.length-1;i>=0;i--){
-                var n=nodes[i], dx=mx-n.x, dy=my-n.y;
-                if(dx*dx+dy*dy<(n.r+4)*(n.r+4)) return n;
-            }
-            return null;
-        }
-        function canvasXY(e){
-            var r=canvas.getBoundingClientRect();
-            return {x:e.clientX-r.left, y:e.clientY-r.top};
-        }
-
-        canvas.addEventListener('mousedown',function(e){
-            var p=canvasXY(e); var n=getNode(p.x,p.y);
-            if(n){ drag=n; canvas.style.cursor='grabbing'; alpha=Math.max(alpha,0.3); }
+        // Get agencies that connect to these clients
+        var agencies=[];
+        var relevantAgencies={};
+        clients.forEach(function(c){ Object.keys(connByPair).forEach(function(k){ if(k.indexOf('|'+c.name)>=0) relevantAgencies[k.split('|')[0]]=true; }); });
+        Object.keys(relevantAgencies).forEach(function(a){
+            var p=PI.profiles[a];
+            agencies.push({name:a, holding:p?p.holding||'':'', count:agencyTotals[a]||0});
         });
-        canvas.addEventListener('mousemove',function(e){
-            var p=canvasXY(e);
-            if(drag){ drag.x=p.x; drag.y=p.y; drag.vx=0; drag.vy=0; }
-            var n=getNode(p.x,p.y);
-            hover=n;
-            if(n){
-                canvas.style.cursor=drag?'grabbing':'pointer';
-                var tt='';
-                if(n.type==='holding') tt='<strong>'+n.label+'</strong>';
-                else if(n.type==='company') tt='<strong>'+n.label+'</strong><br>'+n.holding+' · '+n.pool+'<br>'+n.count+' profiles'+(n.wpp_score?' · WPP score: '+n.wpp_score:'');
-                else tt='<strong>'+n.label+'</strong><br>'+n.company+(n.school?'<br>'+n.school:'');
-                tooltip.innerHTML=tt;
-                tooltip.style.display='block';
-                tooltip.style.left=Math.min(p.x+12,W-200)+'px';
-                tooltip.style.top=(p.y-10)+'px';
-            } else {
-                canvas.style.cursor=drag?'grabbing':'grab';
-                tooltip.style.display='none';
-            }
-        });
-        canvas.addEventListener('mouseup',function(){
-            if(drag && hover && hover.type==='company') showCompanyPeople(hover.label);
-            drag=null; canvas.style.cursor='grab';
-        });
-        canvas.addEventListener('mouseleave',function(){ drag=null; tooltip.style.display='none'; canvas.style.cursor='grab'; });
+        agencies.sort(function(a,b){return b.count-a.count;});
 
-        // Filter pills
-        document.querySelectorAll('#graphPills .pill').forEach(function(btn){
-            btn.addEventListener('click',function(){
-                document.querySelectorAll('#graphPills .pill').forEach(function(b){b.classList.remove('on');b.style.color='var(--faint)';});
-                btn.classList.add('on');
-                filter=btn.dataset.gf;
-                buildGraph(filter);
-                alpha=1;
+        if(clients.length===0){ el.innerHTML='<p style="color:var(--faint)">No school connections found yet. Run the LinkedIn scraper to populate.</p>'; return; }
+
+        // Build bipartite HTML layout
+        var h='<div style="display:flex;gap:0;min-height:'+(Math.max(agencies.length,clients.length)*44+40)+'px;position:relative">';
+
+        // LEFT: Agencies
+        h+='<div style="width:200px;flex-shrink:0">';
+        h+='<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);padding:0 0 8px;font-weight:500">AGENCIES</div>';
+        agencies.forEach(function(a,i){
+            var col=HC[a.holding]||'#999';
+            h+='<div id="agency-'+i+'" style="padding:6px 10px;margin-bottom:4px;border-radius:3px;border-left:3px solid '+col+';background:var(--elevated);font-size:0.75rem;position:relative">';
+            h+='<span style="font-weight:500">'+a.name+'</span>';
+            h+='<span style="font-size:0.6rem;color:var(--faint);margin-left:4px">'+a.count+'</span>';
+            h+='</div>';
+        });
+        h+='</div>';
+
+        // CENTER: SVG connection lines
+        h+='<div style="flex:1;min-width:80px;position:relative"><svg id="connSvg" style="width:100%;height:100%;position:absolute;top:0;left:0"></svg></div>';
+
+        // RIGHT: Clients
+        h+='<div style="width:280px;flex-shrink:0">';
+        h+='<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);padding:0 0 8px;font-weight:500">ADVERTISERS (by connection score)</div>';
+        clients.forEach(function(c,i){
+            var col=HC[c.holding]||'#999';
+            var total=Math.max(c.wpp+c.comp,1);
+            var wPct=Math.round(c.wpp/total*100);
+            h+='<div id="client-'+i+'" onclick="showCompanyPeople(\''+c.name.replace(/'/g,"\\'")+'\')" style="padding:6px 10px;margin-bottom:4px;border-radius:3px;border-right:3px solid '+col+';background:var(--elevated);font-size:0.75rem;cursor:pointer;position:relative" onmouseover="highlightConns(\''+c.name.replace(/'/g,"\\'")+'\')" onmouseout="clearConns()">';
+            h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+            h+='<span style="font-weight:500">'+c.name+'</span>';
+            h+='<span style="font-size:0.65rem;color:var(--faint)">'+c.holding+'</span>';
+            h+='</div>';
+            h+='<div style="display:flex;gap:1px;height:3px;border-radius:2px;overflow:hidden;margin-top:3px">';
+            h+='<div style="width:'+wPct+'%;background:var(--wpp)"></div>';
+            h+='<div style="width:'+(100-wPct)+'%;background:#ddd"></div>';
+            h+='</div>';
+            h+='<div style="display:flex;justify-content:space-between;font-size:0.55rem;margin-top:1px"><span style="color:var(--wpp)">WPP '+c.wpp+'</span><span style="color:var(--faint)">Comp '+c.comp+'</span></div>';
+            h+='</div>';
+        });
+        h+='</div>';
+
+        h+='</div>';
+        el.innerHTML=h;
+
+        // Draw SVG connection lines
+        var svg=document.getElementById('connSvg');
+        function drawLines(){
+            var svgRect=svg.getBoundingClientRect();
+            var lines='';
+            agencies.forEach(function(a,ai){
+                var aEl=document.getElementById('agency-'+ai);
+                if(!aEl) return;
+                var aRect=aEl.getBoundingClientRect();
+                var ax=0, ay=aRect.top+aRect.height/2-svgRect.top;
+
+                clients.forEach(function(c,ci){
+                    var key=a.name+'|'+c.name;
+                    var conns=connByPair[key];
+                    if(!conns) return;
+                    var cEl=document.getElementById('client-'+ci);
+                    if(!cEl) return;
+                    var cRect=cEl.getBoundingClientRect();
+                    var cx=svgRect.width, cy=cRect.top+cRect.height/2-svgRect.top;
+
+                    var col=HC[a.holding]||'#999';
+                    var w=Math.min(conns.length*1.5,5);
+                    var title=conns.map(function(c){return c.ap+' ↔ '+c.cp+' ('+c.school+')';}).join('\n');
+                    lines+='<line x1="'+ax+'" y1="'+ay+'" x2="'+cx+'" y2="'+cy+'" stroke="'+col+'" stroke-width="'+w+'" stroke-opacity="0.25" data-client="'+c.name+'" data-agency="'+a.name+'"><title>'+title+'</title></line>';
+                });
             });
-        });
+            svg.innerHTML=lines;
+        }
+        setTimeout(drawLines,50);
 
-        requestAnimationFrame(tick);
+        // Highlight on hover
+        window.highlightConns=function(clientName){
+            svg.querySelectorAll('line').forEach(function(l){
+                if(l.dataset.client===clientName){ l.setAttribute('stroke-opacity','0.7'); l.setAttribute('stroke-width',Math.max(parseFloat(l.getAttribute('stroke-width')),2.5)); }
+                else { l.setAttribute('stroke-opacity','0.08'); }
+            });
+        };
+        window.clearConns=function(){
+            svg.querySelectorAll('line').forEach(function(l){
+                l.setAttribute('stroke-opacity','0.25');
+            });
+        };
     }
     </script>
 
