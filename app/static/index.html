@@ -86,6 +86,7 @@
         <button data-p="simulator">Simulator</button>
         <button data-p="detail">Detail</button>
         <button data-p="intel">Market Intelligence</button>
+        <button data-p="profiles">People Intel</button>
     </nav>
 </div>
 
@@ -275,6 +276,107 @@
             <h2>Pitch Volume Forecast</h2>
             <div class="desc">Expected review activity by quarter and holding group.</div>
             <div class="chart-wrap sm"><canvas id="intelBarChart"></canvas></div>
+        </div>
+    </div>
+
+</div></div>
+
+<!-- ===== PEOPLE INTEL ===== -->
+<div class="wrap"><div class="panel" id="p-profiles">
+
+    <!-- Hero -->
+    <div style="padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem">
+        <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem">
+            <span style="font-size:3rem;font-weight:500;letter-spacing:-0.04em;line-height:1" id="profilesHeroCount">837</span>
+            <span style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint)">marketing leaders profiled</span>
+        </div>
+        <p style="font-family:var(--serif);font-size:1rem;color:var(--muted);max-width:640px;line-height:1.6">
+            LinkedIn profiles of senior marketing, media, and communications leaders across <strong style="color:var(--text)">27 companies</strong> in the pitch pipeline.
+            Sourced from <strong style="color:var(--text)">408 universities</strong> worldwide. Updated weekly via Apify.
+        </p>
+    </div>
+
+    <!-- Data source badges -->
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:2rem">
+        <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:3px;color:var(--faint)">BigQuery: na-analytics.media_stocks.linkedin_profiles</span>
+        <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:3px;color:var(--faint)">837 profiles / 27 companies</span>
+        <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.35rem 0.75rem;border:1px solid var(--accent);border-radius:3px;color:var(--accent)">In Development</span>
+    </div>
+
+    <!-- Planned features grid -->
+    <h2 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);font-weight:400;margin-bottom:1.25rem">COMING NEXT</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-bottom:2rem">
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">Company Profiles</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                For each company in the pitch pipeline: marketing org structure, key decision-makers, tenure at role, and agency relationship history. Click a company in Market Intelligence to see its people.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent)">Data ready in BQ</div>
+        </div>
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">Education Network Map</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                Where do CMOs come from? School clustering across the top 100 advertisers. Harvard MBA vs Ivy vs state school vs international — mapped by holding group and seniority.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--warn)">Analysis pending</div>
+        </div>
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">Career Path Analysis</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                Common career trajectories before becoming CMO/VP Marketing. Which agency alumni end up client-side? Which companies feed into which? Previous-company → current-company flow map.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--warn)">Analysis pending</div>
+        </div>
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">New CMO Alerts</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                When a company appoints a new CMO or VP Media, the clock starts on an agency review. Track recent job changes at target companies — the #1 leading indicator of a pitch.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--warn)">Planned</div>
+        </div>
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">WPP Alumni Tracker</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                Former WPP agency employees now client-side. These are warm relationships — they know WPP's capabilities. Flag when a WPP alum becomes a decision-maker at a target account.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--warn)">Planned</div>
+        </div>
+
+        <div style="background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:3px;padding:1.25rem">
+            <h3 style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem">Relationship Scoring</h3>
+            <p style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+                Score each target account by WPP's existing relationship density: shared alumni, school overlap with WPP leadership, previous agency stints. Prioritize pitches where relationships are strongest.
+            </p>
+            <div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--warn)">Planned</div>
+        </div>
+
+    </div>
+
+    <!-- Preview: holding group breakdown -->
+    <h2 style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint);font-weight:400;margin-bottom:1.25rem">DATA COLLECTED</h2>
+    <div class="row r3" style="margin-bottom:1.5rem">
+        <div class="card" style="border-top:3px solid var(--down)">
+            <h3>WPP (Defend)</h3>
+            <div class="big">280</div>
+            <div class="sub">profiles across 9 companies</div>
+            <div style="font-size:0.7rem;color:var(--faint);margin-top:0.5rem">Ford, Colgate, Danone, Adidas, Mastercard, HP, Shell, Target, T-Mobile</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--up)">
+            <h3>Attack Targets</h3>
+            <div class="big">437</div>
+            <div class="sub">profiles across 14 companies</div>
+            <div style="font-size:0.7rem;color:var(--faint);margin-top:0.5rem">Samsung, Microsoft, AB InBev, Pfizer, Walmart, Apple, VW, PepsiCo, Mercedes, Toyota, GM, Meta + more</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--accent)">
+            <h3>Mixed / Contested</h3>
+            <div class="big">120</div>
+            <div class="sub">profiles across 4 companies</div>
+            <div style="font-size:0.7rem;color:var(--faint);margin-top:0.5rem">P&G, Unilever, Coca-Cola, Nestlé — split across multiple holding groups</div>
         </div>
     </div>
 
