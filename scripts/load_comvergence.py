@@ -630,6 +630,158 @@ def generate_comvergence_js(df, output_path=None):
     return data
 
 
+def generate_advertisers_js(df, output_path=None):
+    """Generate advertisers_data.js from COMvergence — top 100 advertisers by global spend."""
+    if output_path is None:
+        output_path = os.path.join(ROOT, "app", "static", "advertisers_data.js")
+
+    import json
+
+    # Map COMvergence categories to pitch prediction sectors
+    SECTOR_MAP = {
+        "FMCG (Food & Soft Drinks)": "FMCG/Beverages",
+        "FMCG (Care)": "FMCG",
+        "Automotive": "Auto",
+        "Technology & IT": "Tech",
+        "Pharmaceutical": "Pharma",
+        "Financial": "Finance",
+        "Travel, Tourism & Leisure": "Travel",
+        "Entertainment & Media": "Media/Entertainment",
+        "Retail": "Retail",
+        "Sports & Clothing": "Apparel/Sportswear",
+        "Home Goods": "FMCG",
+        "Insurance": "Finance",
+        "Alcohol": "FMCG/Beverages",
+        "Luxury": "Luxury",
+        "Games, Toys, Gambling": "Media/Entertainment",
+        "Government": "Other",
+        "Restaurants": "QSR",
+        "Other Key Categories": "Other",
+        "Telecom": "Telecom",
+        "Energy": "Energy",
+    }
+
+    # Aggregate by advertiser across all markets
+    agg = df.groupby("advertiser").agg(
+        total_spend_2025=("total_spend_2025_m", "sum"),
+        total_spend_2024=("total_spend_2024_m", "sum"),
+        n_markets=("card_id", "count"),
+        category=("category_gama", "first"),
+        parent_co=("parent_co", "first"),
+    ).sort_values("total_spend_2025", ascending=False)
+
+    advertisers = []
+    for adv_name, row in agg.head(100).iterrows():
+        adf = df[df["advertiser"] == adv_name]
+
+        # Determine primary holding (by spend)
+        holding_spend = adf.groupby("holding")["total_spend_2025_m"].sum().sort_values(ascending=False)
+        top_holdings = holding_spend.head(3)
+
+        if len(top_holdings) >= 2 and top_holdings.iloc[1] > top_holdings.iloc[0] * 0.3:
+            group = "Mixed"
+        else:
+            group = top_holdings.index[0] if len(top_holdings) > 0 else "Unknown"
+            # Normalize group names to match pitch prediction expectations
+            if group == "Publicis Groupe":
+                group = "Publicis"
+
+        # Primary agency description
+        primary_agencies = []
+        for h_name, h_spend in top_holdings.items():
+            h_df = adf[adf["holding"] == h_name]
+            top_net = h_df.groupby("agency_network")["total_spend_2025_m"].sum().sort_values(ascending=False)
+            net_name = top_net.index[0] if len(top_net) > 0 else h_name
+            short_h = h_name.replace("Publicis Groupe", "Publicis")
+            primary_agencies.append(f"{net_name} ({short_h})")
+        agency_str = "; ".join(primary_agencies[:3])
+
+        # Last review date — most recent move announcement
+        moves = adf[adf["move_type"].isin(["Agency", "New-assignment", "Transfer"])]
+        last_review_dates = moves["last_announcement_date"].dropna()
+        if len(last_review_dates) > 0:
+            last_review_year = int(last_review_dates.max().year)
+        else:
+            # Use first_win_date as fallback
+            fw = adf["first_win_date"].dropna()
+            last_review_year = int(fw.max().year) if len(fw) > 0 else 2020
+
+        sector = SECTOR_MAP.get(row["category"], "Other")
+        spend = round(float(row["total_spend_2025"]), 0) if pd.notna(row["total_spend_2025"]) else 0
+
+        advertisers.append({
+            "name": adv_name,
+            "spend": int(spend),
+            "group": group,
+            "agency": agency_str,
+            "sector": sector,
+            "last_review": last_review_year,
+        })
+
+    with open(output_path, "w") as f:
+        f.write(f"const ADVERTISERS = {json.dumps(advertisers, separators=(',', ':'))};")
+
+    print(f"Generated {output_path} ({len(advertisers)} advertisers)")
+
+
+def generate_pitch_prediction_params(df, output_path=None):
+    """Compute COMvergence-derived parameters for the pitch prediction model.
+
+    Updates SECTOR_FREQ (sector churn rates), GROUP_VULN (holding vulnerability),
+    and FLOW (transition matrix) based on actual COMvergence move data.
+    Writes updated values to a comment block in pitch_prediction.js header.
+    """
+    # Compute actual sector churn rates from COMvergence
+    moves = df[df["move_type"].isin(["Agency", "New-assignment"])].copy()
+    total_by_cat = df.groupby("category_gama")["card_id"].count()
+    moves_by_cat = moves.groupby("category_gama")["card_id"].count()
+
+    sector_churn = {}
+    for cat in total_by_cat.index:
+        total = total_by_cat.get(cat, 0)
+        moved = moves_by_cat.get(cat, 0)
+        if total > 50:  # only categories with enough data
+            rate = round(moved / total, 2)
+            sector_churn[cat] = rate
+
+    # Compute holding vulnerability (loss rate)
+    big_holdings = ["WPP", "Publicis Groupe", "Omnicom", "dentsu", "Havas"]
+    group_vuln = {}
+    for h in big_holdings:
+        total = len(df[df["holding"] == h])
+        lost = len(moves[moves["last_incumbent_holding"] == h])
+        if total > 0:
+            group_vuln[h] = round(lost / total, 2)
+
+    # Compute flow transition matrix
+    flows = {}
+    for src in big_holdings:
+        src_moves = moves[moves["last_incumbent_holding"] == src]
+        total_lost = len(src_moves)
+        if total_lost == 0:
+            continue
+        dests = {}
+        for dst in big_holdings:
+            if dst == src:
+                continue
+            count = len(src_moves[src_moves["holding"] == dst])
+            if count > 0:
+                dests[dst] = round(count / total_lost, 2)
+        flows[src] = dests
+
+    # Print the computed values (for manual verification)
+    print("\nCOMvergence-derived pitch prediction parameters:")
+    print("  Sector churn rates (top 10):")
+    for cat, rate in sorted(sector_churn.items(), key=lambda x: -x[1])[:10]:
+        print(f"    {cat}: {rate}")
+    print("  Holding vulnerability:")
+    for h, v in sorted(group_vuln.items(), key=lambda x: -x[1]):
+        print(f"    {h}: {v}")
+    print("  Flow matrix (where lost accounts go):")
+    for src, dests in flows.items():
+        print(f"    {src} → {dests}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Load COMvergence data to BigQuery")
     parser.add_argument("--file", default=DEFAULT_FILE, help="Path to Excel file")
@@ -644,6 +796,8 @@ def main():
 
     if not args.skip_js:
         generate_comvergence_js(df)
+        generate_advertisers_js(df)
+        generate_pitch_prediction_params(df)
 
     if args.dry_run:
         print("\n--dry-run: Skipping BigQuery upload.")

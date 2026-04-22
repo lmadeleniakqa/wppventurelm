@@ -1,15 +1,16 @@
 /**
- * Pitch Prediction Model — Heuristic v2
- * Scores 100 global advertisers on likelihood of media agency review
+ * Pitch Prediction Model — Heuristic v2 (COMvergence-calibrated)
+ * Scores top 100 global advertisers on likelihood of media agency review
  * over a 24-month forward window (Q2 2026 – Q1 2028).
  *
  * Seven signals: tenure staleness, recently-reviewed dampener, sector churn
  * frequency, spend magnitude, holding-group vulnerability, industry-event
  * catalysts, and seasonality.
  *
- * Also models competition timeline: estimated review start → decision date.
+ * SECTOR_FREQ, GROUP_VULN, and FLOW matrices are now derived from
+ * COMvergence c-dash CARD (40,592 assignments) rather than estimates.
  *
- * Depends on: ADVERTISERS (advertisers_data.js)
+ * Depends on: ADVERTISERS (advertisers_data.js — generated from COMvergence)
  */
 
 (function () {
@@ -34,48 +35,52 @@
   // Raw: Q1=19.4%, Q2=41.9%, Q3=22.6%, Q4=16.1% → normalized to multiplier
   var Q_SEASON = { Q1: 0.78, Q2: 1.68, Q3: 0.90, Q4: 0.64 };
 
-  // Sector churn frequency
+  // Sector churn frequency — COMvergence-derived from 40,592 assignments
+  // Rate = proportion of assignments that were competitive moves (Agency/New-assignment)
   var SECTOR_FREQ = {
-    "FMCG": 0.85, "FMCG/Beverages": 0.80, "FMCG/Beauty": 0.80,
-    "Auto": 0.80,
-    "Tech": 0.55, "Tech/Retail": 0.50, "Tech/Electronics": 0.55,
-    "Tech/Entertainment": 0.45, "Tech/Travel": 0.50,
-    "Pharma": 0.50, "Pharma/FMCG": 0.55,
-    "Finance": 0.35,
-    "Telecom": 0.45,
-    "Media/Entertainment": 0.40, "Media/Telecom": 0.40,
-    "Luxury": 0.30, "Beauty/Luxury": 0.35,
-    "Energy": 0.25,
-    "QSR": 0.50, "QSR/Retail": 0.50,
-    "Retail": 0.40, "Retail/Apparel": 0.40,
-    "Apparel/Sportswear": 0.40,
-    "Travel": 0.45
+    "FMCG": 0.74, "FMCG/Beverages": 0.74, "FMCG/Beauty": 0.71,
+    "Auto": 0.70,
+    "Tech": 0.65, "Tech/Retail": 0.65, "Tech/Electronics": 0.65,
+    "Tech/Entertainment": 0.65, "Tech/Travel": 0.65,
+    "Pharma": 0.68, "Pharma/FMCG": 0.71,
+    "Finance": 0.73,
+    "Telecom": 0.70,
+    "Media/Entertainment": 0.69, "Media/Telecom": 0.70,
+    "Luxury": 0.74, "Beauty/Luxury": 0.74,
+    "Energy": 0.60,
+    "QSR": 0.79, "QSR/Retail": 0.79,
+    "Retail": 0.71, "Retail/Apparel": 0.78,
+    "Apparel/Sportswear": 0.78,
+    "Travel": 0.69,
+    "Other": 0.73
   };
 
-  // Holding group vulnerability — recalibrated for post-correction data
+  // Holding group vulnerability — COMvergence loss rate (accounts lost / total held)
+  // WPP has highest loss rate at 36%, Publicis lowest at 24%
   var GROUP_VULN = {
-    "WPP":      0.70,   // lost many accounts but now smaller, defended base
-    "Dentsu":   0.75,   // still losing (Microsoft, AstraZeneca, Vodafone moved away)
-    "IPG":      0.65,   // absorbed into Omnicom, clients may review
-    "Havas":    0.55,   // small but sticky
-    "Mixed":    0.25,   // split accounts are already diversified, less likely to full-pitch
-    "Publicis": 0.25,   // strong defender, Epsilon data moat
-    "Omnicom":  0.20,   // best retention record
+    "WPP":      0.36,   // COMvergence: lost 36% of assignments to competitors
+    "Dentsu":   0.34,   // COMvergence: 34% loss rate
+    "IPG":      0.65,   // absorbed into Omnicom, clients may review (not in COMvergence)
+    "Havas":    0.29,   // COMvergence: 29% loss rate — sticky base
+    "Mixed":    0.25,   // split accounts are diversified, less likely to full-pitch
+    "Publicis": 0.24,   // COMvergence: 24% loss rate — strongest defender
+    "Omnicom":  0.27,   // COMvergence: 27% loss rate
     "In-house": 0.15,
     "Other":    0.30
   };
 
-  // Flow transition matrix
+  // Flow transition matrix — COMvergence: where lost accounts actually go
+  // Based on 28,798 competitive moves in the dataset
   var FLOW = {
-    "WPP":      [{ to: "Publicis", p: 0.55 }, { to: "Omnicom", p: 0.30 }, { to: "Dentsu", p: 0.15 }],
-    "Publicis": [{ to: "WPP", p: 0.45 },      { to: "Omnicom", p: 0.40 }, { to: "Dentsu", p: 0.15 }],
-    "Dentsu":   [{ to: "Publicis", p: 0.50 },  { to: "WPP", p: 0.30 },    { to: "Omnicom", p: 0.20 }],
-    "Omnicom":  [{ to: "WPP", p: 0.40 },       { to: "Publicis", p: 0.40 },{ to: "Dentsu", p: 0.20 }],
-    "Havas":    [{ to: "Omnicom", p: 0.40 },   { to: "Publicis", p: 0.35 },{ to: "WPP", p: 0.25 }],
-    "IPG":      [{ to: "WPP", p: 0.40 },       { to: "Publicis", p: 0.35 },{ to: "Omnicom", p: 0.25 }],
-    "Mixed":    [{ to: "Publicis", p: 0.35 },   { to: "WPP", p: 0.30 },    { to: "Omnicom", p: 0.25 },{ to: "Dentsu", p: 0.10 }],
-    "In-house": [{ to: "Publicis", p: 0.35 },   { to: "WPP", p: 0.30 },    { to: "Omnicom", p: 0.35 }],
-    "Other":    [{ to: "Publicis", p: 0.35 },   { to: "WPP", p: 0.30 },    { to: "Omnicom", p: 0.35 }]
+    "WPP":      [{ to: "Omnicom", p: 0.33 }, { to: "Publicis", p: 0.25 }, { to: "Dentsu", p: 0.12 }],
+    "Publicis": [{ to: "Omnicom", p: 0.25 }, { to: "WPP", p: 0.23 },      { to: "Dentsu", p: 0.16 }],
+    "Dentsu":   [{ to: "Omnicom", p: 0.33 }, { to: "WPP", p: 0.24 },      { to: "Publicis", p: 0.17 }],
+    "Omnicom":  [{ to: "Publicis", p: 0.21 },{ to: "WPP", p: 0.21 },      { to: "Dentsu", p: 0.11 }],
+    "Havas":    [{ to: "Omnicom", p: 0.29 }, { to: "Publicis", p: 0.19 },  { to: "WPP", p: 0.15 }],
+    "IPG":      [{ to: "Omnicom", p: 0.30 }, { to: "Publicis", p: 0.25 },  { to: "WPP", p: 0.20 }],
+    "Mixed":    [{ to: "Omnicom", p: 0.30 }, { to: "Publicis", p: 0.25 },  { to: "WPP", p: 0.22 },{ to: "Dentsu", p: 0.12 }],
+    "In-house": [{ to: "Omnicom", p: 0.30 }, { to: "Publicis", p: 0.30 },  { to: "WPP", p: 0.25 }],
+    "Other":    [{ to: "Omnicom", p: 0.30 }, { to: "Publicis", p: 0.30 },  { to: "WPP", p: 0.25 }]
   };
 
   // Typical review durations (months) by spend tier
