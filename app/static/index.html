@@ -18,57 +18,70 @@
             --wpp: #7B61FF; --pub: #4AEADC; --omc: #FF6B35; --sp: #C8C8CD;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.55; }
         .wrap { max-width: 1120px; margin: 0 auto; padding: 0 2rem; }
-        header { padding: 4rem 0 0; }
-        header p.eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); }
-        header h1 { font-size: 2.25rem; font-weight: 500; letter-spacing: -0.03em; margin: 0.25rem 0 0.5rem; }
-        header .lead { font-family: var(--serif); font-size: 1.125rem; color: var(--muted); max-width: 720px; }
-        nav { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin: 2.5rem 0 0; overflow-x: auto; }
-        nav button { font-family: var(--font); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.75rem 1rem; border: none; background: none; color: var(--faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+        header { padding: 3.5rem 0 0; }
+        header p.eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); margin-bottom: 0.25rem; }
+        header h1 { font-size: 2.75rem; font-weight: 600; letter-spacing: -0.035em; margin: 0 0 0.5rem; line-height: 1.1; }
+        header .lead { font-family: var(--serif); font-size: 1.05rem; color: var(--muted); max-width: 640px; line-height: 1.6; }
+        nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin: 2rem 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        nav::-webkit-scrollbar { display: none; }
+        nav button { font-family: var(--font); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.85rem 1.1rem; border: none; background: none; color: var(--faint); cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
         nav button:hover { color: var(--muted); }
-        nav button.on { color: var(--accent); border-bottom-color: var(--accent); }
-        .panel { display: none; padding: 2rem 0 4rem; }
-        .panel.on { display: block; }
-        .row { display: grid; gap: 1.25rem; margin-bottom: 1.5rem; }
+        nav button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+        .panel { display: none; padding: 2.5rem 0 4rem; }
+        .panel.on { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .row { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
         .r2 { grid-template-columns: 1fr 1fr; }
         .r3 { grid-template-columns: 1fr 1fr 1fr; }
         .r4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
         .r5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
-        .card { background: var(--elevated); border: 1px solid var(--border); border-radius: 3px; padding: 1.25rem; }
-        .card h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-weight: 400; }
-        .card .big { font-size: 2rem; font-weight: 500; margin: 0.25rem 0; letter-spacing: -0.02em; }
-        .card .sub { font-size: 0.7rem; color: var(--muted); }
-        .section { background: var(--elevated); border: 1px solid var(--border); border-radius: 3px; padding: 1.5rem; margin-bottom: 1.5rem; }
-        .section h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; margin-bottom: 0.25rem; }
-        .section .desc { font-family: var(--serif); font-size: 0.85rem; color: var(--muted); margin-bottom: 1.25rem; }
+        .card { background: var(--elevated); border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem 1.25rem 1rem; transition: border-color 0.15s; }
+        .card:hover { border-color: var(--border-active); }
+        .card h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); font-weight: 500; margin-bottom: 0.15rem; }
+        .card .big { font-size: 2rem; font-weight: 600; margin: 0.2rem 0; letter-spacing: -0.03em; line-height: 1.1; }
+        .card .sub { font-size: 0.7rem; color: var(--muted); line-height: 1.4; }
+        .section { background: var(--elevated); border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .section h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 0.15rem; }
+        .section .desc { font-family: var(--serif); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
         .chart-wrap { position: relative; height: 380px; }
         .chart-wrap.sm { height: 260px; }
-        .pills { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
-        .pill { font-family: var(--font); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 3px; background: none; color: var(--faint); cursor: pointer; transition: all 0.15s; }
-        .pill.on { border-color: currentColor; }
+        .pills { display: flex; gap: 0.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .pill { font-family: var(--font); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.35rem 0.85rem; border: 1px solid var(--border); border-radius: 20px; background: none; color: var(--faint); cursor: pointer; transition: all 0.15s; }
+        .pill:hover { border-color: var(--border-active); color: var(--muted); }
+        .pill.on { border-color: currentColor; background: rgba(123,97,255,0.04); }
         .pill[data-v="WPP"].on { color: var(--wpp); }
         .pill[data-v="Publicis"].on { color: var(--pub); }
         .pill[data-v="Omnicom"].on { color: var(--omc); }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        th { text-align: left; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 400; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); }
-        td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+        thead { position: sticky; top: 0; background: var(--elevated); z-index: 2; }
+        th { text-align: left; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-weight: 500; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); }
+        td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); }
         th:not(:first-child), td:not(:first-child) { text-align: right; }
-        tr:hover { background: rgba(0,0,0,0.015); }
+        tr:hover { background: rgba(123,97,255,0.03); }
+        tr { transition: background 0.1s; }
         .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .c-up { color: var(--up); } .c-dn { color: var(--down); } .c-w { color: var(--warn); }
         .bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 0.5rem; }
         .bar-fill { height: 100%; border-radius: 2px; }
-        .callout { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; background: rgba(123,97,255,0.03); margin-bottom: 1.5rem; }
-        .callout h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
-        .callout p { font-size: 0.85rem; color: var(--muted); }
-        .callout strong { color: var(--text); }
-        .tag { display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px; }
-        .tag-up { background: rgba(34,160,107,0.1); color: var(--up); }
-        .tag-dn { background: rgba(222,53,11,0.1); color: var(--down); }
-        footer { padding: 0 0 2rem; font-size: 0.65rem; color: var(--faint); }
+        .callout { border-left: 3px solid var(--accent); padding: 0.85rem 1.25rem; background: rgba(123,97,255,0.025); margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; }
+        .callout h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 600; margin-bottom: 0.35rem; }
+        .callout p { font-size: 0.8rem; color: var(--muted); line-height: 1.55; }
+        .callout strong { color: var(--text); font-weight: 600; }
+        .tag { display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 10px; }
+        .tag-up { background: rgba(34,160,107,0.08); color: var(--up); }
+        .tag-dn { background: rgba(222,53,11,0.08); color: var(--down); }
+        footer { padding: 2rem 0; font-size: 0.65rem; color: var(--faint); border-top: 1px solid var(--border); margin-top: 2rem; }
         footer span::before { content: '‣ '; color: var(--accent); }
-        @media (max-width: 768px) { .r2,.r3,.r4,.r5 { grid-template-columns: 1fr; } .wrap { padding: 0 1rem; } header { padding: 2rem 0 0; } .chart-wrap { height: 260px; } .chart-wrap.sm { height: 200px; } }
+        /* Scrollable tables with max height */
+        .table-scroll { max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; }
+        .table-scroll table { border: none; }
+        .table-scroll thead { background: var(--bg); }
+        /* Responsive */
+        @media (max-width: 1024px) { .r3,.r4,.r5 { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) { .r2,.r3,.r4,.r5 { grid-template-columns: 1fr; } .wrap { padding: 0 1rem; } header { padding: 2rem 0 0; } header h1 { font-size: 2rem; } .chart-wrap { height: 280px; } .chart-wrap.sm { height: 220px; } nav button { padding: 0.7rem 0.75rem; font-size: 0.6rem; } .section { padding: 1.25rem; } .card { padding: 1rem; } }
+        @media (max-width: 480px) { header h1 { font-size: 1.6rem; } .card .big { font-size: 1.5rem; } .section h2 { font-size: 0.85rem; } nav button { padding: 0.6rem 0.6rem; font-size: 0.55rem; } }
     </style>
 </head>
 <body>
@@ -124,7 +137,7 @@
 
 <!-- ===== COMPETITION ===== -->
 <div class="wrap"><div class="panel" id="p-competition">
-    <div class="callout"><h3>Zero-Sum Dynamics</h3><p>When one holding group wins a major account, it almost always comes <strong>at the expense of another</strong>. COMvergence data shows <strong>$50.9B</strong> in media spend changed hands between the Big 3 across 3,110 account moves. WPP lost <strong>$25.5B</strong> to Publicis and Omnicom combined, winning only <strong>$12.0B</strong> back — a <strong>$13.5B net deficit</strong>.</p></div>
+    <div class="callout"><h3>Zero-Sum Dynamics</h3><p><strong>$50.9B</strong> changed hands between the Big 3. WPP net deficit: <strong>-$13.5B</strong>.</p></div>
     <div class="row r3" id="compKpis"></div>
     <div class="section">
         <h2>Cumulative Net Account Spend ($M)</h2>
@@ -133,13 +146,13 @@
     </div>
     <div class="section">
         <h2>Account Moves — Full Ledger</h2>
-        <div style="overflow-x:auto" id="moveTable"></div>
+        <div class="table-scroll" id="moveTable"></div>
     </div>
 </div></div>
 
 <!-- ===== WIN STREAKS ===== -->
 <div class="wrap"><div class="panel" id="p-streaks">
-    <div class="callout"><h3>The Magic Number Is 3</h3><p>When Publicis hit <strong>3 consecutive net-win quarters</strong>, average quarterly return was <strong>+24%</strong> with <strong>+15.5% excess vs S&P 500</strong>. COMvergence reveals Publicis is on a <strong>26 consecutive net-win quarter streak</strong> (2020-Q1 through 2026-Q2) — they haven't had a single net-loss quarter in over 6 years. WPP's 2025 was devastating: lost Coca-Cola ($805M), Mars ($1.5B), Paramount ($592M), Bayer ($639M) for <strong>-$3.4B net</strong>. The Estée Lauder consolidation (Q1 2026, from independents/Stagwell/Omnicom) and Wendy's (Q2 2026, $382M from Publicis) start a potential WPP recovery streak.</p></div>
+    <div class="callout"><h3>Streak = 3 Triggers +24% Return</h3><p>Publicis: <strong>26-quarter winning streak</strong> (since 2020-Q1). WPP 2025: <strong>-$3.4B net</strong>. Recovery started: Estée Lauder (Q1) + Wendy's (Q2). One more win triggers the pattern.</p></div>
     <div class="section">
         <h2>Consecutive Wins → Stock Impact</h2>
         <div class="desc">Average quarterly return and excess vs S&P at each streak length.</div>
@@ -154,7 +167,7 @@
 
 <!-- ===== MODELS ===== -->
 <div class="wrap"><div class="panel" id="p-models">
-    <div class="callout"><h3>13 Models Trained — Evolved v2 is Production</h3><p>Best model: <strong>Evolved XGBoost v2 — 58.2% accuracy, Sharpe 0.86, +202% P&L</strong>. Evolved by Gemini 2.5 Pro from 217 candidates on real BigQuery data. Key innovations: recency-weighted training (last 3Y count 2x) + monotonic constraint on net_wins. JEPA tested but doesn't beat XGBoost at this data scale.</p></div>
+    <div class="callout"><h3>Production Model</h3><p>Evolved XGBoost v2 — <strong>58.2% accuracy</strong>, <strong>Sharpe 0.86</strong>, <strong>+202% P&L</strong>. 22 features including 6 from COMvergence.</p></div>
     <div class="section">
         <h2>Model Leaderboard</h2>
         <div id="modelTable"></div>
@@ -183,7 +196,7 @@
 
 <!-- ===== SIMULATOR ===== -->
 <div class="wrap"><div class="panel" id="p-simulator">
-    <div class="callout"><h3>Account Move Simulator</h3><p>Powered by the <strong>Evolved XGBoost v2</strong> model (58.2% accuracy, Sharpe 0.86, +202% P&L) — evolved by Gemini from 217 candidates on real BigQuery data. Select from the <strong>top 100 global advertisers</strong> (COMvergence-sourced), set when the move happens, and see the predicted impact.</p></div>
+    <div class="callout"><h3>Account Move Simulator</h3><p>Model an account move and see the predicted stock impact. <strong>100 advertisers</strong> from COMvergence, powered by Evolved XGBoost v2.</p></div>
 
     <div class="row r2">
         <div class="section">
@@ -284,7 +297,7 @@
 
 <!-- ===== COMVERGENCE ===== -->
 <div class="wrap"><div class="panel" id="p-comvergence">
-    <div class="callout"><h3>COMvergence Ground Truth</h3><p>40,592 agency assignments from COMvergence c-dash CARD — the definitive source for global media spend allocation. Click any account for full agency history.</p></div>
+    <div class="callout"><h3>COMvergence Ground Truth</h3><p><strong>40,592 assignments</strong> across all holdings. Click any account for full agency history.</p></div>
 
     <!-- Portfolio KPIs -->
     <div class="row r3" id="comvPortfolioKpis"></div>
