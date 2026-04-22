@@ -420,61 +420,53 @@ def compute_relationships(bq):
     # 2. School overlap between ALL agency people and client-side people
     school_query = f"""
     CREATE OR REPLACE TABLE `{PROJECT}.{DATASET}.school_overlaps` AS
-    WITH
-    agency_schools AS (
-        SELECT full_name AS agency_person, company_name AS agency_name,
-               holding_group AS agency_holding, school AS agency_school,
-               SPLIT(school, ' | ') AS schools
-        FROM `{PROJECT}.{DATASET}.linkedin_profiles`
-        WHERE pool = 'agency' AND school != ''
-    ),
-    client_schools AS (
-        SELECT full_name AS client_person, company_name AS client_company,
-               holding_group AS client_holding, school AS client_school,
-               SPLIT(school, ' | ') AS schools
-        FROM `{PROJECT}.{DATASET}.linkedin_profiles`
-        WHERE pool = 'client' AND school != ''
-    )
     SELECT
         a.agency_person, a.agency_name, a.agency_holding,
         c.client_person, c.client_company, c.client_holding,
-        shared_school
-    FROM agency_schools a, UNNEST(a.schools) AS a_school
-    JOIN client_schools c, UNNEST(c.schools) AS c_school
-      ON LOWER(TRIM(a_school)) = LOWER(TRIM(c_school))
-    CROSS JOIN UNNEST([a_school]) AS shared_school
-    WHERE TRIM(a_school) != ''
+        a_school AS shared_school
+    FROM (
+        SELECT full_name AS agency_person, company_name AS agency_name,
+               holding_group AS agency_holding, a_school
+        FROM `{PROJECT}.{DATASET}.linkedin_profiles`,
+             UNNEST(SPLIT(school, ' | ')) AS a_school
+        WHERE pool = 'agency' AND school IS NOT NULL AND school != ''
+    ) a
+    JOIN (
+        SELECT full_name AS client_person, company_name AS client_company,
+               holding_group AS client_holding, c_school
+        FROM `{PROJECT}.{DATASET}.linkedin_profiles`,
+             UNNEST(SPLIT(school, ' | ')) AS c_school
+        WHERE pool = 'client' AND school IS NOT NULL AND school != ''
+    ) c
+    ON LOWER(TRIM(a.a_school)) = LOWER(TRIM(c.c_school))
+    WHERE TRIM(a.a_school) != ''
     """
     bq.query(school_query).result()
 
     # 3. Past employer overlap between ALL agency people and client-side people
     employer_query = f"""
     CREATE OR REPLACE TABLE `{PROJECT}.{DATASET}.employer_overlaps` AS
-    WITH
-    agency_employers AS (
-        SELECT full_name AS agency_person, company_name AS agency_name,
-               holding_group AS agency_holding,
-               SPLIT(previous_companies, ' | ') AS prev_cos
-        FROM `{PROJECT}.{DATASET}.linkedin_profiles`
-        WHERE pool = 'agency' AND previous_companies != ''
-    ),
-    client_employers AS (
-        SELECT full_name AS client_person, company_name AS client_company,
-               holding_group AS client_holding,
-               SPLIT(previous_companies, ' | ') AS prev_cos
-        FROM `{PROJECT}.{DATASET}.linkedin_profiles`
-        WHERE pool = 'client' AND previous_companies != ''
-    )
     SELECT
-        a.agency_person, a.agency_name,
+        a.agency_person, a.agency_name, a.agency_holding,
         c.client_person, c.client_company, c.client_holding,
-        shared_employer
-    FROM agency_employers a, UNNEST(a.prev_cos) AS a_co
-    JOIN client_employers c, UNNEST(c.prev_cos) AS c_co
-      ON LOWER(TRIM(a_co)) = LOWER(TRIM(c_co))
-    CROSS JOIN UNNEST([a_co]) AS shared_employer
-    WHERE TRIM(a_co) != ''
-      AND LOWER(TRIM(a_co)) NOT IN ('freelance', 'self-employed', 'consultant')
+        a_co AS shared_employer
+    FROM (
+        SELECT full_name AS agency_person, company_name AS agency_name,
+               holding_group AS agency_holding, a_co
+        FROM `{PROJECT}.{DATASET}.linkedin_profiles`,
+             UNNEST(SPLIT(previous_companies, ' | ')) AS a_co
+        WHERE pool = 'agency' AND previous_companies IS NOT NULL AND previous_companies != ''
+    ) a
+    JOIN (
+        SELECT full_name AS client_person, company_name AS client_company,
+               holding_group AS client_holding, c_co
+        FROM `{PROJECT}.{DATASET}.linkedin_profiles`,
+             UNNEST(SPLIT(previous_companies, ' | ')) AS c_co
+        WHERE pool = 'client' AND previous_companies IS NOT NULL AND previous_companies != ''
+    ) c
+    ON LOWER(TRIM(a.a_co)) = LOWER(TRIM(c.c_co))
+    WHERE TRIM(a.a_co) != ''
+      AND LOWER(TRIM(a.a_co)) NOT IN ('freelance', 'self-employed', 'consultant')
     """
     bq.query(employer_query).result()
 
