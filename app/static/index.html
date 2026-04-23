@@ -1232,6 +1232,26 @@ function initSimulator() {
     const now = new Date();
     const nextQ = new Date(now.getFullYear(), Math.ceil((now.getMonth()+1)/3)*3, 1);
     document.getElementById('simDate').value = nextQ.toISOString().split('T')[0];
+
+    // Derive current streaks from COMvergence competition data (quarterly net wins)
+    // Uses stored net field which includes all COMvergence moves, not just Big 3
+    // Walks backwards from latest quarter to compute consecutive streak
+    if (typeof COMPETITION_DATA !== 'undefined' && COMPETITION_DATA.cumulative_data) {
+        for (const name of GRP) {
+            const cd = COMPETITION_DATA.cumulative_data[name];
+            if (!cd || !cd.length) continue;
+            let streak = 0;
+            for (let i = cd.length - 1; i >= 0; i--) {
+                const net = cd[i].net;
+                if (net === 0) continue; // neutral quarters don't break streak
+                if (streak === 0) { streak = net > 0 ? 1 : -1; }
+                else if (streak > 0 && net > 0) { streak++; }
+                else if (streak < 0 && net < 0) { streak--; }
+                else break; // direction changed, streak ends
+            }
+            SIM_CONFIG.current_streaks[name] = streak;
+        }
+    }
 }
 
 function onBrandSelect() {
@@ -1240,10 +1260,12 @@ function onBrandSelect() {
     if (!a) { document.getElementById('brandInfo').innerHTML = ''; return; }
     document.getElementById('simBudget').value = a.spend;
     document.getElementById('brandInfo').innerHTML = `${a.sector} · ${a.agency} · Last reviewed ${a.last_review}`;
-    // Auto-set From to current group
+    // Auto-set From to current group — map COMvergence group names to dropdown values
     const fromSel = document.getElementById('simFrom');
     const grp = a.group;
-    for (const opt of fromSel.options) { if (opt.value === grp) { fromSel.value = grp; break; } }
+    const groupMap = { 'dentsu': 'Dentsu', 'Mixed': 'Other', 'In-house': 'Other', 'Independents': 'Other', 'Non-disclosed': 'Other' };
+    const mapped = groupMap[grp] || grp;
+    for (const opt of fromSel.options) { if (opt.value === mapped) { fromSel.value = mapped; break; } }
 }
 
 function addSimMove() {
