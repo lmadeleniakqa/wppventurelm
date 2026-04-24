@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Function Capability Map — WPP vs Publicis vs Omnicom</title>
+    <style>
+        :root {
+            --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            --serif: Georgia, 'Times New Roman', serif;
+            --bg: #FAFAFA; --elevated: #FFFFFF; --surface: #F3F3F5; --border: #E2E2E8; --border-active: #B8B8C4;
+            --text: #0A0A0A; --muted: #555555; --faint: #8E8E9A;
+            --accent: #7B61FF; --teal: #4AEADC; --orange: #FF6B35;
+            --up: #1A9960; --down: #D42E0A; --warn: #B88F00;
+            --wpp: #7B61FF; --pub: #4AEADC; --omc: #FF6B35;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+        .wrap { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+
+        header { padding: 2.5rem 0 0; }
+        header p.eyebrow { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent); font-weight: 600; margin-bottom: 0.4rem; }
+        header h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 0.6rem; line-height: 1.05; }
+        header .lead { font-family: var(--serif); font-size: 1rem; color: var(--muted); max-width: 760px; line-height: 1.6; margin-bottom: 0.5rem; }
+        .back { display: inline-block; font-size: 0.7rem; color: var(--accent); text-decoration: none; margin-bottom: 1.25rem; font-weight: 600; letter-spacing: 0.04em; }
+        .back:hover { text-decoration: underline; }
+
+        .section { background: var(--elevated); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+        .section h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; margin-bottom: 0.15rem; }
+        .section .desc { font-family: var(--serif); font-size: 0.78rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
+        thead { position: sticky; top: 0; background: var(--elevated); z-index: 2; }
+        th { text-align: left; font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); font-weight: 600; padding: 0.55rem 0.55rem; border-bottom: 2px solid var(--border); }
+        td { padding: 0.45rem 0.55rem; border-bottom: 1px solid rgba(0,0,0,0.04); vertical-align: top; line-height: 1.4; }
+        tr:hover td { background: rgba(123,97,255,0.015); }
+
+        .col-fn { font-weight: 600; color: var(--text); min-width: 115px; font-size: 0.7rem; }
+        .col-wpp { border-left: 3px solid var(--wpp); padding-left: 0.6rem; }
+        .col-pub { border-left: 3px solid var(--teal); padding-left: 0.6rem; }
+        .col-omc { border-left: 3px solid var(--orange); padding-left: 0.6rem; }
+        th.col-wpp { color: var(--wpp); border-left: 3px solid var(--wpp); padding-left: 0.6rem; }
+        th.col-pub { color: #2AB5A8; border-left: 3px solid var(--teal); padding-left: 0.6rem; }
+        th.col-omc { color: var(--omc); border-left: 3px solid var(--orange); padding-left: 0.6rem; }
+
+        .p { font-weight: 600; color: var(--text); }
+        .co { font-size: 0.63rem; color: var(--faint); }
+        .n { font-size: 0.66rem; color: var(--muted); margin-top: 0.15rem; }
+        .blank { color: var(--faint); font-style: italic; font-size: 0.68rem; }
+
+        .t { display: inline-block; font-size: 0.52rem; padding: 0.1rem 0.35rem; border-radius: 2px; font-weight: 700; letter-spacing: 0.04em; vertical-align: middle; margin-right: 0.15rem; }
+        .t-l { background: rgba(26,153,96,0.12); color: var(--up); }
+        .t-s { background: rgba(26,153,96,0.06); color: #2a8a5a; }
+        .t-p { background: rgba(184,143,0,0.1); color: var(--warn); }
+        .t-g { background: rgba(212,46,10,0.1); color: var(--down); }
+
+        /* Category group rows */
+        .cat td { background: var(--surface); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); padding: 0.5rem 0.55rem; border-bottom: 2px solid var(--border); }
+        /* Sub-category rows */
+        .sub td { background: rgba(123,97,255,0.02); }
+        .sub .col-fn { font-weight: 500; color: var(--muted); padding-left: 0.8rem; font-size: 0.68rem; }
+
+        /* Legend */
+        .legend { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+        .legend span { font-size: 0.66rem; color: var(--muted); }
+
+        /* Summary cards */
+        .sg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; margin-top: 1.25rem; }
+        .sc { border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem; }
+        .sc.wpp { border-top: 3px solid var(--wpp); }
+        .sc.pub { border-top: 3px solid var(--teal); }
+        .sc.omc { border-top: 3px solid var(--orange); }
+        .sc h4 { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); margin-bottom: 0.4rem; }
+        .sc ul { list-style: none; padding: 0; }
+        .sc li { font-size: 0.7rem; padding: 0.15rem 0; color: var(--muted); }
+        .sc li strong { color: var(--text); }
+        .sc li .t { margin-left: 0.2rem; }
+
+        /* Count bar */
+        .counts { display: flex; gap: 1.5rem; margin: 1rem 0 1.5rem; flex-wrap: wrap; }
+        .ct { text-align: center; }
+        .ct .num { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; }
+        .ct .lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+        .ct.wpp .num { color: var(--wpp); }
+        .ct.pub .num { color: #2AB5A8; }
+        .ct.omc .num { color: var(--omc); }
+
+        footer { padding: 1.5rem 0 2.5rem; font-size: 0.66rem; color: var(--faint); }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 900px) {
+            .wrap { padding: 0 0.75rem; }
+            header h1 { font-size: 1.8rem; }
+            table { font-size: 0.68rem; display: block; overflow-x: auto; }
+            .sg { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <a href="/" class="back">&larr; Dashboard</a>
+        <p class="eyebrow">Competitive Intelligence</p>
+        <h1>Marketing Function Capability Map</h1>
+        <p class="lead">A granular, function-by-function inventory of the specific products, owned companies, and platforms each holding deploys. Blanks = gaps. 48 marketing functions across 12 categories.</p>
+    </header>
+
+    <div class="section" style="margin-top:1.5rem;">
+
+        <div class="legend">
+            <span class="t t-l">LEADER</span>
+            <span class="t t-s">STRONG</span>
+            <span class="t t-p">PARITY</span>
+            <span class="t t-g">GAP</span>
+            <span style="font-size:0.63rem;color:var(--faint);margin-left:0.3rem;">Blank cells = no dedicated product or company identified.</span>
+        </div>
+
+        <!-- Count summary -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;text-align:center;">
+            <div style="border:1px solid var(--border);border-top:3px solid var(--wpp);border-radius:6px;padding:0.7rem;">
+                <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);font-weight:600;">WPP Leader/Strong</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--wpp);">14</div>
+                <div style="font-size:0.6rem;color:var(--faint);">6 gaps &middot; 4 leaders</div>
+            </div>
+            <div style="border:1px solid var(--border);border-top:3px solid var(--teal);border-radius:6px;padding:0.7rem;">
+                <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);font-weight:600;">Publicis Leader/Strong</div>
+                <div style="font-size:1.5rem;font-weight:700;color:#2AB5A8;">27</div>
+                <div style="font-size:0.6rem;color:var(--faint);">2 gaps &middot; 15 leaders</div>
+            </div>
+            <div style="border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:0.7rem;">
+                <div style="font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);font-weight:600;">Omnicom Leader/Strong</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--omc);">21</div>
+                <div style="font-size:0.6rem;color:var(--faint);">2 gaps &middot; 7 leaders</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="min-width:130px;">Function</th>
+                    <th class="col-wpp" style="min-width:210px;">WPP</th>
+                    <th class="col-pub" style="min-width:210px;">Publicis Groupe</th>
+                    <th class="col-omc" style="min-width:210px;">Omnicom</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            <!-- ===== 1. DATA & IDENTITY ===== -->
+            <tr class="cat"><td colspan="4">1. Data &amp; Identity Infrastructure</td></tr>
+
+            <tr>
+                <td class="col-fn">Identity Graph</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No proprietary graph</span><div class="n">Relies on partner graphs + client 1P data via Choreograph clean rooms</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon CORE ID</span><div class="n">250M+ deterministic profiles. Cookie-independent. Cross-device.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Acxiom RealID</span><div class="n">2.6B verified global IDs. Deterministic + probabilistic.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Identity Reach Extension</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">InfoSum</span> partnership<div class="n">Privacy-safe data collaboration. Partner-dependent reach.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Lotame</span> <span class="co">(acq. 2025)</span><div class="n">Extends to ~90% global consumer reach. Largest independent data onboarding.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span> + <span class="p">Flywheel</span> signals<div class="n">Trillions of commerce signals layered on RealID.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Data Onboarding / Matching</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Choreograph</span><div class="n">Client 1P onboarding via clean room partners. AmeriLINK database for US.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> + <span class="p">Conversant</span><div class="n">Native onboarding into CORE ID. Offline-to-online matching at scale.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span><div class="n">Enterprise-grade data onboarding. InfoBase consumer database.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Customer Data Platform</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No proprietary CDP</span><div class="n">Relies on partner CDPs (Salesforce, Adobe, Tealium).</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon PeopleCloud — Customer</span><div class="n">Full CDP: unified profiles, journey view, multichannel attribution. In 50%+ of top-30 accounts.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Omni</span> data layer<div class="n">Not a standalone CDP. Identity + audience foundation within Omni.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Data Clean Rooms</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Choreograph</span> + <span class="p">InfoSum</span><div class="n">Google ADH, Amazon Marketing Cloud, InfoSum. Market-by-market.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Epsilon</span> clean rooms<div class="n">Own identity reduces clean room dependence. Salesforce, retailer integrations.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span> + retailer clean rooms<div class="n">Flywheel commerce relationships = retailer clean room access.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Audience Enrichment /<br>3P Data</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Choreograph AmeriLINK</span><div class="n">US-centric. Demographic, psychographic, financial, health data. Partner data via 350+ sources in Open Intelligence.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> + <span class="p">Lotame</span><div class="n">Transactional, behavioral, attitudinal data. Lotame adds global scale. Connected to activation.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Acxiom</span> + <span class="p">Flywheel Commerce Cloud</span><div class="n">Largest digital transaction dataset. Commerce + media + cultural signals.</div></td>
+            </tr>
+
+            <!-- ===== 2. AUDIENCE & INSIGHTS ===== -->
+            <tr class="cat"><td colspan="4">2. Audience &amp; Insights</td></tr>
+
+            <tr>
+                <td class="col-fn">Audience Creation /<br>Segment Building</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Open Intelligence</span><div class="n">AI-modeled audiences from partner data. 5B adult reach. Probabilistic.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">PeopleCloud — Audience</span><div class="n">People-based segments on CORE ID. Deterministic. Cross-device, offline+online.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> + <span class="p">Acxiom</span><div class="n">RealID-powered segments. Commerce behavioral layering from Flywheel.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Lookalike / Propensity Modeling</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Choreograph</span> + <span class="p">Open Intelligence</span><div class="n">Lookalike modeling via AmeriLINK + InfoSum. AI models in WPP Open.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> predictive models<div class="n">Purchase propensity, churn prediction, LTV scoring on CORE ID data.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Annalect</span> + <span class="p">Acxiom</span><div class="n">Annalect builds models on Acxiom data. Integrated into Omni workflows.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Consumer Research /<br>Market Intelligence</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Open Intelligence</span> + agency teams<div class="n">Google Earth AI geospatial (Apr 2026). Mindshare, EssenceMediacom research practices.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">CoreAI</span> insights + agency teams<div class="n">AI insights from Epsilon data. Zenith, Starcom strategy teams.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Annalect</span> <span class="co">(dedicated unit)</span><div class="n">Annalect = dedicated analytics/insights. OMD, PHD strategy teams.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Social Listening /<br>Earned Analytics</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency teams + 3P tools<div class="n">No proprietary listening tool. Brandwatch, Sprinklr partnerships.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency teams + 3P tools<div class="n">No proprietary tool. CoreAI ingests social signals.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams + <span class="p">Omni</span> cultural signals<div class="n">Omni ingests cultural/social signals. No standalone listening product.</div></td>
+            </tr>
+
+            <!-- ===== 3. STRATEGY & PLANNING ===== -->
+            <tr class="cat"><td colspan="4">3. Strategy &amp; Planning</td></tr>
+
+            <tr>
+                <td class="col-fn">Media Strategy</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">EssenceMediacom</span>, <span class="p">Mindshare</span>, <span class="p">Wavemaker</span><div class="n">3 media networks. $62.6B billings. Deep EMEA/APAC bench.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Zenith</span>, <span class="p">Starcom</span>, <span class="p">Spark Foundry</span><div class="n">3 media networks. $67.6B billings. Data-informed via CoreAI.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">OMD</span>, <span class="p">PHD</span>, <span class="p">Hearts &amp; Science</span>, <span class="p">Initiative</span>, <span class="p">UM</span>, <span class="p">Mediahub</span><div class="n">6 networks post-IPG. $74.3B billings. Largest global scale.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Channel Planning /<br>Budget Allocation</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Open Media Studio — Discover + Planning</span><div class="n">AI-assisted channel mix modeling. Budget optimization across channels.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">CoreAI</span> planning + simulation<div class="n">Predictive channel performance. Budget simulation pre-campaign. Outcome forecasting.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> planning module + <span class="p">Annalect</span><div class="n">Omni integrates planning with audience intelligence. Annalect for econometric modeling.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Comms Strategy /<br>Brand Planning</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Ogilvy</span>, <span class="p">VML</span> <span class="co">(WPP Creative)</span><div class="n">Ogilvy brand planning heritage. VML for CX strategy.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Leo Burnett</span>, <span class="p">Saatchi &amp; Saatchi</span>, <span class="p">LePub</span>, <span class="p">BBH</span><div class="n">Data-informed creative strategy via CoreAI + Epsilon.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">BBDO</span>, <span class="p">TBWA</span>, <span class="p">McCann</span><div class="n">3 iconic strategy shops. (FCB, DDB, MullenLowe sunsetted 2026.)</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Competitive Media<br>Intelligence</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> 3P tools (Pathmatics, Nielsen Ad Intel)<div class="n">No proprietary competitive intel tool.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> 3P tools + <span class="p">CoreAI</span> signals<div class="n">CoreAI ingests competitive data but no standalone product.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> 3P tools + <span class="p">Annalect</span><div class="n">Annalect handles competitive analysis. No standalone product.</div></td>
+            </tr>
+
+            <!-- ===== 4. MEDIA ACTIVATION ===== -->
+            <tr class="cat"><td colspan="4">4. Media Activation &amp; Buying</td></tr>
+
+            <tr>
+                <td class="col-fn">Programmatic Display<br>&amp; Video</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Open Media Studio — Activation</span><div class="n">Formerly Xaxis (sunsetted). Bid optimization, programmatic management via WPP Open.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">CoreAI</span> buying + <span class="p">CORE ID</span><div class="n">People-based programmatic. Agentic AI for real-time buying. Highest digital share (58.8%).</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> activation<div class="n">Acxiom segments activated programmatically. Largest volume = pricing leverage.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Paid Search / SEM</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency search teams + <span class="p">WPP Open</span><div class="n">Google $400M/5yr partnership. AI-assisted bidding. No dedicated search unit.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Performics</span> <span class="co">(dedicated agency)</span><div class="n">Dedicated performance agency. Epsilon-informed bidding strategies.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Resolution</span> <span class="co">(OMG)</span><div class="n">Performance media practice. Integrated into Omni reporting.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Paid Social</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency social teams<div class="n">No dedicated social activation product. Handled within media agencies.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Performics</span> + <span class="p">CoreAI</span><div class="n">Cross-channel social optimization. CORE ID for people-based social targeting.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams + <span class="p">Omni</span><div class="n">Omni social intelligence layer. No standalone social product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Addressable TV / CTV</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Finecast</span> capabilities <span class="co">(absorbed into WPP Media)</span><div class="n">Pioneer in addressable TV. YouTube 5K program. Strong EMEA CTV.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency TV teams + <span class="p">Epsilon</span><div class="n">No standalone CTV product. Epsilon identity extends into CTV environments.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Hearts &amp; Science</span> advanced TV<div class="n">H&S built around data-driven TV. Scale in upfronts. No standalone product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Audio / Podcast</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated audio product.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated audio product.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated audio product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">OOH / DOOH</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">WPP Media</span> <span class="co">(ex-Sightline, ex-Kinetic)</span><div class="n">Google Earth AI geospatial integration (2026). Location-based planning.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated OOH product or geospatial capability.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams + <span class="p">Acxiom</span> location<div class="n">Acxiom location data for DOOH targeting. No dedicated product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Affiliate / Partner<br>Marketing</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated affiliate product.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Performics</span> affiliate practice<div class="n">Performics handles affiliate alongside search/social.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated affiliate product.</div></td>
+            </tr>
+
+            <!-- ===== 5. TARGETING & PERSONALIZATION ===== -->
+            <tr class="cat"><td colspan="4">5. Targeting &amp; Personalization</td></tr>
+
+            <tr>
+                <td class="col-fn">People-Based<br>Targeting</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No owned identity</span><div class="n">Cannot do deterministic people-based targeting natively. Partner-dependent.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">CORE ID</span> &rarr; <span class="p">PeopleCloud</span> &rarr; activation<div class="n">End-to-end: identify &rarr; segment &rarr; activate &rarr; measure. The pitch differentiator.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">RealID</span> &rarr; <span class="p">Omni</span> &rarr; activation<div class="n">2.6B IDs. Commerce-enriched targeting. End-to-end within Omni.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Contextual Targeting</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">WPP Open</span> + 3P partners<div class="n">Google partnership supports contextual. AI-modeled context signals. Compensates for identity gap.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">CoreAI</span> contextual<div class="n">AI contextual layered with Epsilon audience signals.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> contextual<div class="n">Cultural + content signals within Omni.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Geo / Location<br>Targeting</td>
+                <td class="col-wpp"><span class="t t-l">LEADER</span> <span class="p">Open Intelligence</span> + <span class="p">Google Earth AI</span><div class="n">Planetary-scale geospatial. Weather, movement, community health signals. Unique 2026 capability.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> 3P location partners<div class="n">No proprietary geospatial capability.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span> location data<div class="n">Acxiom physical-world data. No geospatial AI equivalent.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Retargeting /<br>Sequential Messaging</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Platform-native retargeting<div class="n">Dependent on Meta, Google retargeting. No owned cross-platform retargeting.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Conversant</span> + <span class="p">PeopleCloud</span><div class="n">Cross-platform retargeting on CORE ID. Sequential journeys across channels.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> cross-channel<div class="n">RealID enables cross-platform sequencing within Omni.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Site Personalization</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> 3P tools (Adobe, Optimizely)<div class="n">No proprietary personalization engine.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Epsilon</span> site personalization + <span class="p">Yieldify</span> <span class="co">(acq.)</span><div class="n">On-site personalization tied to CORE ID. Yieldify for conversion optimization.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> 3P tools<div class="n">No proprietary personalization engine.</div></td>
+            </tr>
+
+            <!-- ===== 6. REAL-TIME OPTIMIZATION ===== -->
+            <tr class="cat"><td colspan="4">6. Optimization &amp; Automation</td></tr>
+
+            <tr>
+                <td class="col-fn">Real-Time Bid<br>Optimization</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Open Media Studio</span> bid engine<div class="n">AI-driven bid optimization. 28,000+ AI agents via Agent Builder.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">CoreAI</span> agentic buying<div class="n">Autonomous AI agents. Real-time budget reallocation, bid adjustment, audience shifting.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> AI framework<div class="n">Agentic AI. New platform — potential but unproven at scale.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Budget Pacing /<br>Flighting Optimization</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">WPP Open</span><div class="n">AI-assisted pacing within Open Media Studio.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">CoreAI</span><div class="n">Automated pacing with outcome optimization.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span><div class="n">Integrated pacing across channels.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Cross-Channel<br>Orchestration</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">WPP Open</span><div class="n">Orchestration layer exists but weak without owned identity for cross-channel stitching.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">PeopleCloud</span> journey orchestration<div class="n">CORE ID enables true cross-channel journeys: Paid, Earned, Shared, Owned unified.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Omni</span> orchestration<div class="n">RealID-powered cross-channel. Newer system — maturing.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Marketing<br>Automation / Email</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No owned platform</span><div class="n">Relies on client MarTech (Salesforce, Adobe, HubSpot).</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon PeopleCloud — Messaging</span><div class="n">Email, SMS, push, in-app. Audience segmentation + personalization + automation. Own platform.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">RAPP</span> + client platforms<div class="n">RAPP handles CRM execution. No proprietary messaging platform.</div></td>
+            </tr>
+
+            <!-- ===== 7. COMMERCE & RETAIL MEDIA ===== -->
+            <tr class="cat"><td colspan="4">7. Commerce &amp; Retail Media</td></tr>
+
+            <tr>
+                <td class="col-fn">Retail Media Activation</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No product</span><div class="n">No platform, no dedicated practice. Handled ad-hoc by agency teams.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">CitrusAd</span> <span class="co">(acq.)</span><div class="n">Unified on-site/off-site retail media. Epsilon-powered. Some client losses noted.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Flywheel</span> <span class="co">(acq. $835M)</span><div class="n">$10B+ under management. Forrester Leader 2026. Hundreds of retailer integrations.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Marketplace Mgmt<br>(Amazon, Walmart, etc.)</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No capability</span></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Profitero</span> <span class="co">(acq.)</span><div class="n">Product page optimization, pricing intelligence, shelf analytics.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Flywheel</span> marketplace services<div class="n">Full-service marketplace management. End-to-end commerce operations.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Shopper Marketing /<br>In-Store</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated shopper unit.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated shopper unit.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">TPN</span> <span class="co">(integrated into Flywheel, Jan 2026)</span><div class="n">Flagship retail/shopper agency. Now part of Flywheel connected commerce.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Commerce Analytics /<br>Shelf Intelligence</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No capability</span></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Profitero</span> + <span class="p">Shelf Intelligent Media</span><div class="n">Share-of-search, pricing, digital shelf analytics. Retail media ROI measurement.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Flywheel Commerce Cloud</span><div class="n">Largest transaction dataset. Closed-loop from ad to purchase.</div></td>
+            </tr>
+
+            <!-- ===== 8. CREATIVE & PRODUCTION ===== -->
+            <tr class="cat"><td colspan="4">8. Creative &amp; Production</td></tr>
+
+            <tr>
+                <td class="col-fn">Creative Development</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Ogilvy</span>, <span class="p">VML</span>, <span class="p">AKQA</span> <span class="co">(WPP Creative)</span><div class="n">Ogilvy = perennial Cannes leader. Deep brand storytelling DNA.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Leo Burnett</span>, <span class="p">Saatchi</span>, <span class="p">LePub</span>, <span class="p">BBH</span><div class="n">LePub = breakout performer. "Data company" perception challenge.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">BBDO</span>, <span class="p">TBWA</span>, <span class="p">McCann</span><div class="n">3 legendary shops. FCB/DDB/MullenLowe sunsetted — talent risk.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Creative Pre-Testing /<br>Scoring</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Satalia</span> <span class="co">(acq. 2021)</span> + <span class="p">WPP Open</span><div class="n">"Brand Brains" — bespoke AI trained on brand guidelines. Predictive creative scoring.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">AdgeAI</span> <span class="co">(acq. Mar 2026)</span><div class="n">Predictive creative analytics. Scores assets pre-flight. Connected to identity + production.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Omni</span> AI tools<div class="n">No standalone creative scoring product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Dynamic Creative<br>Optimization (DCO)</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">WPP Open</span> + <span class="p">Satalia</span><div class="n">AI-powered versioning. Brand-safe creative generation at scale.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">AdgeAI</span> + <span class="p">CoreAI</span><div class="n">Creative performance intelligence feeds DCO. Epsilon identity informs personalization.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Omni</span> content tools<div class="n">DCO capabilities exist but no standalone DCO product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Content Production<br>at Scale</td>
+                <td class="col-wpp"><span class="t t-l">LEADER</span> <span class="p">Hogarth</span> <span class="co">(owned)</span> + <span class="p">WPP Production Studio</span><div class="n">Largest global production co. NVIDIA Omniverse, Stability AI. Gen-AI for text/image/video/3D. Dedicated WPP Production unit.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Prodigious</span> <span class="co">(owned)</span> + <span class="p">Publicis Production</span><div class="n">Global production network. AdgeAI integrated. Scale but less AI-native.</div></td>
+                <td class="col-omc"><span class="t t-g">GAP</span> Agency-level production<div class="n">No global production company at Hogarth/Prodigious scale. Decentralized.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Generative AI /<br>AI Content Creation</td>
+                <td class="col-wpp"><span class="t t-l">LEADER</span> <span class="p">Stability AI</span> + <span class="p">NVIDIA</span> + <span class="p">Google</span><div class="n">Equity investment in Stability AI. NVIDIA Omniverse 3D. Most advanced gen-AI pipeline.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> <span class="p">CoreAI</span> generative + <span class="p">Microsoft</span><div class="n">Microsoft partnership (Apr 2026). AI in production. Less advanced than WPP.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">Omni</span> AI content<div class="n">25-55% faster production claimed. No major gen-AI partnership.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">DAM / Content<br>Supply Chain</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Hogarth</span> + <span class="p">WPP Open</span><div class="n">Hogarth manages content supply chains for major clients. WPP Open as central asset hub.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Prodigious</span><div class="n">Production + asset management network.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency-level<div class="n">No centralized content supply chain capability.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">SEO / Content<br>Marketing</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">VML</span> + agency teams<div class="n">SEO within VML and media agencies. No dedicated SEO product.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Performics</span> SEO + <span class="p">Digitas</span><div class="n">Performics handles SEO alongside paid. Digitas for content marketing.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams<div class="n">No dedicated SEO product or agency.</div></td>
+            </tr>
+
+            <!-- ===== 9. MEASUREMENT ===== -->
+            <tr class="cat"><td colspan="4">9. Measurement &amp; Attribution</td></tr>
+
+            <tr>
+                <td class="col-fn">Marketing Mix<br>Modeling (MMM)</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">Open Media Studio — Measure</span><div class="n">Strong econometrics heritage. Mindshare, EssenceMediacom analytics teams.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">CoreAI</span> measurement<div class="n">AI-powered MMM. Budget simulation + outcome prediction.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Annalect</span> <span class="co">(dedicated)</span><div class="n">Long heritage in econometric modeling. Dedicated analytics unit.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Multi-Touch<br>Attribution (MTA)</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">WPP Open</span> + partner tools<div class="n">Attribution within Open. No owned identity limits cross-channel MTA.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> + <span class="p">PeopleCloud — Customer</span><div class="n">People-based attribution. Cross-channel, cross-device on CORE ID. Closed-loop.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span> + <span class="p">Annalect</span><div class="n">RealID enables cross-channel identity stitching for MTA.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Incrementality /<br>Lift Testing</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> Platform-native lift + agency<div class="n">Uses Meta, Google lift tools. No owned incrementality framework.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> incrementality<div class="n">CORE ID enables true holdout/exposed testing across channels.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Acxiom</span> + <span class="p">Annalect</span><div class="n">RealID for test/control design. Annalect for experiment methodology.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Commerce / Sales<br>Measurement</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="blank">No transaction data</span><div class="n">Cannot close the ad-to-purchase loop.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Profitero</span> + <span class="p">Epsilon</span><div class="n">Shelf analytics + identity for commerce ROI. CitrusAd reporting.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Flywheel Commerce Cloud</span><div class="n">Largest transaction dataset. Full-funnel ad-to-purchase attribution.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Brand Safety /<br>Ad Verification</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> 3P (IAS, DoubleVerify)<div class="n">WPP Media brand safety policy. Pre-bid segments for viewability + context.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> 3P (IAS, DoubleVerify)<div class="n">Standard verification via 3P partners.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> 3P (IAS, DoubleVerify)<div class="n">Standard verification via 3P partners.</div></td>
+            </tr>
+
+            <!-- ===== 10. CRM, LOYALTY, CX ===== -->
+            <tr class="cat"><td colspan="4">10. CRM, Loyalty &amp; Customer Experience</td></tr>
+
+            <tr>
+                <td class="col-fn">CRM Strategy /<br>Execution</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">VML</span> <span class="co">(ex-Wunderman Thompson)</span><div class="n">Wunderman heritage in direct/CRM. Now VML. No data asset to power it.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> CRM + <span class="p">PeopleCloud — Messaging</span><div class="n">Native CRM platform. Email, SMS, push. Identity-powered personalization at scale.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">RAPP</span> <span class="co">(+ MRM, integrated 2026)</span><div class="n">RAPP = dedicated CRM agency. MRM folded in. Acxiom powers data.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Loyalty Programs</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">VML</span> consulting<div class="n">Loyalty strategy consulting. No technology platform.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Epsilon</span> loyalty<div class="n">Epsilon's legacy business IS loyalty. Manages programs for major retailers. Full platform.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> <span class="p">RAPP</span><div class="n">CRM-adjacent loyalty work. No dedicated loyalty platform.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">CX / Experience Design</td>
+                <td class="col-wpp"><span class="t t-s">STRONG</span> <span class="p">VML</span> + <span class="p">AKQA</span> <span class="co">(WPP Creative)</span><div class="n">AKQA = digital experience pioneer. VML for CX strategy.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Publicis Sapient</span> + <span class="p">Digitas</span><div class="n">Sapient engineering + design at enterprise scale. Digitas for digital CX. Connected to Epsilon.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Critical Mass</span> + <span class="p">RAPP</span><div class="n">Critical Mass = digital experience. RAPP = data-driven CX. Precision Marketing Group.</div></td>
+            </tr>
+
+            <!-- ===== 11. CONSULTING & TRANSFORMATION ===== -->
+            <tr class="cat"><td colspan="4">11. Consulting &amp; Technology</td></tr>
+
+            <tr>
+                <td class="col-fn">Digital Business<br>Transformation</td>
+                <td class="col-wpp"><span class="t t-g">GAP</span> <span class="p">WPP Enterprise Solutions</span> <span class="co">(Elevate28, new)</span><div class="n">Nascent. Cannot compete for CTO/CIO budgets at Sapient scale.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Publicis Sapient</span> <span class="co">(~$5B rev)</span><div class="n">Full consultancy: software engineering, cloud, CX. ~1/3 of group revenue. CTO/CIO access.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Credera</span> <span class="co">(acquired)</span><div class="n">Management &amp; tech consultancy. Smaller (~$500M est.) but growing. Forrester-recognized.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">MarTech<br>Implementation</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">VML</span> + partners<div class="n">Implements client MarTech stacks. No proprietary platform to integrate with.</div></td>
+                <td class="col-pub"><span class="t t-l">LEADER</span> <span class="p">Sapient</span> + <span class="p">Epsilon</span><div class="n">Implements AND provides the platform (PeopleCloud). Salesforce, Adobe, AWS integrations. CORE ID + Salesforce CDP.</div></td>
+                <td class="col-omc"><span class="t t-s">STRONG</span> <span class="p">Credera</span><div class="n">Credera = technology consultancy for MarTech. MRM platform implementation expertise.</div></td>
+            </tr>
+
+            <!-- ===== 12. PR, INFLUENCE, HEALTH ===== -->
+            <tr class="cat"><td colspan="4">12. Specialist: PR, Health, Influence</td></tr>
+
+            <tr>
+                <td class="col-fn">PR / Corporate<br>Communications</td>
+                <td class="col-wpp"><span class="t t-l">LEADER</span> <span class="p">Burson</span> + <span class="p">Hill &amp; Knowlton</span><div class="n">Two of world's largest PR firms. Public affairs, crisis, corporate comms.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> <span class="p">MSL</span><div class="n">Publicis PR arm. Smaller scale than WPP or Omnicom.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">FleishmanHillard</span>, <span class="p">Ketchum</span>, <span class="p">Porter Novelli</span>, <span class="p">Weber Shandwick</span><div class="n">Post-IPG: 4 major global PR brands. Deepest bench.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Influencer / Creator<br>Marketing</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">Ogilvy</span> influence practice<div class="n">No dedicated platform or company.</div></td>
+                <td class="col-pub"><span class="t t-p">PAR</span> Agency teams<div class="n">No standalone product. Epsilon can inform creator selection.</div></td>
+                <td class="col-omc"><span class="t t-p">PAR</span> Agency teams<div class="n">No standalone product.</div></td>
+            </tr>
+            <tr class="sub">
+                <td class="col-fn">Healthcare / Pharma</td>
+                <td class="col-wpp"><span class="t t-p">PAR</span> <span class="p">WPP Health</span> practice<div class="n">Cross-agency health practice. Less specialized than competitors.</div></td>
+                <td class="col-pub"><span class="t t-s">STRONG</span> <span class="p">Publicis Health</span> <span class="co">(dedicated hub)</span><div class="n">Digitas Health, Saatchi Wellness, Langland. Epsilon health data.</div></td>
+                <td class="col-omc"><span class="t t-l">LEADER</span> <span class="p">Omnicom Health Group</span> <span class="co">(+ IPG Health)</span><div class="n">Largest healthcare comms network. CDM, Harrison &amp; Star. IPG Health added.</div></td>
+            </tr>
+
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="section">
+        <h2>Gap Summary by Holding</h2>
+        <p class="desc">Where each holding has blank cells or structural gaps. Cross-referenced with COMvergence pitch flow data where applicable.</p>
+
+        <div class="sg">
+            <div class="sc wpp">
+                <h4>WPP — 6 Critical Gaps</h4>
+                <ul>
+                    <li><strong>Identity Graph</strong> — only Big 3 without one <span class="t t-g">$12.6B lost to Publicis</span></li>
+                    <li><strong>CDP</strong> — no PeopleCloud / Acxiom equiv.</li>
+                    <li><strong>People-Based Targeting</strong> — cannot do deterministic targeting natively</li>
+                    <li><strong>Marketing Automation / Email</strong> — no owned messaging platform</li>
+                    <li><strong>Retail Media</strong> — blank. No Flywheel, no CitrusAd</li>
+                    <li><strong>Marketplace Mgmt</strong> — blank</li>
+                    <li><strong>Commerce Analytics</strong> — no transaction data</li>
+                    <li><strong>Commerce Measurement</strong> — can't close ad-to-purchase loop</li>
+                    <li><strong>Digital Transformation</strong> — Enterprise Solutions nascent vs $5B Sapient</li>
+                    <li style="margin-top:0.3rem;color:var(--up);"><strong>WPP leads in:</strong> Content production (Hogarth), Gen-AI (Stability/NVIDIA), Geo targeting (Google Earth AI), PR (Burson/H&K)</li>
+                </ul>
+            </div>
+            <div class="sc pub">
+                <h4>Publicis — 2 Notable Gaps</h4>
+                <ul>
+                    <li><strong>Addressable TV / CTV</strong> — no Finecast equiv.</li>
+                    <li><strong>OOH / DOOH</strong> — no product, no geospatial</li>
+                    <li><strong>Generative AI</strong> — behind WPP's pipeline</li>
+                    <li><strong>Content Production</strong> — Prodigious solid but not Hogarth + gen-AI level</li>
+                    <li><strong>PR</strong> — MSL small vs Burson/H&K or OMC portfolio</li>
+                    <li style="margin-top:0.3rem;color:var(--up);"><strong>15 Leader positions</strong> — dominant in data/identity, targeting, optimization, measurement, CRM, loyalty, consulting, MarTech</li>
+                </ul>
+            </div>
+            <div class="sc omc">
+                <h4>Omnicom — 2 Notable Gaps</h4>
+                <ul>
+                    <li><strong>Content Production</strong> — no Hogarth/Prodigious-scale company</li>
+                    <li><strong>Generative AI</strong> — no major gen-AI partnerships</li>
+                    <li><strong>CDP</strong> — Omni not a standalone CDP</li>
+                    <li><strong>Transformation</strong> — Credera ~10% of Sapient scale</li>
+                    <li><strong>Integration Risk</strong> — IPG merger = 18-24mo uncertainty</li>
+                    <li style="margin-top:0.3rem;color:var(--up);"><strong>7 Leader positions</strong> — dominant in commerce, retail media, media scale, healthcare, PR. Post-IPG data stack (Acxiom + Flywheel) is formidable.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Generated April 2026 &middot; Sources: <a href="https://www.comvergence.net/">COMvergence</a>, <a href="https://www.wpp.com/en/open">WPP Open</a>, <a href="https://www.publicisgroupe.com">Publicis Groupe</a>, <a href="https://www.omc.com/omni/">Omnicom Omni</a>, <a href="https://us.epsilon.com/epsilon-peoplecloud-overview">Epsilon PeopleCloud</a>, <a href="https://www.flywheeldigital.com">Flywheel</a>, Forrester, public filings &middot;
+        <a href="/">Dashboard</a></p>
+    </footer>
+</div>
+</body>
+</html>
